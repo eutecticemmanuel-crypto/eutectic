@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.npm-cache/
+
+# Build outputs
+build/
+*.exe
+*.o
+*.obj
+
+# Runtime data
+data/store.json
+data/*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local

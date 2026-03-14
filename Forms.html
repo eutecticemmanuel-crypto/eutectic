@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My first website</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Form structure</h1>
+    <p>Forms are used to collect user input. They can contain various types of input elements such as text fields, checkboxes, radio buttons, and submit buttons. A form is created using the <code>&lt;form&gt;</code> tag.</p>
+    <h2>Form Elements</h2>
+    <form action="/submit" method="post">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name"><br><br>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email"><br><br>
+        
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br><br>
+
+        <label for = "age">Age:</label>
+        <input type="number" id="age" name="age" min = "1" max = "120"><br><br>
+
+        <label for="birthdate">Birthdate:</label>
+        <input type="date" id="birthdate" name="birthdate"><br><br>
+
+        <fieldset>
+            <legend>Gender:</legend>
+            <input type="radio" id="male" name="gender" value="male">   
+            <label for="male">Male</label   
+            <input type="radio" id="female" name="gender    " value="female">
+            <label for="female">female</label>
+            <input type="radio" id="other" name="gender" value="other">
+            <label for="other">Other</label>       
+           
+        
+        <!-- Checkbox input -->
+         <input type="checkbox" id="subscribe" name="subscribe" value="yes">
+         <label for="subscribe">Subscribe to newsletter</label><br><br>
+
+         <!----Dropdown list---->
+            <label for="country">Country:</label>
+            <select id="country" name="country">
+                <option value="usa">United States</option>
+                <option value="canada">Canada</option>
+                <option value="uk">United Kingdom</option>
+                <option value="australia">Australia</option>
+            </select><br><br>
+
+            <!---Text area---->
+            <label for="message">Message:</label><br>
+            <textarea id="message" name="message" rows="4" cols="50"></textarea><br><br>
+
+        <!---File input---->
+        <label for="file">Upload a file:</label>
+        <input type="file" id="file" name="file" accept = ".pdf,.doc,.docx"><br><br>
+
+        <!---Submit button---->
+            <input type="submit" value="Submit">
+            <button type = "submit">Submit form</button>
+            <button type="reset">Reset form</button>
+        </fieldset>       
+    </form>
+</body>     

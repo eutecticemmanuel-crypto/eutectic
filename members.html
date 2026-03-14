@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Members - Abious Rehabilitation Initiative</title>
+    <style>
+        :root {
+            --primary: #0d6e5e;
+            --primary-dark: #094a42;
+            --accent: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f0fdf9 0%, #ecfeff 50%, #f0fdf4 100%);
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+
+        header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 30px;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .member-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .member-photo {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e0f7f4, #ccf5ee);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .member-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .member-photo .placeholder {
+            font-size: 60px;
+            color: var(--primary);
+            opacity: 0.5;
+        }
+
+        .member-info {
+            padding: 20px;
+        }
+
+        .member-name {
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .member-role {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .member-biodata {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .member-biodata.collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .read-more {
+            color: var(--primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .member-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .no-members {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .nav-links a {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: var(--primary-dark);
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .members-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Our Members</h1>
+        <p>Meet the amazing people of Abious Rehabilitation Initiative</p>
+    </header>
+
+    <div class="container">
+        <h2 class="section-title">Community Members</h2>
+        
+        <div id="membersContainer">
+            <div class="loading">Loading members...</div>
+        </div>
+        
+        <div class="nav-links">
+            <a href="trial.html">← Back to Home</a>
+            <a href="register.html">Join Us</a>
+        </div>
+    </div>
+
+    <script>
+        async function loadMembers() {
+            const container = document.getElementById('membersContainer');
+            
+            try {
+                const response = await fetch('/api/public/members');
+                const data = await response.json();
+                
+                if (!data.members || data.members.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-members">
+                            <p>No members to display yet.</p>
+                            <p>Be the first to join!</p>
+                            <a href="register.html" style="color: var(--primary);">Register here</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '<div class="members-grid">';
+                
+                data.members.forEach(member => {
+                    const photoHtml = member.photo 
+                        ? `<img src="${member.photo}" alt="${member.fullName}">` 
+                        : '<div class="placeholder">👤</div>';
+                    
+                    const biodataHtml = member.biodata 
+                        ? `<p class="member-biodata">${member.biodata}</p>` 
+                        : '<p class="member-biodata" style="color: #999; font-style: italic;">No bio available</p>';
+                    
+                    const joinDate = new Date(member.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long'
+                    });
+                    
+                    html += `
+                        <div class="member-card">
+                            <div class="member-photo">
+                                ${photoHtml}
+                            </div>
+                            <div class="member-info">
+                                <h3 class="member-name">${member.fullName}</h3>
+                                <div class="member-role">${member.role || 'Member'}</div>
+                                ${biodataHtml}
+                                <div class="member-meta">
+                                    <span>Joined: ${joinDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading members:', error);
+                container.innerHTML = `
+                    <div class="no-members">
+                        <p>Unable to load members.</p>
+                        <p>Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Load members on page load
+        loadMembers();
+    </script>
+</body>
+</html>

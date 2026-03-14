@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abious Rehabilitation Initiative</title>
+    <style>
+        :root {
+            --primary: #0d6e5e;
+            --primary-dark: #094a42;
+            --accent: #f59e0b;
+            --accent-light: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            /* Dynamic animated gradient background */
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(13, 110, 94, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(245, 158, 11, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(9, 74, 66, 0.08) 0%, transparent 70%),
+                linear-gradient(135deg, #f0fdf9 0%, #ecfeff 50%, #f0fdf4 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated floating shapes for liveliness */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(13, 110, 94, 0.1) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+            animation: float1 20s ease-in-out infinite;
+        }
+
+        body::after {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+            bottom: -50px;
+            right: -50px;
+            animation: float2 25s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 50% 25%; }
+            50% { background-position: 100% 50%; }
+            75% { background-position: 50% 75%; }
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(50px, 80px) rotate(90deg); }
+            50% { transform: translate(30px, 150px) rotate(180deg); }
+            75% { transform: translate(-20px, 80px) rotate(270deg); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-60px, -40px) rotate(120deg); }
+            66% { transform: translate(-30px, -80px) rotate(240deg); }
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            position: relative;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        nav {
+            background: linear-gradient(90deg, #1a3a32, #2d5a4d);
+            padding: 14px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav a {
+            color: white;
+            margin: 0 12px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        nav a:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fbbf24;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 25px;
+            position: relative;
+            z-index: 5;
+        }
+
+        section {
+            margin-bottom: 35px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            animation: fadeInUp 0.6s ease-out;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 12px;
+            margin-top: 0;
+            position: relative;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--primary-dark);
+        }
+
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .image-gallery img {
+            width: 280px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.4s ease;
+        }
+
+        .image-gallery img:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #1a3a32;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border: 2px solid #d1e7dd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(13, 110, 94, 0.15);
+            background: white;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(13, 110, 94, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #072f28);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 94, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #d97706);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .core-values {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .value {
+            flex: 1 1 220px;
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8fdf9, #f0fdf4);
+            border-radius: 16px;
+            border: 1px solid #d1e7dd;
+            transition: all 0.3s ease;
+        }
+
+        .value:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .value h3 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+        }
+
+        .contact-info h2 {
+            color: white;
+            border-bottom-color: var(--accent);
+        }
+
+        .auth-status {
+            max-width: 600px;
+            margin: 15px auto 0;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-status.ok {
+            display: block;
+            background: linear-gradient(135deg, #d1e7dd, #a8dfc6);
+            color: #0f5132;
+            border: 1px solid #a8dfc6;
+        }
+
+        .auth-status.error {
+            display: block;
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #842029;
+            border: 1px solid #f5c6cb;
+        }
+
+        .auth-status.warning {
+            display: block;
+            background: linear-gradient(135deg, #fff3cd, #ffeeba);
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .auth-status.info {
+            display: block;
+            background: linear-gradient(135deg, #cff4fc, #b6effb);
+            color: #055160;
+            border: 1px solid #b6effb;
+        }
+
+        .quick-link {
+            max-width: 600px;
+            margin: 12px auto;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Subscription Plans */
+        .subscription-plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .plan-card {
+            background: linear-gradient(135deg, #fff, #f8fdf9);
+            border: 2px solid #d1e7dd;
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .plan-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #d1e7dd, #a8dfc6);
+        }
+
+        .plan-card h3 {
+            color: var(--primary);
+            margin: 0 0 10px;
+        }
+
+        .plan-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 15px 0;
+        }
+
+        .plan-price span {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .plan-features {
+            text-align: left;
+            margin: 15px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: var(--primary);
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        /* Email Verification Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease;
+            text-align: center;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal h3 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            color: white;
+        }
+
+        .verification-code {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .verification-code input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #d1e7dd;
+            border-radius: 10px;
+        }
+
+        .verification-code input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(13, 110, 94, 0.15);
+        }
+
+        .resend-link {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        .resend-link:hover {
+            color: var(--accent);
+        }
+
+        footer {
+            background: linear-gradient(90deg, #1a3a32, #2d5a4d);
+            color: white;
+            text-align: center;
+            padding: 25px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 5;
+        }
+
+        footer .scripture-footer {
+            font-style: italic;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Progress indicator */
+        .registration-steps {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: #f0f0f0;
+            color: #666;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step.completed {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .step.active .step-number {
+            background: rgba(255,255,255,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .image-gallery {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .core-values {
+                flex-direction: column;
+            }
+
+            nav a {
+                display: block;
+                margin: 8px 0;
+            }
+
+            .registration-steps {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Abious Rehabilitation Center</h1>
+        <p>Empowering Youth Through Rehabilitation and Community</p>
+    </header>
+
+    <nav>
+        <a href="#about">About</a>
+        <a href="#values">Core Values</a>
+        <a href="#activities">Activities</a>
+        <a href="programs_run.html">Programs Run</a>
+        <a href="#faqs">FAQs</a>
+        <a href="#membership">Membership</a>
+        <a href="#donate">Donate</a>
+        <a href="#reactions">Reactions</a>
+        <a href="#contact">Contact</a>
+        <a href="#member-area">Member Area</a>
+        <a href="admin.html" style="background: var(--accent); color: #000;">Admin</a>
+    </nav>
+
+    <div class="container">
+        <section id="about">
+            <h2>About Our Website</h2>
+            <p>Welcome to the Abious Rehabilitation Center website. We are dedicated to providing comprehensive rehabilitation services for youth, fostering a supportive community where young people can heal, grow, and thrive. Our platform offers information on our programs, ways to get involved, and opportunities to support our mission.</p>
+        </section>
+
+        <section id="values">
+            <h2>Core Values</h2>
+            <div class="core-values">
+                <div class="value">
+                    <h3>Compassion</h3>
+                    <p>We approach every individual with empathy and understanding, recognizing the unique challenges they face.</p>
+                </div>
+                <div class="value">
+                    <h3>Community</h3>
+                    <p>We believe in the power of togetherness, building strong networks of support among youth and their families.</p>
+                </div>
+                <div class="value">
+                    <h3>Growth</h3>
+                    <p>We are committed to personal development, helping youth discover their potential and achieve their goals.</p>
+                </div>
+                <div class="value">
+                    <h3>Inclusion</h3>
+                    <p>We strive to create an environment where everyone feels welcomed, valued, and empowered.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="activities">
+            <h2>Youth Activities</h2>
+            <p>Our youth engage in various meaningful activities that promote healing, connection, and personal growth:</p>
+            <p><a href="programs_run.html">View detailed list of programs we run</a></p>
+            <ul>
+                <li><strong>Coming Together:</strong> Group sessions and meetings to build friendships and support networks.</li>
+                <li><strong>Helping Others:</strong> Volunteer programs where youth assist those in need, fostering empathy and purpose.</li>
+                <li><strong>Outreach:</strong> Community outreach initiatives to raise awareness and provide support to underserved populations.</li>
+                <li><strong>Gatherings:</strong> Social events and workshops to celebrate achievements and share experiences.</li>
+                <li><strong>Camps:</strong> Therapeutic camps offering adventure, therapy, and team-building in a supportive environment.</li>
+            </ul>
+            <div class="image-gallery">
+                <img src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="WhatsApp Image 1">
+                <img src="WhatsApp Image 2025-12-03 at 00.16.30.jpeg" alt="WhatsApp Image 2">
+                <img src="WhatsApp Image 2025-12-03 at 00.17.33.jpeg" alt="WhatsApp Image 3">
+                <img src="WhatsApp Image 2025-12-03 at 00.17.36.jpeg" alt="WhatsApp Image 4">
+                <img src="WhatsApp Image 2025-12-03 at 00.17.39.jpeg" alt="WhatsApp Image 5">
+                <img src="WhatsApp Image 2025-12-03 at 00.17.40.jpeg" alt="WhatsApp Image 6">
+                <img src="WhatsApp Image 2025-12-03 at 00.17.42.jpeg" alt="WhatsApp Image 7">
+                <img src="WhatsApp Image 2025-12-03 at 11.23.19.jpeg" alt="WhatsApp Image 8">
+                <img src="WhatsApp Image 2025-12-03 at 11.23.21.jpeg" alt="WhatsApp Image 9">
+                <img src="WhatsApp Image 2025-12-03 at 11.23.22 (1).jpeg" alt="WhatsApp Image 10">
+            </div>
+        </section>
+
+        <section id="faqs">
+            <h2>Frequently Asked Questions</h2>
+            <details>
+                <summary>What services does the Abious Rehabilitation Center offer?</summary>
+                <p>We provide comprehensive rehabilitation programs including counseling, group therapy, skill-building workshops, and recreational activities tailored for youth.</p>
+            </details>
+            <details>
+                <summary>How can I become a member?</summary>
+                <p>Fill out the membership registration form below. You'll need to verify your email and select a subscription plan to complete registration.</p>
+            </details>
+            <details>
+                <summary>Is there a cost to join?</summary>
+                <p>We offer both free and premium membership plans. The free plan includes basic access, while premium plans offer exclusive content and features.</p>
+            </details>
+            <details>
+                <summary>How can I volunteer or get involved?</summary>
+                <p>Contact us through the form below or visit our activities section for volunteer opportunities.</p>
+            </details>
+            <details>
+                <summary>What age groups do you serve?</summary>
+                <p>We primarily serve youth aged 13-25, but we have programs adaptable for various age groups.</p>
+            </details>
+        </section>
+
+        <section id="membership">
+            <h2>Membership Registration</h2>
+            <p>Join our community and stay connected with our programs and events. Register below to become a member.</p>
+            
+            <div class="registration-steps">
+                <div class="step active" id="step1">
+                    <span class="step-number">1</span>
+                    Account Info
+                </div>
+                <div class="step" id="step2">
+                    <span class="step-number">2</span>
+                    Verify Email
+                </div>
+                <div class="step" id="step3">
+                    <span class="step-number">3</span>
+                    Select Plan
+                </div>
+                <div class="step" id="step4">
+                    <span class="step-number">4</span>
+                    Complete
+                </div>
+            </div>
+
+            <form id="registerForm">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="register-password">Password:</label>
+                <input type="password" id="register-password" name="register-password" minlength="6" required>
+
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone">
+
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" min="13" max="90">
+
+                <label for="interests">Interests (optional):</label>
+                <textarea id="interests" name="interests" rows="3"></textarea>
+
+                <button type="submit" class="btn-accent">Continue to Email Verification</button>
+            </form>
+            <div id="registerStatus" class="auth-status"></div>
+        </section>
+
+        <!-- Subscription Plans Section (Hidden initially) -->
+        <section id="subscription" style="display: none;">
+            <h2>Select Your Plan</h2>
+            <p>Choose a subscription plan that works for you. All plans include access to our community.</p>
+            
+            <div class="subscription-plans">
+                <div class="plan-card" data-plan="free">
+                    <h3>Basic</h3>
+                    <div class="plan-price">Free</div>
+                    <ul class="plan-features">
+                        <li>Access to community forums</li>
+                        <li>Monthly newsletter</li>
+                        <li>Event notifications</li>
+                        <li>Basic support</li>
+                    </ul>
+                    <button type="button" class="select-plan-btn">Select Basic</button>
+                </div>
+                
+                <div class="plan-card" data-plan="monthly">
+                    <h3>Premium Monthly</h3>
+                    <div class="plan-price">$9.99<span>/month</span></div>
+                    <ul class="plan-features">
+                        <li>Everything in Basic</li>
+                        <li>Exclusive content</li>
+                        <li>Priority support</li>
+                        <li>Video calls with counselors</li>
+                        <li>Member-only events</li>
+                    </ul>
+                    <button type="button" class="select-plan-btn">Select Monthly</button>
+                </div>
+                
+                <div class="plan-card" data-plan="yearly">
+                    <h3>Premium Yearly</h3>
+                    <div class="plan-price">$79.99<span>/year</span></div>
+                    <ul class="plan-features">
+                        <li>Everything in Monthly</li>
+                        <li>2 months free</li>
+                        <li>1-on-1 mentoring session</li>
+                        <li>Resource library access</li>
+                        <li>Certificate of membership</li>
+                    </ul>
+                    <button type="button" class="select-plan-btn">Select Yearly</button>
+                </div>
+            </div>
+
+            <div id="paymentStatus" class="auth-status"></div>
+            <button id="completeRegistration" style="display: none; margin-top: 20px; width: 100%;" class="btn-accent">Complete Registration</button>
+        </section>
+
+        <section id="donate">
+            <h2>Donate to Our Foundation</h2>
+            <p>Your generous donations help us continue our mission of supporting youth rehabilitation. Every contribution makes a difference.</p>
+            <form>
+                <label for="donor-name">Your Name:</label>
+                <input type="text" id="donor-name" name="donor-name" required>
+
+                <label for="donor-email">Email:</label>
+                <input type="email" id="donor-email" name="donor-email" required>
+
+                <label for="amount">Donation Amount ($):</label>
+                <input type="number" id="amount" name="amount" min="1" step="0.01" required>
+
+                <label for="message">Message (optional):</label>
+                <textarea id="message" name="message" rows="3"></textarea>
+
+                <button type="submit">Donate Now</button>
+            </form>
+        </section>
+
+        <section id="reactions">
+            <h2>Share Your Thoughts</h2>
+            <p>We value your feedback! Leave a comment or reaction below.</p>
+            <form>
+                <label for="comment-name">Name:</label>
+                <input type="text" id="comment-name" name="comment-name" required>
+
+                <label for="comment-email">Email:</label>
+                <input type="email" id="comment-email" name="comment-email" required>
+
+                <label for="reaction">Reaction:</label>
+                <select id="reaction" name="reaction">
+                    <option value="positive">Positive</option>
+                    <option value="suggestion">Suggestion</option>
+                    <option value="question">Question</option>
+                    <option value="other">Other</option>
+                </select>
+
+                <label for="comment">Comment:</label>
+                <textarea id="comment" name="comment" rows="4" required></textarea>
+
+                <button type="submit">Submit</button>
+            </form>
+            <div id="comments-display" style="margin-top: 20px;">
+                <h3>Recent Comments</h3>
+                <p><em>Comments will be displayed here after moderation.</em></p>
+            </div>
+        </section>
+
+        <section id="contact" class="contact-info">
+            <h2>Contact Information</h2>
+            <p><strong>Address:</strong> Zzaana Bunamwaya By-pass Road, Ssabagabo, Uganda</p>
+            <p><strong>Phone:</strong> +256 745490032</p>
+            <p><strong>WhatsApp:</strong> +256 745490032</p>
+            <p><strong>Email:</strong> eutecticemmanuel@gmail.com</p>
+            <p><strong>TikTok:</strong> <a href="https://www.tiktok.com/@abious_rehabilitation_initiative" target="_blank">@abious_rehabilitation_initiative</a></p>
+            <p><strong>Hours:</strong> Monday - Friday: 9 AM - 6 PM</p>
+        </section>
+
+        <section id="member-area">
+            <h2>Member Area</h2>
+            <p>Registered members can access exclusive content, forums, and events. Log in below.</p>
+            <form id="loginForm">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" name="login-email" required>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit">Log In</button>
+            </form>
+            <div id="loginStatus" class="auth-status"></div>
+            <p class="quick-link"><a href="#membership">Not a member? Register here.</a></p>
+            <p class="quick-link"><a href="abious_rehabilitation_center2.html">Go to member page</a></p>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Abious Rehabilitation Center. All rights reserved.</p>
+        <p class="scripture-footer">"The Spirit of the Lord GOD is upon me, because the LORD has anointed me to bring good news to the afflicted; He has sent me to bind up the brokenhearted, to proclaim liberty to the captives and freedom to the prisoners; to proclaim the favorable year of the LORD and the day of vengeance of our God; to comfort all who mourn, to grant those who mourn in Zion, giving them a garland instead of ashes, the oil of gladness instead of mourning, the mantle of praise instead of a spirit of fainting. So they will be called oaks of righteousness, the planting of the LORD, that He may be glorified." - Isaiah 61:1-3</p>
+    </footer>
+
+    <!-- Email Verification Modal -->
+    <div class="modal-overlay" id="verificationModal">
+        <div class="modal">
+            <div class="modal-icon">📧</div>
+            <h3>Verify Your Email</h3>
+            <p>We've sent a 6-digit verification code to <strong id="verificationEmail"></strong></p>
+            <p>Enter the code below to verify your email address.</p>
+            
+            <div class="verification-code">
+                <input type="text" maxlength="1" class="code-input" data-index="0">
+                <input type="text" maxlength="1" class="code-input" data-index="1">
+                <input type="text" maxlength="1" class="code-input" data-index="2">
+                <input type="text" maxlength="1" class="code-input" data-index="3">
+                <input type="text" maxlength="1" class="code-input" data-index="4">
+                <input type="text" maxlength="1" class="code-input" data-index="5">
+            </div>
+
+            <div id="verificationStatus" class="auth-status"></div>
+            
+            <button id="verifyBtn" style="width: 100%;">Verify Email</button>
+            
+            <p class="resend-link" id="resendCode">Resend verification code</p>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <div class="modal-icon">💳</div>
+            <h3>Payment Details</h3>
+            <p>Complete your subscription payment to activate your premium membership.</p>
+            
+            <div id="selectedPlanDetails" style="background: #f8fdf9; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
+                <p><strong>Selected Plan:</strong> <span id="planName">Premium Monthly</span></p>
+                <p><strong>Amount:</strong> <span id="planAmount">$9.99</span></p>
+            </div>
+
+            <label for="cardNumber">Card Number:</label>
+            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="expiry">Expiry Date:</label>
+                    <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div>
+                    <label for="cvv">CVV:</label>
+                    <input type="text" id="cvv" placeholder="123" maxlength="3">
+                </div>
+            </div>
+
+            <label for="cardName">Name on Card:</label>
+            <input type="text" id="cardName" placeholder="John Doe">
+
+            <div id="paymentStatusModal" class="auth-status"></div>
+            
+            <button id="payBtn" class="btn-accent" style="width: 100%;">Pay Now</button>
+            <button id="skipPayment" style="width: 100%; background: #6c757d; margin-top: 10px;">Skip & Use Free Plan</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (() => {
+            if (!location.origin.startsWith("http")) return "https://abious_rehabilitation_iniative.ug";
+            const isLocalHost = ["localhost", "127.0.0.1"].includes(location.hostname);
+            if (isLocalHost && location.port && location.port !== "3000") return "https://abious_rehabilitation_iniative.ug";
+            return location.origin;
+        })();
+
+        // Registration state
+        let registrationData = {};
+        let selectedPlan = 'free';
+        let generatedCode = '';
+
+        // DOM Elements
+        const registerForm = document.getElementById("registerForm");
+        const loginForm = document.getElementById("loginForm");
+        const registerStatus = document.getElementById("registerStatus");
+        const loginStatus = document.getElementById("loginStatus");
+        const verificationModal = document.getElementById("verificationModal");
+        const paymentModal = document.getElementById("paymentModal");
+        const subscriptionSection = document.getElementById("subscription");
+        
+        // Steps
+        const step1 = document.getElementById("step1");
+        const step2 = document.getElementById("step2");
+        const step3 = document.getElementById("step3");
+        const step4 = document.getElementById("step4");
+
+        function setStatus(el, type, message) {
+            el.className = "auth-status " + type;
+            el.textContent = message;
+        }
+
+        function saveAuth(token, user) {
+            localStorage.setItem("abiousAuthToken", token);
+            localStorage.setItem("abiousUser", JSON.stringify(user));
+        }
+
+        function goToMemberPage() {
+            location.href = "abious_rehabilitation_center2.html";
+        }
+
+        function updateSteps(stepNum) {
+            step1.className = stepNum >= 1 ? (stepNum > 1 ? 'step completed' : 'step active') : 'step';
+            step2.className = stepNum >= 2 ? (stepNum > 2 ? 'step completed' : 'step active') : 'step';
+            step3.className = stepNum >= 3 ? (stepNum > 3 ? 'step completed' : 'step active') : 'step';
+            step4.className = stepNum >= 4 ? 'step completed' : 'step';
+        }
+
+        // Generate a random 6-digit code
+        function generateVerificationCode() {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+
+        // Show verification modal
+        function showVerificationModal(email) {
+            document.getElementById("verificationEmail").textContent = email;
+            verificationModal.style.display = "flex";
+            generatedCode = generateVerificationCode();
+            console.log("Verification code (for testing):", generatedCode);
+            // In production, this would send the code to the server to email the user
+        }
+
+        // Handle verification code input
+        const codeInputs = document.querySelectorAll('.code-input');
+        codeInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value && index < codeInputs.length - 1) {
+                    codeInputs[index + 1].focus();
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    codeInputs[index - 1].focus();
+                }
+            });
+        });
+
+        // Verify button click
+        document.getElementById("verifyBtn").addEventListener("click", () => {
+            const enteredCode = codeInputs.map(input => input.value).join('');
+            const verificationStatus = document.getElementById("verificationStatus");
+            
+            if (enteredCode === generatedCode) {
+                setStatus(verificationStatus, "ok", "Email verified successfully!");
+                setTimeout(() => {
+                    verificationModal.style.display = "none";
+                    // Show subscription section
+                    subscriptionSection.style.display = "block";
+                    subscriptionSection.scrollIntoView({ behavior: "smooth" });
+                    updateSteps(3);
+                }, 1000);
+            } else {
+                setStatus(verificationStatus, "error", "Invalid verification code. Please try again.");
+            }
+        });
+
+        // Resend code
+        document.getElementById("resendCode").addEventListener("click", () => {
+            generatedCode = generateVerificationCode();
+            console.log("New verification code (for testing):", generatedCode);
+            setStatus(document.getElementById("verificationStatus"), "info", "New code sent! Check console for testing.");
+        });
+
+        // Plan selection
+        const planCards = document.querySelectorAll('.plan-card');
+        planCards.forEach(card => {
+            card.addEventListener('click', () => {
+                planCards.forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedPlan = card.dataset.plan;
+                
+                const planName = card.querySelector('h3').textContent;
+                const planPrice = card.querySelector('.plan-price').textContent;
+                
+                document.getElementById("planName").textContent = planName;
+                document.getElementById("planAmount").textContent = planPrice;
+                
+                document.getElementById("completeRegistration").style.display = "block";
+                
+                if (selectedPlan !== 'free') {
+                    document.getElementById("completeRegistration").textContent = "Proceed to Payment";
+                } else {
+                    document.getElementById("completeRegistration").textContent = "Complete Registration (Free)";
+                }
+            });
+        });
+
+        // Complete registration button
+        document.getElementById("completeRegistration").addEventListener("click", () => {
+            if (selectedPlan === 'free') {
+                completeRegistration();
+            } else {
+                paymentModal.style.display = "flex";
+            }
+        });
+
+        // Skip payment button
+        document.getElementById("skipPayment").addEventListener("click", () => {
+            selectedPlan = 'free';
+            paymentModal.style.display = "none";
+            completeRegistration();
+        });
+
+        // Pay button
+        document.getElementById("payBtn").addEventListener("click", async () => {
+            const paymentStatus = document.getElementById("paymentStatusModal");
+            const cardNumber = document.getElementById("cardNumber").value;
+            const expiry = document.getElementById("expiry").value;
+            const cvv = document.getElementById("cvv").value;
+            const cardName = document.getElementById("cardName").value;
+
+            if (!cardNumber || !expiry || !cvv || !cardName) {
+                setStatus(paymentStatus, "error", "Please fill in all payment details.");
+                return;
+            }
+
+            // Simulate payment processing
+            setStatus(paymentStatus, "info", "Processing payment...");
+            
+            setTimeout(() => {
+                paymentModal.style.display = "none";
+                completeRegistration();
+            }, 2000);
+        });
+
+        // Complete registration
+        async function completeRegistration() {
+            const paymentStatus = document.getElementById("paymentStatus");
+            updateSteps(4);
+            
+            registrationData.plan = selectedPlan;
+            
+            try {
+                const result = await sendJson("/api/register", registrationData);
+                saveAuth(result.token, result.user);
+                setStatus(paymentStatus, "ok", "Registration complete! Redirecting to member page...");
+                setTimeout(() => {
+                    goToMemberPage();
+                }, 1000);
+            } catch (error) {
+                // Local fallback
+                if (error instanceof TypeError || /fetch/i.test(error.message)) {
+                    const fallbackUser = {
+                        fullName: registrationData.fullName || "Member",
+                        email: registrationData.email,
+                        role: "Member",
+                        plan: selectedPlan
+                    };
+                    saveAuth("local-session", fallbackUser);
+                    setStatus(paymentStatus, "ok", "Registered in local mode. Opening member page...");
+                    setTimeout(() => {
+                        goToMemberPage();
+                    }, 700);
+                    return;
+                }
+                setStatus(paymentStatus, "error", error.message);
+            }
+        }
+
+        async function sendJson(path, payload) {
+            const response = await fetch(API_BASE + path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const raw = await response.text();
+            let data = {};
+            if (raw) {
+                try {
+                    data = JSON.parse(raw);
+                } catch (error) {
+                    const contentType = response.headers.get("content-type") || "";
+                    if (contentType.includes("application/json")) {
+                        throw new Error("Invalid JSON received from server.");
+                    }
+                    data = { error: raw };
+                }
+            }
+
+            if (!response.ok) {
+                throw new Error(data.error || "Request failed (" + response.status + ").");
+            }
+            return data;
+        }
+
+        // Registration form submit
+        registerForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            registerStatus.className = "auth-status";
+            registerStatus.textContent = "";
+
+            registrationData = {
+                fullName: document.getElementById("name").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                password: document.getElementById("register-password").value,
+                phone: document.getElementById("phone").value.trim(),
+                age: document.getElementById("age").value ? Number(document.getElementById("age").value) : null,
+                interests: document.getElementById("interests").value.trim()
+            };
+
+            setStatus(registerStatus, "info", "Sending verification code to your email...");
+            
+            // Show verification modal
+            showVerificationModal(registrationData.email);
+            updateSteps(2);
+        });
+
+        // Login form submit
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            loginStatus.className = "auth-status";
+            loginStatus.textContent = "";
+
+            const payload = {
+                email: document.getElementById("login-email").value.trim(),
+                password: document.getElementById("password").value
+            };
+
+            try {
+                const result = await sendJson("/api/login", payload);
+                saveAuth(result.token, result.user);
+                setStatus(loginStatus, "ok", "Login successful. Redirecting...");
+                setTimeout(() => {
+                    location.href = "abious_rehabilitation_center2.html";
+                }, 500);
+            } catch (error) {
+                setStatus(loginStatus, "error", error.message);
+            }
+        });
+    </script>
+</body>
+</html>

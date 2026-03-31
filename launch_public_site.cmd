@@ -6,6 +6,16 @@ set "RUNTIME_DIR=%~dp0.runtime"
 set "NPM_CACHE=%~dp0.npm-cache"
 if not exist "%RUNTIME_DIR%" mkdir "%RUNTIME_DIR%"
 if not exist "%NPM_CACHE%" mkdir "%NPM_CACHE%"
+if not exist "%~dp0.env" (
+  echo Missing .env file. Create one before launching publicly.
+  echo A starter file is available at %~dp0.env.example
+  exit /b 1
+)
+
+echo Checking launch readiness...
+findstr /C:"SMTP_PASS=replace-with-your-app-password" "%~dp0.env" >nul && echo Warning: SMTP_PASS is still a placeholder.
+findstr /C:"VERIFICATION_SENDER_EMAIL=your-email@example.com" "%~dp0.env" >nul && echo Warning: VERIFICATION_SENDER_EMAIL is still a placeholder.
+findstr /C:"PUBLIC_BASE_URL=http://localhost:3000" "%~dp0.env" >nul && echo Warning: PUBLIC_BASE_URL is still set to localhost.
 
 echo Starting backend and tunnel in background...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^

@@ -4,6 +4,44 @@ const path = require("path");
 const crypto = require("crypto");
 const os = require("os");
 const { URL } = require("url");
+const nodemailer = require("nodemailer");
+
+function loadEnvFile() {
+    const envPath = path.join(__dirname, ".env");
+    if (!fs.existsSync(envPath)) {
+        return;
+    }
+
+    const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const separator = trimmed.indexOf("=");
+        if (separator === -1) continue;
+        const key = trimmed.slice(0, separator).trim();
+        const value = trimmed.slice(separator + 1).trim();
+        if (key && !process.env[key]) {
+            process.env[key] = value;
+        }
+    }
+}
+
+loadEnvFile();
+
+const VERIFICATION_SENDER_EMAIL = process.env.VERIFICATION_SENDER_EMAIL || "isaacnewton0767304563@gmail.com";
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE = String(process.env.SMTP_SECURE || "true") !== "false";
+const SMTP_USER = process.env.SMTP_USER || VERIFICATION_SENDER_EMAIL;
+const SMTP_PASS = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "";
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "admin@abious.org").trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
+const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+const VERIFICATION_APPROVAL_TTL_MS = Number(process.env.VERIFICATION_APPROVAL_TTL_MS || 30 * 60 * 1000);
+const PASSWORD_HASH_ITERATIONS = Number(process.env.PASSWORD_HASH_ITERATIONS || 120000);
+const VERIFICATION_TOKEN_SECRET = process.env.VERIFICATION_TOKEN_SECRET || crypto.randomBytes(32).toString("hex");
+let mailTransporter = null;
+const rateLimitBuckets = new Map();
 
 // ============================================
 // DATABASE CONFIGURATION
@@ -57,6 +95,8 @@ if (initFirebase()) {
     console.log('  - Set MONGODB_URI for MongoDB Atlas');
     console.log('  - Or add firebase-service-account.json for Firebase');
 }
+console.log(`Verification sender: ${VERIFICATION_SENDER_EMAIL}`);
+console.log(`SMTP ready: ${canSendVerificationEmails() ? 'yes' : 'no (set SMTP_PASS or GMAIL_APP_PASSWORD)'}`);
 console.log('=============================');
 
 // Connect to MongoDB with better error handling
@@ -252,6 +292,30 @@ async function getSessions() {
     return readStore().sessions;
 }
 
+async function saveSessions(sessionMap) {
+    if (useFirebase && firestore) {
+        const existing = await firebaseGetAll("sessions");
+        for (const session of existing) {
+            await firebaseDeleteDoc("sessions", session.id);
+        }
+        for (const [token, session] of Object.entries(sessionMap || {})) {
+            await firebaseSetDoc("sessions", token, { ...session, token });
+        }
+        return;
+    }
+    if (useMongoDB && db) {
+        await db.collection("sessions").deleteMany({});
+        const documents = Object.entries(sessionMap || {}).map(([token, session]) => ({ ...session, token }));
+        if (documents.length > 0) {
+            await db.collection("sessions").insertMany(documents);
+        }
+        return;
+    }
+    const store = readStore();
+    store.sessions = sessionMap || {};
+    writeStore(store);
+}
+
 async function saveSession(token, session) {
     if (useFirebase && firestore) {
         await firebaseSetDoc('sessions', token, session);
@@ -395,6 +459,7 @@ async function getStore() {
 async function saveStore(store) {
     if (useFirebase && firestore) {
         await saveUsers(store.users);
+        await saveSessions(store.sessions);
         await savePosts(store.posts);
         await saveChat(store.chat);
         if (store.verificationCodes) {
@@ -404,6 +469,7 @@ async function saveStore(store) {
     }
     if (useMongoDB && db) {
         await saveUsers(store.users);
+        await saveSessions(store.sessions);
         await savePosts(store.posts);
         await saveChat(store.chat);
         if (store.verificationCodes) {
@@ -484,55 +550,125 @@ async function saveResources(resources) {
     writeStore(store);
 }
 
-// Site content functions
-async function getSiteContent() {
-    if (useFirebase && firestore) {
-        return await firebaseGetDoc('content', 'site');
-    }
-    if (useMongoDB && db) {
-        return await db.collection('content').findOne({ key: 'site' });
-    }
-    return siteContent;
-}
-
-async function saveSiteContent(content) {
-    siteContent = content;
-    if (useFirebase && firestore) {
-        await firebaseSetDoc('content', 'site', content);
-        return;
-    }
-    if (useMongoDB && db) {
-        await db.collection('content').updateOne(
-            { key: 'site' },
-            { $set: { value: content } },
-            { upsert: true }
-        );
-        return;
-    }
-}
-
-// Admin credentials (hashed)
-const ADMIN_CREDENTIALS = {
-    email: "admin@abious.org",
-    passwordHash: hashPassword("admin123"),
-    role: "Admin",
-    phone: "+256745490032"
-};
-
-// Site content storage (for admin CMS)
-let siteContent = {
+const DEFAULT_SITE_CONTENT = {
     contact: {
         address: "Zzaana Bunamwaya By-pass Road, Ssabagabo, Uganda",
         phone: "+256 745490032",
         whatsapp: "+256 745490032",
         email: "eutecticemmanuel@gmail.com",
-        tiktok: "https://www.tiktok.com/@abious_rehabilitation_initiative"
+        tiktok: "https://www.tiktok.com/search?q=abious%20rehabilitation%20initiative&t=1774816862008"
+    },
+    links: {
+        website: "",
+        facebook: "",
+        instagram: "",
+        x: "",
+        youtube: "",
+        tiktok: "https://www.tiktok.com/search?q=abious%20rehabilitation%20initiative&t=1774816862008",
+        whatsapp: "https://wa.me/256745490032"
     },
     about: {
         text: "Abious Rehabilitation Initiative is a youth-focused organization dedicated to helping young people overcome challenges and reach their full potential."
     },
-    gallery: []
+    gallery: [],
+    imageAssets: {},
+    privacy: {
+        content: "",
+        lastUpdated: null,
+        updatedBy: null
+    },
+    security: {
+        content: "",
+        lastUpdated: null,
+        updatedBy: null
+    },
+    bankAccount: {
+        bankName: "",
+        accountNumber: "",
+        accountName: "",
+        branch: "",
+        swiftCode: "",
+        instructions: ""
+    }
 };
+
+function normalizeSiteContent(content) {
+    return {
+        ...DEFAULT_SITE_CONTENT,
+        ...(content || {}),
+        contact: {
+            ...DEFAULT_SITE_CONTENT.contact,
+            ...((content && content.contact) || {})
+        },
+        links: {
+            ...DEFAULT_SITE_CONTENT.links,
+            ...((content && content.links) || {})
+        },
+        about: {
+            ...DEFAULT_SITE_CONTENT.about,
+            ...((content && content.about) || {})
+        },
+        gallery: Array.isArray(content && content.gallery) ? content.gallery : DEFAULT_SITE_CONTENT.gallery,
+        imageAssets: content && content.imageAssets && typeof content.imageAssets === "object" && !Array.isArray(content.imageAssets)
+            ? content.imageAssets
+            : DEFAULT_SITE_CONTENT.imageAssets,
+        privacy: {
+            ...DEFAULT_SITE_CONTENT.privacy,
+            ...((content && content.privacy) || {})
+        },
+        security: {
+            ...DEFAULT_SITE_CONTENT.security,
+            ...((content && content.security) || {})
+        },
+        bankAccount: {
+            ...DEFAULT_SITE_CONTENT.bankAccount,
+            ...((content && content.bankAccount) || {})
+        }
+    };
+}
+
+// Site content functions
+async function getSiteContent() {
+    if (useFirebase && firestore) {
+        return normalizeSiteContent(await firebaseGetDoc('content', 'site'));
+    }
+    if (useMongoDB && db) {
+        const doc = await db.collection('content').findOne({ key: 'site' });
+        return normalizeSiteContent(doc ? (doc.value || doc) : null);
+    }
+    const store = readStore();
+    return normalizeSiteContent(store.siteContent);
+}
+
+async function saveSiteContent(content) {
+    siteContent = normalizeSiteContent(content);
+    if (useFirebase && firestore) {
+        await firebaseSetDoc('content', 'site', siteContent);
+        return;
+    }
+    if (useMongoDB && db) {
+        await db.collection('content').updateOne(
+            { key: 'site' },
+            { $set: { value: siteContent } },
+            { upsert: true }
+        );
+        return;
+    }
+    const store = readStore();
+    store.siteContent = siteContent;
+    writeStore(store);
+}
+
+// Admin credentials (hashed)
+const ADMIN_CREDENTIALS = {
+    email: ADMIN_EMAIL,
+    passwordHash: hashPassword(ADMIN_PASSWORD),
+    role: "Admin",
+    phone: "+256745490032"
+};
+
+// Site content storage (for admin CMS)
+let siteContent = normalizeSiteContent(DEFAULT_SITE_CONTENT);
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
@@ -553,16 +689,182 @@ const MIME_TYPES = {
     ".ico": "image/x-icon"
 };
 
-function hashPassword(password) {
+function hashLegacyPassword(password) {
     return crypto.createHash("sha256").update(password).digest("hex");
+}
+
+function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const derived = crypto.pbkdf2Sync(password, salt, PASSWORD_HASH_ITERATIONS, 64, "sha512").toString("hex");
+    return `pbkdf2$${PASSWORD_HASH_ITERATIONS}$${salt}$${derived}`;
+}
+
+function verifyPassword(password, storedHash) {
+    if (!storedHash) return false;
+    if (!storedHash.startsWith("pbkdf2$")) {
+        return hashLegacyPassword(password) === storedHash;
+    }
+
+    const [, rawIterations, salt, expected] = storedHash.split("$");
+    const iterations = Number(rawIterations);
+    if (!iterations || !salt || !expected) return false;
+
+    const actual = crypto.pbkdf2Sync(password, salt, iterations, 64, "sha512").toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
+}
+
+function needsPasswordRehash(storedHash) {
+    return !storedHash || !storedHash.startsWith("pbkdf2$");
 }
 
 function createToken() {
     return crypto.randomBytes(24).toString("hex");
 }
 
+function createSignedToken(payload) {
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    const signature = crypto.createHmac("sha256", VERIFICATION_TOKEN_SECRET).update(encodedPayload).digest("base64url");
+    return `${encodedPayload}.${signature}`;
+}
+
+function readSignedToken(token) {
+    if (!token || typeof token !== "string" || !token.includes(".")) return null;
+    const [encodedPayload, signature] = token.split(".");
+    const expectedSignature = crypto.createHmac("sha256", VERIFICATION_TOKEN_SECRET).update(encodedPayload).digest("base64url");
+    if (signature !== expectedSignature) return null;
+    try {
+        return JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+    } catch {
+        return null;
+    }
+}
+
+function createVerificationApproval(email) {
+    return createSignedToken({
+        type: "verification-approval",
+        email,
+        expiresAt: Date.now() + VERIFICATION_APPROVAL_TTL_MS
+    });
+}
+
+function verifyVerificationApproval(email, token) {
+    const payload = readSignedToken(token);
+    return Boolean(
+        payload &&
+        payload.type === "verification-approval" &&
+        typeof payload.email === "string" &&
+        payload.email === email &&
+        typeof payload.expiresAt === "number" &&
+        payload.expiresAt > Date.now()
+    );
+}
+
 function nowIso() {
     return new Date().toISOString();
+}
+
+function getClientIp(req) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (typeof forwarded === "string" && forwarded.trim()) {
+        return forwarded.split(",")[0].trim();
+    }
+    return req.socket?.remoteAddress || "unknown";
+}
+
+function isRateLimited(req, key, limit, windowMs) {
+    const bucketKey = `${key}:${getClientIp(req)}`;
+    const now = Date.now();
+    const bucket = rateLimitBuckets.get(bucketKey);
+    if (!bucket || bucket.expiresAt <= now) {
+        rateLimitBuckets.set(bucketKey, { count: 1, expiresAt: now + windowMs });
+        return false;
+    }
+    if (bucket.count >= limit) {
+        return true;
+    }
+    bucket.count += 1;
+    return false;
+}
+
+function cleanupExpiredSessions(store) {
+    if (!store || !store.sessions || typeof store.sessions !== "object") return false;
+    const now = Date.now();
+    let changed = false;
+    Object.entries(store.sessions).forEach(([token, session]) => {
+        const createdAt = session && session.createdAt ? new Date(session.createdAt).getTime() : 0;
+        if (!createdAt || now - createdAt > SESSION_TTL_MS) {
+            delete store.sessions[token];
+            changed = true;
+        }
+    });
+    return changed;
+}
+
+function securityHeaders() {
+    return {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Resource-Policy": "same-origin",
+        "Content-Security-Policy": "default-src 'self' data: blob: https:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'self' http://localhost:3000 https://abious-rehabilitation-center.onrender.com https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https:;"
+    };
+}
+
+function canSendVerificationEmails() {
+    return Boolean(SMTP_USER && SMTP_PASS);
+}
+
+function getMailTransporter() {
+    if (!canSendVerificationEmails()) {
+        return null;
+    }
+
+    if (!mailTransporter) {
+        mailTransporter = nodemailer.createTransport({
+            host: SMTP_HOST,
+            port: SMTP_PORT,
+            secure: SMTP_SECURE,
+            auth: {
+                user: SMTP_USER,
+                pass: SMTP_PASS
+            }
+        });
+    }
+
+    return mailTransporter;
+}
+
+async function sendVerificationEmail(recipientEmail, code) {
+    const transporter = getMailTransporter();
+    if (!transporter) {
+        return {
+            delivered: false,
+            reason: "smtp_not_configured"
+        };
+    }
+
+    await transporter.sendMail({
+        from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+        to: recipientEmail,
+        subject: "Your Abious verification code",
+        text: `Your verification code is ${code}. It expires in 1 hour.`,
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
+                <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
+                <p>Your verification code is:</p>
+                <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                    ${code}
+                </div>
+                <p style="margin-top: 18px;">This code expires in 1 hour.</p>
+            </div>
+        `
+    });
+
+    return {
+        delivered: true
+    };
 }
 
 function ensureStore() {
@@ -608,9 +910,57 @@ function ensureStore() {
             chat: [
                 { id: "m_1", authorName: "Sarah", text: "Welcome to the member portal everyone.", createdAt: nowIso() },
                 { id: "m_2", authorName: "Daniel", text: "Let us post updates after outreach visits.", createdAt: nowIso() }
-            ]
+            ],
+            news: [],
+            resources: [],
+            verificationCodes: [],
+            siteContent: normalizeSiteContent(DEFAULT_SITE_CONTENT)
         };
         fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2), "utf8");
+        return;
+    }
+
+    const currentStore = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    let changed = false;
+
+    if (!Array.isArray(currentStore.news)) {
+        currentStore.news = [];
+        changed = true;
+    }
+    if (!Array.isArray(currentStore.resources)) {
+        currentStore.resources = [];
+        changed = true;
+    }
+    if (!Array.isArray(currentStore.verificationCodes)) {
+        currentStore.verificationCodes = [];
+        changed = true;
+    }
+    if (!currentStore.sessions || typeof currentStore.sessions !== "object") {
+        currentStore.sessions = {};
+        changed = true;
+    }
+    if (cleanupExpiredSessions(currentStore)) {
+        changed = true;
+    }
+    if (Array.isArray(currentStore.users)) {
+        currentStore.users = currentStore.users.map((user) => {
+            const nextUser = { ...user };
+            if (nextUser.verified === undefined) {
+                nextUser.verified = true;
+                changed = true;
+            }
+            return nextUser;
+        });
+    }
+
+    const normalizedContent = normalizeSiteContent(currentStore.siteContent);
+    if (JSON.stringify(currentStore.siteContent || {}) !== JSON.stringify(normalizedContent)) {
+        currentStore.siteContent = normalizedContent;
+        changed = true;
+    }
+
+    if (changed) {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(currentStore, null, 2), "utf8");
     }
 }
 
@@ -627,8 +977,9 @@ function sendJson(res, statusCode, payload) {
     res.writeHead(statusCode, {
         "Content-Type": "application/json; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+        "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        ...securityHeaders()
     });
     res.end(JSON.stringify(payload));
 }
@@ -669,6 +1020,7 @@ function parseAuthToken(req) {
 }
 
 function requireUser(req, store) {
+    cleanupExpiredSessions(store);
     const token = parseAuthToken(req);
     if (!token) return null;
     const session = store.sessions[token];
@@ -694,7 +1046,13 @@ function toPublicUser(user) {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        phone: user.phone || "",
         role: user.role || "Member",
+        verified: user.verified === true,
+        biodata: user.biodata || "",
+        photo: user.photo || null,
+        age: user.age ?? null,
+        interests: user.interests || "",
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt || null
     };
@@ -702,33 +1060,87 @@ function toPublicUser(user) {
 
 async function handleApi(req, res, urlObj) {
     try {
-        const store = readStore();
+        const store = await getStore();
+        cleanupExpiredSessions(store);
         const method = req.method || "GET";
         const pathname = urlObj.pathname;
+
+        if (useFirebase || useMongoDB) {
+            siteContent = await getSiteContent();
+        } else {
+            siteContent = normalizeSiteContent(store.siteContent);
+        }
 
         if (method === "OPTIONS") {
             res.writeHead(204, {
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Authorization"
+                "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                ...securityHeaders()
             });
             res.end();
             return true;
         }
 
         if (method === "GET" && pathname === "/api/health") {
-            sendJson(res, 200, { ok: true, now: nowIso(), mongodb: useMongoDB });
+            sendJson(res, 200, {
+                ok: true,
+                now: nowIso(),
+                mongodb: useMongoDB,
+                firebase: useFirebase,
+                storage: useFirebase ? "firebase" : useMongoDB ? "mongodb" : "json",
+                verificationSender: VERIFICATION_SENDER_EMAIL,
+                publicBaseUrl: process.env.PUBLIC_BASE_URL || ""
+            });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/public/config") {
+            sendJson(res, 200, {
+                ok: true,
+                registrationOpen: true,
+                verificationRequired: true,
+                sender: VERIFICATION_SENDER_EMAIL,
+                contactEmail: siteContent.contact?.email || ""
+            });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/site-content") {
+            sendJson(res, 200, await getSiteContent());
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/privacy-policy") {
+            const content = await getSiteContent();
+            sendJson(res, 200, content.privacy);
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/security-policy") {
+            const content = await getSiteContent();
+            sendJson(res, 200, content.security);
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/bank-account") {
+            const content = await getSiteContent();
+            sendJson(res, 200, content.bankAccount || {});
             return true;
         }
 
         // Admin login
         if (method === "POST" && pathname === "/api/admin/login") {
+            if (isRateLimited(req, "admin-login", 10, 10 * 60 * 1000)) {
+                sendJson(res, 429, { success: false, message: "Too many login attempts. Please try again later." });
+                return true;
+            }
             const body = await getRequestBody(req);
             const email = String(body.email || "").trim().toLowerCase();
             const password = String(body.password || "");
             
             // Check admin credentials
-            if (email === ADMIN_CREDENTIALS.email && hashPassword(password) === ADMIN_CREDENTIALS.passwordHash) {
+            if (email === ADMIN_CREDENTIALS.email && verifyPassword(password, ADMIN_CREDENTIALS.passwordHash)) {
                 const token = createToken();
                 const adminUser = {
                     email: ADMIN_CREDENTIALS.email,
@@ -736,7 +1148,7 @@ async function handleApi(req, res, urlObj) {
                     phone: ADMIN_CREDENTIALS.phone
                 };
                 store.sessions[token] = { userId: "admin", createdAt: nowIso() };
-                writeStore(store);
+                await saveStore(store);
                 sendJson(res, 200, { success: true, token, user: adminUser });
                 return true;
             }
@@ -775,8 +1187,54 @@ async function handleApi(req, res, urlObj) {
             }
             const memberId = pathname.split("/").pop();
             store.users = store.users.filter(u => u.id !== memberId);
-            writeStore(store);
+            await saveStore(store);
             sendJson(res, 200, { success: true });
+            return true;
+        }
+
+        // Admin: Update member
+        if (method === "PATCH" && pathname.startsWith("/api/admin/members/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+
+            const memberId = pathname.split("/").pop();
+            const body = await getRequestBody(req);
+            const memberIndex = store.users.findIndex((u) => u.id === memberId);
+
+            if (memberIndex === -1) {
+                sendJson(res, 404, { error: "Member not found" });
+                return true;
+            }
+
+            const member = store.users[memberIndex];
+            const nextEmail = body.email ? String(body.email).trim().toLowerCase() : member.email;
+
+            if (store.users.some((u) => u.id !== memberId && u.email === nextEmail)) {
+                sendJson(res, 409, { error: "Email already registered" });
+                return true;
+            }
+
+            member.fullName = String(body.fullName ?? body.name ?? member.fullName).trim() || member.fullName;
+            member.email = nextEmail;
+            member.phone = String(body.phone ?? member.phone ?? "").trim();
+            member.role = String(body.role ?? member.role ?? "Member").trim() || "Member";
+            member.biodata = String(body.biodata ?? member.biodata ?? "").trim();
+
+            if (body.photo !== undefined) {
+                member.photo = body.photo || null;
+            }
+            if (body.verified !== undefined) {
+                member.verified = Boolean(body.verified);
+            }
+            if (body.password) {
+                member.passwordHash = hashPassword(String(body.password));
+            }
+
+            await saveStore(store);
+            sendJson(res, 200, { success: true, member: toPublicUser(member) });
             return true;
         }
 
@@ -792,7 +1250,7 @@ async function handleApi(req, res, urlObj) {
             const validCodes = (store.verificationCodes || []).filter(v => v.expires > now);
             if (validCodes.length !== (store.verificationCodes || []).length) {
                 store.verificationCodes = validCodes;
-                writeStore(store);
+                await saveStore(store);
             }
             sendJson(res, 200, { codes: validCodes });
             return true;
@@ -842,7 +1300,7 @@ async function handleApi(req, res, urlObj) {
             };
             
             store.users.push(newMember);
-            writeStore(store);
+            await saveStore(store);
             
             sendJson(res, 201, { success: true, member: toPublicUser(newMember) });
             return true;
@@ -867,7 +1325,7 @@ async function handleApi(req, res, urlObj) {
             }
             
             store.users[memberIndex].photo = photo;
-            writeStore(store);
+            await saveStore(store);
             
             sendJson(res, 200, { success: true, photo: photo });
             return true;
@@ -897,7 +1355,7 @@ async function handleApi(req, res, urlObj) {
             if (body.interests !== undefined) store.users[memberIndex].interests = body.interests;
             if (body.fullName !== undefined) store.users[memberIndex].fullName = body.fullName;
             
-            writeStore(store);
+            await saveStore(store);
             
             sendJson(res, 200, { success: true, user: toPublicUser(store.users[memberIndex]) });
             return true;
@@ -905,7 +1363,7 @@ async function handleApi(req, res, urlObj) {
 
         // Get public members (for display page - shows photo and biodata)
         if (method === "GET" && pathname === "/api/public/members") {
-            const publicMembers = store.users.map(u => ({
+            const publicMembers = store.users.filter((u) => u.verified !== false).map(u => ({
                 id: u.id,
                 fullName: u.fullName,
                 photo: u.photo || null,
@@ -924,7 +1382,7 @@ async function handleApi(req, res, urlObj) {
                 sendJson(res, 403, { error: "Admin access required" });
                 return true;
             }
-            sendJson(res, 200, siteContent);
+            sendJson(res, 200, await getSiteContent());
             return true;
         }
 
@@ -1094,6 +1552,12 @@ async function handleApi(req, res, urlObj) {
             }
             const body = await getRequestBody(req);
             siteContent.contact = { ...siteContent.contact, ...body };
+            if (body.tiktok) {
+                siteContent.links.tiktok = String(body.tiktok).trim();
+            }
+            if (body.whatsapp) {
+                siteContent.links.whatsapp = String(body.whatsapp).trim();
+            }
             
             // Save to cloud database if available
             await saveSiteContent(siteContent);
@@ -1102,8 +1566,231 @@ async function handleApi(req, res, urlObj) {
             return true;
         }
 
+        if (method === "POST" && pathname === "/api/admin/content/links") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            siteContent.links = {
+                ...siteContent.links,
+                website: String(body.website ?? siteContent.links.website ?? "").trim(),
+                facebook: String(body.facebook ?? siteContent.links.facebook ?? "").trim(),
+                instagram: String(body.instagram ?? siteContent.links.instagram ?? "").trim(),
+                x: String(body.x ?? siteContent.links.x ?? "").trim(),
+                youtube: String(body.youtube ?? siteContent.links.youtube ?? "").trim(),
+                tiktok: String(body.tiktok ?? siteContent.links.tiktok ?? "").trim(),
+                whatsapp: String(body.whatsapp ?? siteContent.links.whatsapp ?? "").trim()
+            };
+            await saveSiteContent(siteContent);
+            sendJson(res, 200, { success: true, links: siteContent.links });
+            return true;
+        }
+
+        if (method === "POST" && pathname === "/api/admin/content/about") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            siteContent.about = {
+                ...siteContent.about,
+                text: String(body.text || "").trim()
+            };
+            await saveSiteContent(siteContent);
+            sendJson(res, 200, { success: true, about: siteContent.about });
+            return true;
+        }
+
+        if (method === "POST" && pathname === "/api/admin/content/gallery") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            siteContent.gallery = Array.isArray(body.gallery) ? body.gallery.filter(Boolean) : [];
+            await saveSiteContent(siteContent);
+            sendJson(res, 200, { success: true, gallery: siteContent.gallery });
+            return true;
+        }
+
+        if (method === "POST" && pathname === "/api/admin/content/images") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            const nextImages = {};
+            const rawImages = body && body.imageAssets && typeof body.imageAssets === "object" ? body.imageAssets : {};
+            Object.entries(rawImages).forEach(([key, value]) => {
+                const safeKey = String(key || "").trim();
+                const safeValue = String(value || "").trim();
+                if (safeKey) nextImages[safeKey] = safeValue;
+            });
+            siteContent.imageAssets = nextImages;
+            await saveSiteContent(siteContent);
+            sendJson(res, 200, { success: true, imageAssets: siteContent.imageAssets });
+            return true;
+        }
+
+        if ((method === "PUT" || method === "POST") && pathname === "/api/admin/content/site") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            await saveSiteContent({
+                ...siteContent,
+                ...body,
+                contact: {
+                    ...siteContent.contact,
+                    ...((body && body.contact) || {})
+                },
+                links: {
+                    ...siteContent.links,
+                    ...((body && body.links) || {})
+                },
+                about: {
+                    ...siteContent.about,
+                    ...((body && body.about) || {})
+                },
+                gallery: Array.isArray(body.gallery) ? body.gallery.filter(Boolean) : siteContent.gallery,
+                imageAssets: body && body.imageAssets && typeof body.imageAssets === "object" && !Array.isArray(body.imageAssets)
+                    ? body.imageAssets
+                    : siteContent.imageAssets,
+                privacy: {
+                    ...siteContent.privacy,
+                    ...((body && body.privacy) || {})
+                },
+                security: {
+                    ...siteContent.security,
+                    ...((body && body.security) || {})
+                },
+                bankAccount: {
+                    ...siteContent.bankAccount,
+                    ...((body && body.bankAccount) || {})
+                }
+            });
+            sendJson(res, 200, { success: true, content: siteContent });
+            return true;
+        }
+
+        // Admin: Get privacy policy
+        if (method === "GET" && pathname === "/api/admin/privacy") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            
+            const privacyContent = siteContent.privacy || {
+                content: "Privacy Policy for Abious Rehabilitation Initiative\n\nLast Updated: " + new Date().toLocaleDateString() + "\n\n1. Introduction\nThis Privacy Policy explains how Abious Rehabilitation Initiative collects, uses, discloses, and safeguards your information.",
+                lastUpdated: null,
+                updatedBy: null
+            };
+            
+            sendJson(res, 200, privacyContent);
+            return true;
+        }
+
+        // Admin: Update privacy policy
+        if (method === "POST" && pathname === "/api/admin/privacy") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            
+            const body = await getRequestBody(req);
+            siteContent.privacy = {
+                content: body.content,
+                lastUpdated: nowIso(),
+                updatedBy: user.email
+            };
+            
+            // Save to cloud database if available
+            await saveSiteContent(siteContent);
+            
+            sendJson(res, 200, { success: true });
+            return true;
+        }
+
+        // Admin: Get security policy
+        if (method === "GET" && pathname === "/api/admin/security") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            
+            const securityContent = siteContent.security || {
+                content: "Security Policy for Abious Rehabilitation Initiative\n\nLast Updated: " + new Date().toLocaleDateString() + "\n\n1. Introduction\nThis Security Policy outlines the security measures implemented to protect your information.",
+                lastUpdated: null,
+                updatedBy: null
+            };
+            
+            sendJson(res, 200, securityContent);
+            return true;
+        }
+
+        // Admin: Update security policy
+        if (method === "POST" && pathname === "/api/admin/security") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            
+            const body = await getRequestBody(req);
+            siteContent.security = {
+                content: body.content,
+                lastUpdated: nowIso(),
+                updatedBy: user.email
+            };
+            
+            // Save to cloud database if available
+            await saveSiteContent(siteContent);
+            
+            sendJson(res, 200, { success: true });
+            return true;
+        }
+
+        // Admin: Update bank account
+        if (method === "POST" && pathname === "/api/admin/content/bank-account") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            
+            const body = await getRequestBody(req);
+            siteContent.bankAccount = {
+                bankName: String(body.bankName || "").trim(),
+                accountNumber: String(body.accountNumber || "").trim(),
+                accountName: String(body.accountName || "").trim(),
+                branch: String(body.branch || "").trim(),
+                swiftCode: String(body.swiftCode || "").trim(),
+                instructions: String(body.instructions || "").trim()
+            };
+            
+            // Save to cloud database if available
+            await saveSiteContent(siteContent);
+            
+            sendJson(res, 200, { success: true, bankAccount: siteContent.bankAccount });
+            return true;
+        }
+
         // Email verification: Generate code (admin or public)
         if (method === "POST" && pathname === "/api/verification/generate") {
+            if (isRateLimited(req, "verification-generate", 8, 10 * 60 * 1000)) {
+                sendJson(res, 429, { error: "Too many verification requests. Please wait a few minutes and try again." });
+                return true;
+            }
             // Allow both authenticated admin and public access
             const authUser = requireUser(req, store);
             const body = await getRequestBody(req);
@@ -1126,18 +1813,37 @@ async function handleApi(req, res, urlObj) {
             if (!store.verificationCodes) {
                 store.verificationCodes = [];
             }
+            store.verificationCodes = store.verificationCodes.filter((item) => item.email !== email && item.expires > Date.now());
             store.verificationCodes.push(verificationData);
-            writeStore(store);
+            await saveStore(store);
             
-            // In production, send email here
-            console.log(`Verification code for ${email}: ${code}`);
+            let delivery = { delivered: false, reason: "smtp_not_configured" };
+            try {
+                delivery = await sendVerificationEmail(email, code);
+            } catch (mailError) {
+                console.error(`Verification email delivery failed for ${email}:`, mailError.message);
+                delivery = { delivered: false, reason: mailError.message };
+            }
+
+            console.log(`Verification code for ${email} from ${VERIFICATION_SENDER_EMAIL}: ${code}`);
             
-            sendJson(res, 200, { success: true, message: "Verification code sent", code: code });
+            sendJson(res, 200, {
+                success: true,
+                message: delivery.delivered
+                    ? `Verification code sent from ${VERIFICATION_SENDER_EMAIL}`
+                    : `Verification code created. Email sender is configured as ${VERIFICATION_SENDER_EMAIL}`,
+                sender: VERIFICATION_SENDER_EMAIL,
+                delivery
+            });
             return true;
         }
 
         // Email verification: Verify code
         if (method === "POST" && pathname === "/api/verification/verify") {
+            if (isRateLimited(req, "verification-verify", 12, 10 * 60 * 1000)) {
+                sendJson(res, 429, { error: "Too many verification attempts. Please wait a few minutes and try again." });
+                return true;
+            }
             const body = await getRequestBody(req);
             const email = String(body.email || "").trim().toLowerCase();
             const code = String(body.code || "");
@@ -1160,8 +1866,12 @@ async function handleApi(req, res, urlObj) {
                 }
                 // Remove used verification code
                 store.verificationCodes.splice(verificationIndex, 1);
-                writeStore(store);
-                sendJson(res, 200, { success: true, verified: true });
+                await saveStore(store);
+                sendJson(res, 200, {
+                    success: true,
+                    verified: true,
+                    verificationToken: createVerificationApproval(email)
+                });
                 return true;
             }
             
@@ -1170,13 +1880,22 @@ async function handleApi(req, res, urlObj) {
         }
 
         if (method === "POST" && pathname === "/api/register") {
+            if (isRateLimited(req, "register", 10, 10 * 60 * 1000)) {
+                sendJson(res, 429, { ok: false, error: "Too many registration attempts. Please try again later." });
+                return true;
+            }
             const body = await getRequestBody(req);
             const fullName = String(body.fullName || "").trim();
             const email = String(body.email || "").trim().toLowerCase();
             const password = String(body.password || "");
+            const verificationToken = String(body.verificationToken || "");
 
             if (!fullName || !email || !password) {
                 sendJson(res, 400, { ok: false, error: "Full name, email, and password are required." });
+                return true;
+            }
+            if (!verifyVerificationApproval(email, verificationToken)) {
+                sendJson(res, 400, { ok: false, error: "Email verification expired or missing. Please verify your email again." });
                 return true;
             }
 
@@ -1197,33 +1916,46 @@ async function handleApi(req, res, urlObj) {
                 biodata: String(body.biodata || "").trim(),
                 photo: body.photo || null,
                 createdAt: nowIso(),
-                lastLoginAt: nowIso()
+                lastLoginAt: nowIso(),
+                verified: true,
+                plan: String(body.plan || "free").trim() || "free"
             };
             store.users.push(user);
 
             const token = createToken();
             store.sessions[token] = { userId: user.id, createdAt: nowIso() };
-            writeStore(store);
+            await saveStore(store);
 
             sendJson(res, 201, { ok: true, token, user: toPublicUser(user) });
             return true;
         }
 
         if (method === "POST" && pathname === "/api/login") {
+            if (isRateLimited(req, "member-login", 15, 10 * 60 * 1000)) {
+                sendJson(res, 429, { ok: false, error: "Too many login attempts. Please try again later." });
+                return true;
+            }
             const body = await getRequestBody(req);
             const email = String(body.email || "").trim().toLowerCase();
             const password = String(body.password || "");
             const user = store.users.find((u) => u.email === email);
 
-            if (!user || user.passwordHash !== hashPassword(password)) {
+            if (!user || !verifyPassword(password, user.passwordHash)) {
                 sendJson(res, 401, { ok: false, error: "Invalid email or password." });
                 return true;
+            }
+            if (user.verified === false) {
+                sendJson(res, 403, { ok: false, error: "Please verify your email before logging in." });
+                return true;
+            }
+            if (needsPasswordRehash(user.passwordHash)) {
+                user.passwordHash = hashPassword(password);
             }
 
             user.lastLoginAt = nowIso();
             const token = createToken();
             store.sessions[token] = { userId: user.id, createdAt: nowIso() };
-            writeStore(store);
+            await saveStore(store);
 
             sendJson(res, 200, { ok: true, token, user: toPublicUser(user) });
             return true;
@@ -1253,6 +1985,17 @@ async function handleApi(req, res, urlObj) {
             const user = requireUser(req, store);
             if (!user) {
                 sendJson(res, 401, { ok: false, error: "Unauthorized." });
+                return true;
+            }
+            const posts = [...store.posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sendJson(res, 200, { ok: true, posts });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/admin/posts") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
                 return true;
             }
             const posts = [...store.posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -1299,8 +2042,48 @@ async function handleApi(req, res, urlObj) {
             };
 
             store.posts.push(post);
-            writeStore(store);
+            await saveStore(store);
             sendJson(res, 201, { ok: true, post });
+            return true;
+        }
+
+        if (method === "DELETE" && pathname.startsWith("/api/admin/posts/") && pathname.endsWith("/attachment")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+
+            const postId = pathname.split("/")[4];
+            const post = store.posts.find((item) => item.id === postId);
+            if (!post) {
+                sendJson(res, 404, { error: "Post not found." });
+                return true;
+            }
+
+            post.attachment = null;
+            await saveStore(store);
+            sendJson(res, 200, { ok: true, post });
+            return true;
+        }
+
+        if (method === "DELETE" && pathname.startsWith("/api/admin/posts/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+
+            const postId = pathname.split("/")[4];
+            const postIndex = store.posts.findIndex((item) => item.id === postId);
+            if (postIndex === -1) {
+                sendJson(res, 404, { error: "Post not found." });
+                return true;
+            }
+
+            store.posts.splice(postIndex, 1);
+            await saveStore(store);
+            sendJson(res, 200, { ok: true });
             return true;
         }
 
@@ -1332,7 +2115,7 @@ async function handleApi(req, res, urlObj) {
                 createdAt: nowIso()
             };
             post.comments.push(comment);
-            writeStore(store);
+            await saveStore(store);
             sendJson(res, 201, { ok: true, comment });
             return true;
         }
@@ -1369,7 +2152,7 @@ async function handleApi(req, res, urlObj) {
             if (store.chat.length > 120) {
                 store.chat = store.chat.slice(store.chat.length - 120);
             }
-            writeStore(store);
+            await saveStore(store);
             sendJson(res, 201, { ok: true, message });
             return true;
         }
@@ -1396,14 +2179,14 @@ function serveStatic(req, res, urlObj) {
 
     fs.stat(absolute, (statErr, stats) => {
         if (statErr || !stats.isFile()) {
-            res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+            res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", ...securityHeaders() });
             res.end("Not found");
             return;
         }
 
         const ext = path.extname(absolute).toLowerCase();
         const contentType = MIME_TYPES[ext] || "application/octet-stream";
-        res.writeHead(200, { "Content-Type": contentType });
+        res.writeHead(200, { "Content-Type": contentType, ...securityHeaders() });
         fs.createReadStream(absolute).pipe(res);
     });
 }
@@ -1437,6 +2220,7 @@ server.listen(PORT, HOST, async () => {
     
     // Try to connect to MongoDB
     await connectMongoDB();
+    siteContent = await getSiteContent();
     
     console.log(`Abious backend running at http://localhost:${PORT}`);
     getLanAddresses().forEach((ip) => {

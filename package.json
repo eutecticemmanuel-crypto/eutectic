@@ -1,6 +1,19 @@
 {
+  "name": "abious-rehabilitation-center",
+  "version": "1.0.0",
+  "description": "Abious Rehabilitation Center Website",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check:public": "powershell -ExecutionPolicy Bypass -File scripts/validate-public-setup.ps1"
+  },
   "dependencies": {
     "firebase-admin": "^13.7.0",
-    "mongodb": "^7.1.0"
+    "mongodb": "^7.1.0",
+    "nodemailer": "^8.0.4"
   }
 }

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Abious Rehabilitation Initiative</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-theme.css">
     <style>
         :root {
             --primary: #0d6e5e;
@@ -16,10 +20,9 @@
         }
 
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #f0fdf9 0%, #ecfeff 50%, #f0fdf4 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -33,10 +36,11 @@
         }
 
         .card {
-            background: white;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9));
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.72);
         }
 
         h1 {
@@ -188,7 +192,19 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-page">
+    <div class="live-wallpaper" aria-hidden="true">
+        <div class="theme-orb one"></div>
+        <div class="theme-orb two"></div>
+        <div class="theme-orb three"></div>
+        <div class="theme-particles">
+            <span class="theme-particle" style="--size: 8px; --left: 8%; --duration: 19s; --delay: -1s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 18%; --duration: 25s; --delay: -8s;"></span>
+            <span class="theme-particle" style="--size: 10px; --left: 28%; --duration: 21s; --delay: -4s;"></span>
+            <span class="theme-particle" style="--size: 7px; --left: 39%; --duration: 24s; --delay: -12s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 48%; --duration: 20s; --delay: -6s;"></span>
+        </div>
+    </div>
     <div class="container">
         <div class="card">
             <h1>Join Abious Rehabilitation</h1>
@@ -219,6 +235,16 @@
                 <div class="form-group">
                     <label for="email">Email Address *</label>
                     <input type="email" id="email" required placeholder="your.email@example.com">
+                </div>
+
+                <div id="verificationPanel" class="form-group" style="display:none; padding:16px; border:1px solid rgba(0,0,0,0.08); border-radius:16px; background:#f7fbfb;">
+                    <label for="verificationCode">Email Verification Code *</label>
+                    <input type="text" id="verificationCode" inputmode="numeric" maxlength="6" placeholder="Enter the 6-digit code">
+                    <p style="color:#666; font-size:12px; margin:8px 0 0;">We will finish creating your account after this code is confirmed.</p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                        <button type="button" id="verifyCodeBtn" style="flex:1;">Verify Code</button>
+                        <button type="button" id="resendCodeBtn" style="flex:1; background:#0f5f57;">Resend Code</button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -260,9 +286,124 @@
     </div>
 
     <script>
+        const LIVE_API_BASE = 'https://abious-rehabilitation-center.onrender.com';
+        const API_BASE_CANDIDATES = Array.from(new Set([
+            location.origin.startsWith('http') ? location.origin : '',
+            (!location.origin.startsWith('http') || ['localhost', '127.0.0.1'].includes(location.hostname)) ? 'http://localhost:3000' : '',
+            LIVE_API_BASE
+        ].filter(Boolean)));
+        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const verificationPanel = document.getElementById('verificationPanel');
+        const verificationCodeInput = document.getElementById('verificationCode');
+        const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+        const resendCodeBtn = document.getElementById('resendCodeBtn');
+        let pendingRegistration = null;
+        let verificationState = { email: '', token: '' };
+
+        async function parseResponse(response) {
+            const text = await response.text();
+            if (!text) return {};
+            try {
+                return JSON.parse(text);
+            } catch {
+                return { error: text };
+            }
+        }
+
+        async function apiRequest(path, init = {}) {
+            let lastError = new Error('Could not reach the server. Start the backend or publish the API first.');
+            for (const base of API_BASE_CANDIDATES) {
+                let response;
+                try {
+                    response = await fetch(base + path, init);
+                } catch (error) {
+                    lastError = error;
+                    continue;
+                }
+                const data = await parseResponse(response);
+                if (response.ok) {
+                    activeApiBase = base;
+                    return data;
+                }
+                const message = data.error || data.message || 'Request failed';
+                if (response.status === 404 || /route not found/i.test(message)) {
+                    lastError = new Error(message);
+                    continue;
+                }
+                throw new Error(message);
+            }
+            throw new Error(lastError.message || 'Could not reach the server.');
+        }
+
+        async function readSelectedPhoto() {
+            if (!(photoInput.files && photoInput.files[0])) return null;
+            return await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(photoInput.files[0]);
+            });
+        }
+
+        function resetVerificationIfEmailChanged(email) {
+            if (verificationState.email && verificationState.email !== email) {
+                verificationState = { email: '', token: '' };
+                verificationCodeInput.value = '';
+                verificationPanel.style.display = 'none';
+            }
+        }
+
+        async function sendVerificationCode(email) {
+            await apiRequest('/api/verification/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            verificationState = { email, token: '' };
+            verificationPanel.style.display = 'block';
+        }
+
+        async function finishRegistration() {
+            if (!pendingRegistration || !verificationState.token) {
+                showAlert('Verify your email before finishing registration.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating Account...';
+
+            try {
+                const data = await apiRequest('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...pendingRegistration,
+                        verificationToken: verificationState.token
+                    })
+                });
+
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                localStorage.setItem('abiousAuthToken', data.token);
+                localStorage.setItem('abiousUser', JSON.stringify(data.user));
+
+                showAlert('Account created successfully! Redirecting to the members page...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'abious_rehabilitation_center2.html';
+                }, 1200);
+            } catch (error) {
+                showAlert(error.message || 'Registration failed', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        }
+
         // Photo preview
         const photoInput = document.getElementById('photoInput');
         const photoPreview = document.getElementById('photoPreview');
+        document.getElementById('email').addEventListener('input', (event) => {
+            resetVerificationIfEmailChanged(event.target.value.trim().toLowerCase());
+        });
         
         photoInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -280,7 +421,6 @@
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
-            const alert = document.getElementById('alert');
             
             const fullName = document.getElementById('fullName').value.trim();
             const email = document.getElementById('email').value.trim().toLowerCase();
@@ -289,63 +429,88 @@
             const age = document.getElementById('age').value;
             const biodata = document.getElementById('biodata').value.trim();
             const interests = document.getElementById('interests').value.trim();
-            
-            // Get photo
-            let photo = null;
-            if (photoInput.files && photoInput.files[0]) {
-                photo = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(photoInput.files[0]);
-                });
-            }
+            const photo = await readSelectedPhoto();
             
             if (!fullName || !email || !password) {
                 showAlert('Please fill in all required fields', 'error');
                 return;
             }
-            
+
+            pendingRegistration = {
+                fullName,
+                email,
+                phone,
+                password,
+                age: age ? parseInt(age, 10) : null,
+                biodata,
+                interests,
+                photo,
+                plan: 'free'
+            };
+
+            if (verificationState.email === email && verificationState.token) {
+                await finishRegistration();
+                return;
+            }
+
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating Account...';
-            
+            submitBtn.textContent = 'Sending Verification Code...';
             try {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        fullName, 
-                        email, 
-                        phone, 
-                        password,
-                        age: age ? parseInt(age) : null,
-                        biodata,
-                        interests,
-                        photo
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.ok) {
-                    // Save token and user
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
-                    
-                    showAlert('Account created successfully! Redirecting...', 'success');
-                    
-                    // Redirect to member portal after 1.5 seconds
-                    setTimeout(() => {
-                        window.location.href = 'abious_rehabilitation_center2.html';
-                    }, 1500);
-                } else {
-                    showAlert(data.error || 'Registration failed', 'error');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Account';
-                }
+                await sendVerificationCode(email);
+                showAlert('Verification code sent. Enter it below to complete registration.', 'success');
             } catch (error) {
-                showAlert('Error: ' + error.message, 'error');
+                showAlert(error.message || 'Could not send verification code.', 'error');
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
+            }
+        });
+
+        verifyCodeBtn.addEventListener('click', async () => {
+            const code = verificationCodeInput.value.trim();
+            if (!pendingRegistration || !pendingRegistration.email) {
+                showAlert('Fill in the registration form first.', 'error');
+                return;
+            }
+            if (code.length !== 6) {
+                showAlert('Enter the full 6-digit verification code.', 'error');
+                return;
+            }
+            verifyCodeBtn.disabled = true;
+            verifyCodeBtn.textContent = 'Verifying...';
+            try {
+                const data = await apiRequest('/api/verification/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: pendingRegistration.email, code })
+                });
+                verificationState = { email: pendingRegistration.email, token: data.verificationToken || '' };
+                showAlert('Email verified. Creating your account now...', 'success');
+                await finishRegistration();
+            } catch (error) {
+                showAlert(error.message || 'Verification failed.', 'error');
+            } finally {
+                verifyCodeBtn.disabled = false;
+                verifyCodeBtn.textContent = 'Verify Code';
+            }
+        });
+
+        resendCodeBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            if (!email) {
+                showAlert('Enter your email first.', 'error');
+                return;
+            }
+            resendCodeBtn.disabled = true;
+            resendCodeBtn.textContent = 'Resending...';
+            try {
+                await sendVerificationCode(email);
+                showAlert('A fresh verification code has been sent.', 'success');
+            } catch (error) {
+                showAlert(error.message || 'Could not resend the verification code.', 'error');
+            } finally {
+                resendCodeBtn.disabled = false;
+                resendCodeBtn.textContent = 'Resend Code';
             }
         });
         

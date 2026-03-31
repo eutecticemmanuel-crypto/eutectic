@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abious Rehabilitation Initiative</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-theme.css">
     <style>
         :root {
             --primary: #0d6e5e;
@@ -23,7 +27,7 @@
         }
 
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
             /* Dynamic animated gradient background */
             background: 
@@ -625,10 +629,27 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-page">
+    <div class="live-wallpaper" aria-hidden="true">
+        <div class="theme-orb one"></div>
+        <div class="theme-orb two"></div>
+        <div class="theme-orb three"></div>
+        <div class="theme-particles">
+            <span class="theme-particle" style="--size: 8px; --left: 8%; --duration: 19s; --delay: -1s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 18%; --duration: 25s; --delay: -8s;"></span>
+            <span class="theme-particle" style="--size: 10px; --left: 28%; --duration: 21s; --delay: -4s;"></span>
+            <span class="theme-particle" style="--size: 7px; --left: 39%; --duration: 24s; --delay: -12s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 48%; --duration: 20s; --delay: -6s;"></span>
+        </div>
+    </div>
     <header>
-        <h1>Abious Rehabilitation Center</h1>
-        <p>Empowering Youth Through Rehabilitation and Community</p>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img data-image-key="main_site_logo" src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="Abious Logo" style="width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 3px 10px rgba(0,0,0,0.2);">
+            <div>
+                <h1>Abious Rehabilitation Center</h1>
+                <p>Empowering Youth Through Rehabilitation and Community</p>
+            </div>
+        </div>
     </header>
 
     <nav>
@@ -685,16 +706,16 @@
                 <li><strong>Camps:</strong> Therapeutic camps offering adventure, therapy, and team-building in a supportive environment.</li>
             </ul>
             <div class="image-gallery">
-                <img src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="WhatsApp Image 1">
-                <img src="WhatsApp Image 2025-12-03 at 00.16.30.jpeg" alt="WhatsApp Image 2">
-                <img src="WhatsApp Image 2025-12-03 at 00.17.33.jpeg" alt="WhatsApp Image 3">
-                <img src="WhatsApp Image 2025-12-03 at 00.17.36.jpeg" alt="WhatsApp Image 4">
-                <img src="WhatsApp Image 2025-12-03 at 00.17.39.jpeg" alt="WhatsApp Image 5">
-                <img src="WhatsApp Image 2025-12-03 at 00.17.40.jpeg" alt="WhatsApp Image 6">
-                <img src="WhatsApp Image 2025-12-03 at 00.17.42.jpeg" alt="WhatsApp Image 7">
-                <img src="WhatsApp Image 2025-12-03 at 11.23.19.jpeg" alt="WhatsApp Image 8">
-                <img src="WhatsApp Image 2025-12-03 at 11.23.21.jpeg" alt="WhatsApp Image 9">
-                <img src="WhatsApp Image 2025-12-03 at 11.23.22 (1).jpeg" alt="WhatsApp Image 10">
+                <img data-image-key="main_gallery_1" src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="WhatsApp Image 1">
+                <img data-image-key="main_gallery_2" src="WhatsApp Image 2025-12-03 at 00.16.30.jpeg" alt="WhatsApp Image 2">
+                <img data-image-key="main_gallery_3" src="WhatsApp Image 2025-12-03 at 00.17.33.jpeg" alt="WhatsApp Image 3">
+                <img data-image-key="main_gallery_4" src="WhatsApp Image 2025-12-03 at 00.17.36.jpeg" alt="WhatsApp Image 4">
+                <img data-image-key="main_gallery_5" src="WhatsApp Image 2025-12-03 at 00.17.39.jpeg" alt="WhatsApp Image 5">
+                <img data-image-key="main_gallery_6" src="WhatsApp Image 2025-12-03 at 00.17.40.jpeg" alt="WhatsApp Image 6">
+                <img data-image-key="main_gallery_7" src="WhatsApp Image 2025-12-03 at 00.17.42.jpeg" alt="WhatsApp Image 7">
+                <img data-image-key="main_gallery_8" src="WhatsApp Image 2025-12-03 at 11.23.19.jpeg" alt="WhatsApp Image 8">
+                <img data-image-key="main_gallery_9" src="WhatsApp Image 2025-12-03 at 11.23.21.jpeg" alt="WhatsApp Image 9">
+                <img data-image-key="main_gallery_10" src="WhatsApp Image 2025-12-03 at 11.23.22 (1).jpeg" alt="WhatsApp Image 10">
             </div>
         </section>
 
@@ -871,9 +892,9 @@
             <h2>Contact Information</h2>
             <p><strong>Address:</strong> Zzaana Bunamwaya By-pass Road, Ssabagabo, Uganda</p>
             <p><strong>Phone:</strong> +256 745490032</p>
-            <p><strong>WhatsApp:</strong> +256 745490032</p>
+            <p><strong>WhatsApp:</strong> <a href="https://wa.me/256745490032" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
             <p><strong>Email:</strong> eutecticemmanuel@gmail.com</p>
-            <p><strong>TikTok:</strong> <a href="https://www.tiktok.com/@abious_rehabilitation_initiative" target="_blank">@abious_rehabilitation_initiative</a></p>
+            <p><strong>TikTok:</strong> <a href="https://www.tiktok.com/search?q=abious%20rehabilitation%20initiative&t=1774816862008" target="_blank" rel="noopener noreferrer">Abious Rehabilitation Initiative on TikTok</a></p>
             <p><strong>Hours:</strong> Monday - Friday: 9 AM - 6 PM</p>
         </section>
 
@@ -905,7 +926,7 @@
         <div class="modal">
             <div class="modal-icon">📧</div>
             <h3>Verify Your Email</h3>
-            <p>We've sent a 6-digit verification code to <strong id="verificationEmail"></strong></p>
+            <p>A 6-digit verification code has been created for <strong id="verificationEmail"></strong> using the configured email sender.</p>
             <p>Enter the code below to verify your email address.</p>
             
             <div class="verification-code">
@@ -962,17 +983,17 @@
     </div>
 
     <script>
-        const API_BASE = (() => {
-            if (!location.origin.startsWith("http")) return "https://abious_rehabilitation_iniative.ug";
-            const isLocalHost = ["localhost", "127.0.0.1"].includes(location.hostname);
-            if (isLocalHost && location.port && location.port !== "3000") return "https://abious_rehabilitation_iniative.ug";
-            return location.origin;
-        })();
+        const LIVE_API_BASE = "https://abious-rehabilitation-center.onrender.com";
+        const API_BASE_CANDIDATES = Array.from(new Set([
+            location.origin.startsWith("http") ? location.origin : "",
+            (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
+            LIVE_API_BASE
+        ].filter(Boolean)));
+        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
 
         // Registration state
         let registrationData = {};
         let selectedPlan = 'free';
-        let generatedCode = '';
 
         // DOM Elements
         const registerForm = document.getElementById("registerForm");
@@ -1010,18 +1031,28 @@
             step4.className = stepNum >= 4 ? 'step completed' : 'step';
         }
 
-        // Generate a random 6-digit code
-        function generateVerificationCode() {
-            return Math.floor(100000 + Math.random() * 900000).toString();
-        }
+        let currentVerificationEmail = "";
 
         // Show verification modal
-        function showVerificationModal(email) {
+        async function showVerificationModal(email) {
             document.getElementById("verificationEmail").textContent = email;
+            currentVerificationEmail = email;
             verificationModal.style.display = "flex";
-            generatedCode = generateVerificationCode();
-            console.log("Verification code (for testing):", generatedCode);
-            // In production, this would send the code to the server to email the user
+            setStatus(
+                document.getElementById("verificationStatus"),
+                "info",
+                "Verification code created. Check your inbox and spam folder."
+            );
+
+            try {
+                await sendJson("/api/verification/generate", { email });
+            } catch (error) {
+                setStatus(
+                    document.getElementById("verificationStatus"),
+                    "error",
+                    "Could not create a verification code right now. Please try again."
+                );
+            }
         }
 
         // Handle verification code input
@@ -1041,29 +1072,62 @@
         });
 
         // Verify button click
-        document.getElementById("verifyBtn").addEventListener("click", () => {
-            const enteredCode = codeInputs.map(input => input.value).join('');
+        document.getElementById("verifyBtn").addEventListener("click", async () => {
+            const enteredCode = Array.from(codeInputs).map((input) => input.value).join('');
             const verificationStatus = document.getElementById("verificationStatus");
-            
-            if (enteredCode === generatedCode) {
+
+            if (enteredCode.length !== 6) {
+                setStatus(verificationStatus, "error", "Enter the full 6-digit code.");
+                return;
+            }
+
+            try {
+                const verificationResult = await sendJson("/api/verification/verify", {
+                    email: currentVerificationEmail,
+                    code: enteredCode
+                });
+                registrationData.verificationToken = verificationResult.verificationToken || "";
                 setStatus(verificationStatus, "ok", "Email verified successfully!");
                 setTimeout(() => {
                     verificationModal.style.display = "none";
-                    // Show subscription section
                     subscriptionSection.style.display = "block";
                     subscriptionSection.scrollIntoView({ behavior: "smooth" });
+                    const defaultPlan = document.querySelector('.plan-card[data-plan="free"]');
+                    if (defaultPlan && !document.querySelector('.plan-card.selected')) {
+                        defaultPlan.classList.add('selected');
+                        selectedPlan = 'free';
+                        document.getElementById("planName").textContent = defaultPlan.querySelector('h3').textContent;
+                        document.getElementById("planAmount").textContent = defaultPlan.querySelector('.plan-price').textContent;
+                        document.getElementById("completeRegistration").style.display = "block";
+                        document.getElementById("completeRegistration").textContent = "Complete Registration (Free)";
+                    }
                     updateSteps(3);
                 }, 1000);
-            } else {
-                setStatus(verificationStatus, "error", "Invalid verification code. Please try again.");
+            } catch (error) {
+                setStatus(verificationStatus, "error", error.message || "Invalid verification code. Please try again.");
             }
         });
 
         // Resend code
-        document.getElementById("resendCode").addEventListener("click", () => {
-            generatedCode = generateVerificationCode();
-            console.log("New verification code (for testing):", generatedCode);
-            setStatus(document.getElementById("verificationStatus"), "info", "New code sent! Check console for testing.");
+        document.getElementById("resendCode").addEventListener("click", async () => {
+            if (!currentVerificationEmail) {
+                return;
+            }
+
+            try {
+                await sendJson("/api/verification/generate", { email: currentVerificationEmail });
+                setStatus(
+                    document.getElementById("verificationStatus"),
+                    "info",
+                    "A new verification code was created. Check your inbox and spam folder."
+                );
+            } catch (error) {
+                setStatus(
+                    document.getElementById("verificationStatus"),
+                    "error",
+                    "Could not resend the verification code."
+                );
+            }
         });
 
         // Plan selection
@@ -1143,50 +1207,52 @@
                     goToMemberPage();
                 }, 1000);
             } catch (error) {
-                // Local fallback
-                if (error instanceof TypeError || /fetch/i.test(error.message)) {
-                    const fallbackUser = {
-                        fullName: registrationData.fullName || "Member",
-                        email: registrationData.email,
-                        role: "Member",
-                        plan: selectedPlan
-                    };
-                    saveAuth("local-session", fallbackUser);
-                    setStatus(paymentStatus, "ok", "Registered in local mode. Opening member page...");
-                    setTimeout(() => {
-                        goToMemberPage();
-                    }, 700);
-                    return;
-                }
                 setStatus(paymentStatus, "error", error.message);
             }
         }
 
         async function sendJson(path, payload) {
-            const response = await fetch(API_BASE + path, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const raw = await response.text();
-            let data = {};
-            if (raw) {
+            let lastError = new Error("Could not reach the server. Check the live backend or localhost:3000.");
+            for (const base of API_BASE_CANDIDATES) {
+                let response;
                 try {
-                    data = JSON.parse(raw);
+                    response = await fetch(base + path, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
                 } catch (error) {
-                    const contentType = response.headers.get("content-type") || "";
-                    if (contentType.includes("application/json")) {
-                        throw new Error("Invalid JSON received from server.");
-                    }
-                    data = { error: raw };
+                    lastError = error;
+                    continue;
                 }
-            }
 
-            if (!response.ok) {
-                throw new Error(data.error || "Request failed (" + response.status + ").");
+                const raw = await response.text();
+                let data = {};
+                if (raw) {
+                    try {
+                        data = JSON.parse(raw);
+                    } catch (error) {
+                        const contentType = response.headers.get("content-type") || "";
+                        if (contentType.includes("application/json")) {
+                            throw new Error("Invalid JSON received from server.");
+                        }
+                        data = { error: raw };
+                    }
+                }
+
+                if (response.ok) {
+                    activeApiBase = base;
+                    return data;
+                }
+
+                const message = data.error || "Request failed (" + response.status + ").";
+                if (response.status === 404 || /route not found/i.test(message)) {
+                    lastError = new Error(message);
+                    continue;
+                }
+                throw new Error(message);
             }
-            return data;
+            throw new Error(lastError.message || "Could not reach the server.");
         }
 
         // Registration form submit
@@ -1204,10 +1270,10 @@
                 interests: document.getElementById("interests").value.trim()
             };
 
-            setStatus(registerStatus, "info", "Sending verification code to your email...");
+            setStatus(registerStatus, "info", "Preparing your verification code...");
             
             // Show verification modal
-            showVerificationModal(registrationData.email);
+            await showVerificationModal(registrationData.email);
             updateSteps(2);
         });
 
@@ -1233,6 +1299,22 @@
                 setStatus(loginStatus, "error", error.message);
             }
         });
+    </script>
+    <script>
+        (async () => {
+            try {
+                const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+                const response = await fetch((activeApiBase || apiBase) + "/api/site-content");
+                const data = await response.json();
+                const imageAssets = data && data.imageAssets ? data.imageAssets : {};
+                document.querySelectorAll("[data-image-key]").forEach((img) => {
+                    const key = img.getAttribute("data-image-key");
+                    if (key && imageAssets[key]) img.src = imageAssets[key];
+                });
+            } catch (error) {
+                console.warn("Could not load managed site images.", error);
+            }
+        })();
     </script>
 </body>
 </html>

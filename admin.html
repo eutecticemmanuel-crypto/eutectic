@@ -3,985 +3,904 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abious Rehabilitation - Admin Panel</title>
+    <title>Admin Dashboard</title>
     <style>
-        :root {
-            --primary: #0d6e5e;
-            --primary-dark: #094a42;
-            --accent: #f59e0b;
-            --danger: #dc2626;
-            --success: #16a34a;
+        :root { --bg:#f1ede4; --bg-deep:#e6dcc8; --card:rgba(255,255,255,.82); --card-strong:#fffdf8; --soft:rgba(255,250,241,.86); --line:rgba(122,102,73,.18); --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-dark:#115e59; --accent:#c08427; --danger:#b91c1c; --success:#166534; --shadow:0 26px 60px rgba(36,32,24,.12); }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:
+            radial-gradient(circle at top left, rgba(192,132,39,.18), transparent 24%),
+            radial-gradient(circle at right 18%, rgba(15,118,110,.18), transparent 26%),
+            linear-gradient(135deg, var(--bg) 0%, #f7f3ea 45%, var(--bg-deep) 100%); }
+        body::before { content:""; position:fixed; inset:0; pointer-events:none; background:
+            linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at center, black 35%, transparent 82%); opacity:.24; }
+        .page { position:relative; width:min(1600px, calc(100% - 24px)); margin:0 auto; padding:24px 0 36px; z-index:1; }
+        .card { background:var(--card); border:1px solid rgba(255,255,255,.7); border-radius:26px; box-shadow:var(--shadow); backdrop-filter:blur(18px); padding:24px; }
+        .header,.row,.tabs,.actions,.form2 { display:flex; gap:12px; flex-wrap:wrap; }
+        .header { justify-content:space-between; align-items:center; margin-bottom:16px; }
+        .layout { display:grid; grid-template-columns:320px minmax(0,1fr); gap:16px; }
+        h1,h2,h3 { margin:0; }
+        p { margin:8px 0 0; color:var(--muted); line-height:1.5; }
+        button,a.btn { appearance:none; border:0; border-radius:999px; padding:11px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
+        button:hover,a.btn:hover { transform:translateY(-1px); }
+        .primary { color:#fff; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 14px 28px rgba(15,118,110,.22); }
+        .secondary { color:var(--text); background:rgba(255,255,255,.8); border:1px solid var(--line); }
+        .danger { color:#fff; background:var(--danger); }
+        .stack { display:grid; gap:12px; }
+        .form2 > div { flex:1 1 220px; }
+        label { display:block; margin-bottom:6px; font-weight:700; }
+        input,textarea,select { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:16px; font:inherit; color:var(--text); background:rgba(255,255,255,.92); box-shadow:inset 0 1px 0 rgba(255,255,255,.9); }
+        input:focus,textarea:focus,select:focus { outline:3px solid rgba(15,118,110,.14); border-color:rgba(15,118,110,.35); }
+        textarea { min-height:100px; resize:vertical; }
+        .alert { display:none; margin-top:12px; padding:12px 14px; border-radius:14px; }
+        .alert.show { display:block; }
+        .alert.error { background:#fee2e2; color:#991b1b; }
+        .alert.success { background:#dcfce7; color:#166534; }
+        .alert.info { background:#dbeafe; color:#1d4ed8; }
+        .dashboard { display:none; gap:16px; }
+        .dashboard.show { display:grid; }
+        .hidden { display:none !important; }
+        .stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+        .stat { padding:18px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,236,.68)); }
+        .stat small { display:block; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em; }
+        .stat strong { font-size:1.8rem; }
+        .tab-btn { background:rgba(255,255,255,.8); border:1px solid var(--line); }
+        .tab-btn.active { color:#fff; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+        .tab-panel { display:none; }
+        .tab-panel.active { display:block; }
+        .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
+        .editor-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
+        .editor-stack { display:grid; gap:16px; }
+        .full-width-box { width:100%; }
+        .editor-stack textarea,
+        .editor-grid textarea,
+        #privacyText,
+        #securityText {
+            min-height: 280px;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #f0fdf9 0%, #ecfeff 50%, #f0fdf4 100%);
-            min-height: 100vh;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .admin-login {
-            max-width: 400px;
-            margin: 100px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .admin-login h2 {
-            margin-top: 0;
-            color: var(--primary);
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: var(--primary-dark);
-        }
-
-        button.danger {
-            background: var(--danger);
-        }
-
-        button.success {
-            background: var(--success);
-        }
-
-        .admin-panel {
-            display: none;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            padding: 10px 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .tab-content {
-            display: none;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .content-item {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-        }
-
-        .content-item h4 {
-            margin: 0 0 10px 0;
-            color: var(--primary);
-        }
-
-        .content-item .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .member-list {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .member-list th, .member-list td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .member-list th {
-            background: var(--primary);
-            color: white;
-        }
-
-        .status {
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 12px;
-        }
-
-        .status.active {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .status.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-
-        .alert.success {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .alert.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .verification-codes {
-            background: #f0fdf4;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-
-        .code-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .whatsapp-logs, .call-logs {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-
-        .log-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .log-item:last-child {
-            border-bottom: none;
-        }
-
-        @media (max-width: 768px) {
-            .tabs {
-                flex-direction: column;
-            }
-            .member-list {
-                font-size: 12px;
-            }
-        }
+        .box { padding:18px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,248,236,.7)); }
+        .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.9); }
+        table { width:100%; min-width:800px; border-collapse:collapse; }
+        th,td { padding:13px 14px; border-bottom:1px solid #ece9e1; text-align:left; vertical-align:top; }
+        th { background:linear-gradient(180deg, rgba(15,118,110,.09), rgba(15,118,110,.04)); font-size:.82rem; text-transform:uppercase; letter-spacing:.05em; }
+        .pill { display:inline-flex; padding:6px 10px; border-radius:999px; font-size:.84rem; font-weight:700; }
+        .pill.verified { color:var(--success); background:#dcfce7; }
+        .pill.pending { color:#b45309; background:#fef3c7; }
+        .empty { padding:20px; color:var(--muted); text-align:center; }
+        .image-manager { display:grid; gap:14px; }
+        .image-item { display:grid; grid-template-columns:140px minmax(0,1fr); gap:16px; padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.88); }
+        .image-preview { width:100%; aspect-ratio:4/3; border-radius:16px; border:1px solid var(--line); background:#f8f5ef; display:grid; place-items:center; overflow:hidden; color:var(--muted); font-size:.82rem; text-align:center; }
+        .image-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+        .image-fields { display:grid; gap:10px; }
+        .image-meta { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .image-meta small { display:block; color:var(--muted); margin-top:4px; }
+        .image-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .moderation-list { display:grid; gap:14px; }
+        .moderation-card { padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.88); }
+        .moderation-head,.moderation-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .moderation-meta { margin-top:10px; color:var(--muted); font-size:.9rem; }
+        .moderation-preview { margin-top:12px; border-radius:16px; overflow:hidden; border:1px solid var(--line); background:#f8f5ef; }
+        .moderation-preview img,.moderation-preview video { display:block; width:100%; max-height:320px; object-fit:cover; background:#101817; }
+        .moderation-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+        @media (max-width:1024px) { .layout,.grid2,.stats,.editor-grid { grid-template-columns:1fr; } }
+        @media (max-width:760px) { .image-item { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Abious Rehabilitation - Admin Panel</h1>
-    </header>
-
-    <div class="container">
-        <!-- Login Section -->
-        <div id="loginSection" class="admin-login">
-            <h2>Admin Login</h2>
-            <div id="loginAlert"></div>
-            <form id="adminLoginForm">
-                <div class="form-group">
-                    <label for="adminEmail">Email:</label>
-                    <input type="email" id="adminEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="adminPassword">Password:</label>
-                    <input type="password" id="adminPassword" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                Default admin: admin@abious.org / admin123
-            </p>
-        </div>
-
-        <!-- Admin Panel -->
-        <div id="adminPanel" class="admin-panel">
-            <!-- Quick Stats Dashboard -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                <div class="content-item" style="background: linear-gradient(135deg, #0d6e5e, #094a42); color: white; text-align: center;">
-                    <h3 style="margin: 0; font-size: 32px;" id="totalMembers">0</h3>
-                    <p style="margin: 5px 0 0 0;">Total Members</p>
-                </div>
-                <div class="content-item" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; text-align: center;">
-                    <h3 style="margin: 0; font-size: 32px;" id="verifiedMembers">0</h3>
-                    <p style="margin: 5px 0 0 0;">Verified Members</p>
-                </div>
-                <div class="content-item" style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; text-align: center;">
-                    <h3 style="margin: 0; font-size: 32px;" id="totalPosts">0</h3>
-                    <p style="margin: 5px 0 0 0;">Total Posts</p>
-                </div>
-                <div class="content-item" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; text-align: center;">
-                    <h3 style="margin: 0; font-size: 32px;" id="pendingVerifications">0</h3>
-                    <p style="margin: 5px 0 0 0;">Pending Verifications</p>
-                </div>
+    <div class="page">
+        <section class="card header" style="background:linear-gradient(135deg, rgba(17,94,89,.94), rgba(192,132,39,.82)); color:#fff; border-color:rgba(255,255,255,.24);">
+            <div>
+                <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Admin Workspace</div>
+                <h1 style="margin-top:14px;">Admin Dashboard</h1>
+                <p style="color:rgba(255,255,255,.84);max-width:52ch;">Manage members, public links, contacts, website copy, and policies from one cleaner control room.</p>
             </div>
-
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('content')">Content Management</button>
-                <button class="tab" onclick="showTab('members')">Members</button>
-                <button class="tab" onclick="showTab('news')">News & Events</button>
-                <button class="tab" onclick="showTab('verification')">Email Verification</button>
-                <button class="tab" onclick="showTab('logs')">WhatsApp/Call Logs</button>
-                <button class="tab" onclick="showTab('settings')">Site Settings</button>
-                <button class="tab" style="background:#f59e0b;color:white;" onclick="window.open('members.html','_blank')">👁 View Members</button>
-                <button class="tab" onclick="logout()">Logout</button>
+            <div class="actions">
+                <a class="btn secondary" href="abious_rehabilitation_ceter.html">Public Site</a>
+                <a class="btn secondary" href="abious_rehabilitation_center2.html">Member Page</a>
             </div>
+        </section>
 
-            <!-- Content Management Tab -->
-            <div id="contentTab" class="tab-content active">
-                <h2>Manage Website Content</h2>
-                <div id="contentAlert"></div>
-                
-                <h3>Edit Contact Information</h3>
-                <form id="contactForm">
-                    <div class="form-group">
-                        <label>Address:</label>
-                        <input type="text" id="contactAddress" value="Zzaana Bunamwaya By-pass Road, Ssabagabo, Uganda">
-                    </div>
-                    <div class="form-group">
-                        <label>Phone:</label>
-                        <input type="text" id="contactPhone" value="+256 745490032">
-                    </div>
-                    <div class="form-group">
-                        <label>WhatsApp:</label>
-                        <input type="text" id="contactWhatsApp" value="+256 745490032">
-                    </div>
-                    <div class="form-group">
-                        <label>Email:</label>
-                        <input type="email" id="contactEmail" value="eutecticemmanuel@gmail.com">
-                    </div>
-                    <div class="form-group">
-                        <label>TikTok Link:</label>
-                        <input type="url" id="contactTikTok" value="https://www.tiktok.com/@abious_rehabilitation_initiative">
-                    </div>
-                    <button type="submit" class="success">Save Contact Info</button>
+        <div class="layout">
+            <aside id="loginPanel" class="card">
+                <h2>Admin Login</h2>
+                <p>Sign in to manage the site.</p>
+                <form id="adminLoginForm" class="stack" style="margin-top:16px;">
+                    <div><label for="adminEmail">Email</label><input id="adminEmail" type="email" required></div>
+                    <div><label for="adminPassword">Password</label><input id="adminPassword" type="password" required></div>
+                    <button id="loginButton" class="primary" type="submit">Sign In</button>
                 </form>
+                <div id="loginAlert" class="alert"></div>
+            </aside>
 
-                <h3>Edit About Section</h3>
-                <form id="aboutForm">
-                    <div class="form-group">
-                        <label>About Text:</label>
-                        <textarea id="aboutText">Abious Rehabilitation Initiative is a youth-focused organization dedicated to helping young people overcome challenges and reach their full potential.</textarea>
+            <main id="dashboard" class="dashboard">
+                <section class="card">
+                    <div class="header" style="margin-bottom:0;">
+                        <div><h2>Workspace</h2><p id="welcomeText">Connected.</p></div>
+                        <div class="actions">
+                            <button id="refreshButton" class="secondary" type="button">Refresh</button>
+                            <button id="logoutButton" class="secondary" type="button">Log Out</button>
+                        </div>
                     </div>
-                    <button type="submit" class="success">Save About</button>
-                </form>
-
-                <h3>Manage Gallery Images</h3>
-                <div id="galleryList"></div>
-                <form id="galleryForm" style="margin-top: 15px;">
-                    <div class="form-group">
-                        <label>Add New Image URL:</label>
-                        <input type="url" id="newImageUrl" placeholder="https://...">
+                    <div class="stats" style="margin-top:16px;">
+                        <div class="stat"><small>Total Members</small><strong id="totalMembers">0</strong></div>
+                        <div class="stat"><small>Verified</small><strong id="verifiedMembers">0</strong></div>
+                        <div class="stat"><small>Pending</small><strong id="pendingMembers">0</strong></div>
                     </div>
-                    <button type="submit">Add Image</button>
-                </form>
-            </div>
-
-            <!-- Members Tab -->
-            <div id="membersTab" class="tab-content">
-                <h2>Member Management</h2>
-                <div id="membersAlert"></div>
-                
-                <!-- Add Member Form -->
-                <div class="content-item" style="background: #f0fdf9; border-left: 4px solid #0d6e5e;">
-                    <h3>➕ Add New Member</h3>
-                    <form id="addMemberForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <div class="form-group">
-                            <label>Full Name:</label>
-                            <input type="text" id="newMemberName" required placeholder="Enter full name">
-                        </div>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" id="newMemberEmail" required placeholder="Enter email">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone:</label>
-                            <input type="text" id="newMemberPhone" placeholder="+256...">
-                        </div>
-                        <div class="form-group">
-                            <label>Password:</label>
-                            <input type="password" id="newMemberPassword" required placeholder="Set password">
-                        </div>
-                        <div class="form-group">
-                            <label>Photo:</label>
-                            <input type="file" id="newMemberPhoto" accept="image/*">
-                        </div>
-                        <div class="form-group">
-                            <label>Biodata:</label>
-                            <textarea id="newMemberBiodata" placeholder="Short bio..." rows="2"></textarea>
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: flex-end;">
-                            <button type="submit" style="width: 100%;">Add Member</button>
-                        </div>
-                    </form>
-                </div>
-
-                <h3>Existing Members</h3>
-                <table class="member-list">
-                    <thead>
-                        <tr>
-                            <th>Photo</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="membersTable">
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- News Tab -->
-            <div id="newsTab" class="tab-content">
-                <h2>News & Events Management</h2>
-                <div id="newsAlert"></div>
-                
-                <!-- Add News/Event Form -->
-                <div class="content-item" style="background: #f0fdf9; border-left: 4px solid #0d6e5e;">
-                    <h3>➕ Post News or Event</h3>
-                    <form id="newsForm">
-                        <div class="form-group">
-                            <label>Type:</label>
-                            <select id="newsType">
-                                <option value="news">📰 News</option>
-                                <option value="event">📅 Event</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Title:</label>
-                            <input type="text" id="newsTitle" required placeholder="Enter title">
-                        </div>
-                        <div class="form-group">
-                            <label>Event Date (for events only):</label>
-                            <input type="datetime-local" id="newsEventDate">
-                        </div>
-                        <div class="form-group">
-                            <label>Content:</label>
-                            <textarea id="newsContent" required placeholder="Write your news or event details..." rows="5"></textarea>
-                        </div>
-                        <button type="submit" class="success">Post</button>
-                    </form>
-                </div>
-
-                <h3>Existing Posts</h3>
-                <div id="newsList"></div>
-            </div>
-
-            <!-- Verification Tab -->
-            <div id="verificationTab" class="tab-content">
-                <h2>Email Verification Codes</h2>
-                <div id="verificationAlert"></div>
-                <p>Manage email verification codes sent to members.</p>
-                
-                <h3>Generate New Code</h3>
-                <form id="generateCodeForm">
-                    <div class="form-group">
-                        <label>Member Email:</label>
-                        <input type="email" id="codeEmail" required>
+                    <div class="tabs" style="margin-top:16px;">
+                        <button class="tab-btn active" data-tab="members" type="button">Members</button>
+                        <button class="tab-btn" data-tab="site" type="button">Website Data</button>
+                        <button class="tab-btn" data-tab="policies" type="button">Policies</button>
+                        <button class="tab-btn" data-tab="media" type="button">Media</button>
                     </div>
-                    <button type="submit">Generate Code</button>
-                </form>
+                    <div id="dashboardAlert" class="alert"></div>
+                </section>
 
-                <h3>Active Codes</h3>
-                <div id="activeCodes"></div>
-            </div>
-
-            <!-- Logs Tab -->
-            <div id="logsTab" class="tab-content">
-                <h2>WhatsApp & Call Logs</h2>
-                <p>Admin Phone: +256 745490032</p>
-                
-                <h3>WhatsApp Logs</h3>
-                <div id="whatsappLogs" class="whatsapp-logs">
-                    <p>No WhatsApp logs yet.</p>
-                </div>
-
-                <h3>Call Logs</h3>
-                <div id="callLogs" class="call-logs">
-                    <p>No call logs yet.</p>
-                </div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div id="settingsTab" class="tab-content">
-                <h2>Site Settings</h2>
-                <div id="settingsAlert"></div>
-                <form id="settingsForm">
-                    <div class="form-group">
-                        <label>Site Title:</label>
-                        <input type="text" id="siteTitle" value="Abious Rehabilitation Initiative">
+                <section id="tab-members" class="tab-panel active card">
+                    <div class="grid2">
+                        <div class="box">
+                            <h3>Add Member</h3>
+                            <form id="addMemberForm" class="stack" style="margin-top:14px;">
+                                <div><label for="newMemberName">Full Name</label><input id="newMemberName" type="text" required></div>
+                                <div class="form2">
+                                    <div><label for="newMemberEmail">Email</label><input id="newMemberEmail" type="email" required></div>
+                                    <div><label for="newMemberPhone">Phone</label><input id="newMemberPhone" type="text"></div>
+                                </div>
+                                <div><label for="newMemberPassword">Password</label><input id="newMemberPassword" type="text" required></div>
+                                <div><label for="newMemberBiodata">Biodata</label><textarea id="newMemberBiodata"></textarea></div>
+                                <button class="primary" type="submit">Add Member</button>
+                            </form>
+                            <div id="addMemberAlert" class="alert"></div>
+                        </div>
+                        <div class="box">
+                            <h3>Edit Member</h3>
+                            <form id="editMemberForm" class="stack" style="margin-top:14px;">
+                                <input id="editMemberId" type="hidden">
+                                <div><label for="editMemberName">Full Name</label><input id="editMemberName" type="text" required></div>
+                                <div class="form2">
+                                    <div><label for="editMemberEmail">Email</label><input id="editMemberEmail" type="email" required></div>
+                                    <div><label for="editMemberPhone">Phone</label><input id="editMemberPhone" type="text"></div>
+                                </div>
+                                <div class="form2">
+                                    <div><label for="editMemberRole">Role</label><select id="editMemberRole"><option value="Member">Member</option><option value="Admin">Admin</option></select></div>
+                                    <div><label for="editMemberVerified">Status</label><select id="editMemberVerified"><option value="true">Verified</option><option value="false">Pending</option></select></div>
+                                </div>
+                                <div><label for="editMemberPassword">New Password</label><input id="editMemberPassword" type="text" placeholder="Leave blank to keep current password"></div>
+                                <div><label for="editMemberBiodata">Biodata</label><textarea id="editMemberBiodata"></textarea></div>
+                                <div class="actions">
+                                    <button class="primary" type="submit">Save Member</button>
+                                    <button id="clearEditButton" class="secondary" type="button">Clear</button>
+                                </div>
+                            </form>
+                            <div id="editMemberAlert" class="alert"></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Admin Email:</label>
-                        <input type="email" id="adminEmailSetting" value="eutecticemmanuel@gmail.com">
+                    <div class="box" style="margin-top:16px;">
+                        <h3>Members Table</h3>
+                        <div class="table-wrap" style="margin-top:14px;">
+                            <table>
+                                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                                <tbody id="membersTableBody"><tr><td colspan="7" class="empty">No members found.</td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
-                    <button type="submit" class="success">Save Settings</button>
-                </form>
-            </div>
+                </section>
+
+                <section id="tab-site" class="tab-panel card">
+                    <div class="editor-grid">
+                        <div class="box">
+                            <h3>Contacts</h3>
+                            <form id="contactForm" class="stack" style="margin-top:14px;">
+                                <div><label for="contactAddress">Address</label><textarea id="contactAddress"></textarea></div>
+                                <div class="form2">
+                                    <div><label for="contactPhone">Phone</label><input id="contactPhone" type="text"></div>
+                                    <div><label for="contactWhatsApp">WhatsApp</label><input id="contactWhatsApp" type="text"></div>
+                                </div>
+                                <div class="form2">
+                                    <div><label for="contactEmail">Email</label><input id="contactEmail" type="email"></div>
+                                    <div><label for="contactTikTok">TikTok</label><input id="contactTikTok" type="url"></div>
+                                </div>
+                                <button class="primary" type="submit">Save Contacts</button>
+                            </form>
+                            <div id="contactAlert" class="alert"></div>
+                        </div>
+                        <div class="box">
+                            <h3>Links</h3>
+                            <form id="linksForm" class="stack" style="margin-top:14px;">
+                                <div><label for="websiteLink">Website</label><input id="websiteLink" type="url"></div>
+                                <div class="form2">
+                                    <div><label for="facebookLink">Facebook</label><input id="facebookLink" type="url"></div>
+                                    <div><label for="instagramLink">Instagram</label><input id="instagramLink" type="url"></div>
+                                </div>
+                                <div class="form2">
+                                    <div><label for="xLink">X</label><input id="xLink" type="url"></div>
+                                    <div><label for="youtubeLink">YouTube</label><input id="youtubeLink" type="url"></div>
+                                </div>
+                                <div class="form2">
+                                    <div><label for="tiktokLink">TikTok</label><input id="tiktokLink" type="url"></div>
+                                    <div><label for="whatsappLink">WhatsApp Link</label><input id="whatsappLink" type="text"></div>
+                                </div>
+                                <button class="primary" type="submit">Save Links</button>
+                            </form>
+                            <div id="linksAlert" class="alert"></div>
+                        </div>
+                    </div>
+                    <div class="editor-stack" style="margin-top:16px;">
+                        <div class="box full-width-box">
+                            <h3>About Text</h3>
+                            <form id="aboutForm" class="stack" style="margin-top:14px;">
+                                <div><label for="aboutText">About</label><textarea id="aboutText"></textarea></div>
+                                <button class="primary" type="submit">Save About</button>
+                            </form>
+                            <div id="aboutAlert" class="alert"></div>
+                        </div>
+                        <div class="box full-width-box">
+                            <h3>Bank Details</h3>
+                            <form id="bankAccountForm" class="stack" style="margin-top:14px;">
+                                <div><label for="bankName">Bank Name</label><input id="bankName" type="text"></div>
+                                <div class="form2">
+                                    <div><label for="accountNumber">Account Number</label><input id="accountNumber" type="text"></div>
+                                    <div><label for="accountName">Account Name</label><input id="accountName" type="text"></div>
+                                </div>
+                                <div class="form2">
+                                    <div><label for="bankBranch">Branch</label><input id="bankBranch" type="text"></div>
+                                    <div><label for="swiftCode">Swift Code</label><input id="swiftCode" type="text"></div>
+                                </div>
+                                <div><label for="bankInstructions">Instructions</label><textarea id="bankInstructions"></textarea></div>
+                                <button class="primary" type="submit">Save Bank Details</button>
+                            </form>
+                            <div id="bankAccountAlert" class="alert"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-policies" class="tab-panel card">
+                    <div class="editor-stack">
+                        <div class="box full-width-box">
+                            <h3>Privacy Policy</h3>
+                            <form id="privacyForm" class="stack" style="margin-top:14px;">
+                                <div><label for="privacyText">Content</label><textarea id="privacyText"></textarea></div>
+                                <button class="primary" type="submit">Save Privacy Policy</button>
+                            </form>
+                            <p id="privacyMeta"></p>
+                            <div id="privacyAlert" class="alert"></div>
+                        </div>
+                        <div class="box full-width-box">
+                            <h3>Security Policy</h3>
+                            <form id="securityForm" class="stack" style="margin-top:14px;">
+                                <div><label for="securityText">Content</label><textarea id="securityText"></textarea></div>
+                                <button class="primary" type="submit">Save Security Policy</button>
+                            </form>
+                            <p id="securityMeta"></p>
+                            <div id="securityAlert" class="alert"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-media" class="tab-panel card">
+                    <div class="editor-stack">
+                        <div class="box full-width-box">
+                            <h3>Website Images</h3>
+                            <p>Replace logos, featured images, and key gallery slots across the website. You can paste a URL or upload a new file.</p>
+                            <div id="imageManager" class="image-manager" style="margin-top:16px;"></div>
+                            <div class="actions" style="margin-top:16px;">
+                                <button id="addCustomImageButton" class="secondary" type="button">Add Custom Image Slot</button>
+                                <button id="saveImagesButton" class="primary" type="button">Save Website Images</button>
+                            </div>
+                            <div id="imagesAlert" class="alert"></div>
+                        </div>
+
+                        <div class="box full-width-box">
+                            <h3>Shared Attachments Moderation</h3>
+                            <p>Review member posts with attachments and remove either the attachment only or the entire post.</p>
+                            <div id="postsModerationList" class="moderation-list" style="margin-top:16px;"></div>
+                            <div id="postsAlert" class="alert"></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 
     <script>
-        let currentUser = null;
-        let verificationCodes = {};
-
-        // Check if already logged in
-        const savedUser = localStorage.getItem('adminUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            showAdminPanel();
+        const LIVE_API_BASE = "https://abious-rehabilitation-center.onrender.com";
+        const API_BASE_CANDIDATES = Array.from(new Set([
+            location.origin.startsWith("http") ? location.origin : "",
+            (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
+            LIVE_API_BASE
+        ].filter(Boolean)));
+        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const LOCAL_ADMIN_EMAIL = "admin@abious.org";
+        const LOCAL_ADMIN_PASSWORD = "St!lla18";
+        const ALLOW_LOCAL_ADMIN_MODE = !location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname);
+        const LOCAL_ADMIN_STORE_KEY = "abiousAdminLocalStore";
+        const state = {
+            token: localStorage.getItem("adminToken") || "",
+            user: (() => { try { return JSON.parse(localStorage.getItem("adminUser") || "null"); } catch { return null; } })(),
+            members: [],
+            posts: [],
+            imageAssets: {},
+            localMode: localStorage.getItem("adminLocalMode") === "true"
+        };
+        const IMAGE_FIELDS = [
+            { key: "main_site_logo", label: "Main Site Logo", hint: "Used on the main public page header." },
+            { key: "main_gallery_1", label: "Main Gallery 1", hint: "Public site activities gallery image." },
+            { key: "main_gallery_2", label: "Main Gallery 2", hint: "Public site activities gallery image." },
+            { key: "main_gallery_3", label: "Main Gallery 3", hint: "Public site activities gallery image." },
+            { key: "main_gallery_4", label: "Main Gallery 4", hint: "Public site activities gallery image." },
+            { key: "main_gallery_5", label: "Main Gallery 5", hint: "Public site activities gallery image." },
+            { key: "main_gallery_6", label: "Main Gallery 6", hint: "Public site activities gallery image." },
+            { key: "main_gallery_7", label: "Main Gallery 7", hint: "Public site activities gallery image." },
+            { key: "main_gallery_8", label: "Main Gallery 8", hint: "Public site activities gallery image." },
+            { key: "main_gallery_9", label: "Main Gallery 9", hint: "Public site activities gallery image." },
+            { key: "main_gallery_10", label: "Main Gallery 10", hint: "Public site activities gallery image." },
+            { key: "trial_logo", label: "Landing Trial Logo", hint: "Logo used on the trial landing page." },
+            { key: "trial_reel_image", label: "Trial Reel Image", hint: "Featured reel-style image on trial landing page." },
+            { key: "members_logo", label: "Members Page Logo", hint: "Logo shown on members listing page." },
+            { key: "programs_logo", label: "Programs Page Logo", hint: "Logo shown on programs page." },
+            { key: "news_logo", label: "News Page Logo", hint: "Logo shown on news page." }
+        ];
+        const loginPanel = document.getElementById("loginPanel");
+        const dashboard = document.getElementById("dashboard");
+        const membersTableBody = document.getElementById("membersTableBody");
+        const refreshButton = document.getElementById("refreshButton");
+        const imageManager = document.getElementById("imageManager");
+        const postsModerationList = document.getElementById("postsModerationList");
+        function showAlert(id, message, type) { const el = document.getElementById(id); el.textContent = message; el.className = "alert show " + type; }
+        function hideAlert(id) { const el = document.getElementById(id); el.textContent = ""; el.className = "alert"; }
+        function esc(value) { return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
+        function formatDate(value) { if (!value) return "-"; const d = new Date(value); return Number.isNaN(d.getTime()) ? value : d.toLocaleString(); }
+        async function parseJsonResponse(response) {
+            const text = await response.text();
+            let data = {};
+            if (text) {
+                try { data = JSON.parse(text); }
+                catch { data = { error: text }; }
+            }
+            return data;
         }
-
-        // Login form handler
-        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
-
+        async function fetchJson(path, options = {}) {
+            let response;
             try {
-                const response = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    currentUser = data.user;
-                    localStorage.setItem('adminUser', JSON.stringify(currentUser));
-                    localStorage.setItem('adminToken', data.token || '');
-                    showAdminPanel();
-                } else {
-                    showAlert('loginAlert', data.message, 'error');
-                }
-            } catch (error) {
-                // For demo, allow login with default credentials
-                if (email === 'admin@abious.org' && password === 'admin123') {
-                    currentUser = { email: 'admin@abious.org', role: 'Admin' };
-                    localStorage.setItem('adminUser', JSON.stringify(currentUser));
-                    localStorage.setItem('adminToken', 'demo_token');
-                    showAdminPanel();
-                } else {
-                    showAlert('loginAlert', 'Login failed. Use default: admin@abious.org / admin123', 'error');
-                }
+                response = await fetch(activeApiBase + path, options);
+            } catch {
+                throw new Error("Could not reach the server. Check the live backend or localhost:3000.");
             }
-        });
-
-        function showAdminPanel() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            // Show members directly by default
-            showTab('members');
-            loadMembers();
-            loadDashboardStats();
-            loadContent();
-            loadVerificationCodes();
+            const data = await parseJsonResponse(response);
+            if (!response.ok) throw new Error(data.error || data.message || "Request failed.");
+            return data;
         }
-
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('adminUser');
-            localStorage.removeItem('adminToken');
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('adminPanel').style.display = 'none';
-        }
-
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            event.target.classList.add('active');
-            
-            // Load data for specific tabs
-            if (tabName === 'news') {
-                loadNews();
-            }
-        }
-
-        function showAlert(alertId, message, type) {
-            const alert = document.getElementById(alertId);
-            alert.className = 'alert ' + type;
-            alert.textContent = message;
-            setTimeout(() => alert.textContent = '', 5000);
-        }
-
-        // Load dashboard stats
-        async function loadDashboardStats() {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const membersRes = await fetch('/api/admin/members', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                
-                if (!membersRes.ok) {
-                    throw new Error('Failed to load members');
-                }
-                
-                const membersData = await membersRes.json();
-                
-                const members = membersData.members || [];
-                document.getElementById('totalMembers').textContent = members.length;
-                document.getElementById('verifiedMembers').textContent = members.filter(m => m.verified).length;
-                
-                // Update posts count (approximate)
-                document.getElementById('totalPosts').textContent = members.length > 0 ? '-' : '0';
-                
-                // Update pending verifications
-                document.getElementById('pendingVerifications').textContent = members.filter(m => !m.verified).length;
-            } catch (error) {
-                console.error('Error loading dashboard stats:', error);
-            }
-        }
-
-        // Add member form handler
-        document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('newMemberName').value.trim();
-            const email = document.getElementById('newMemberEmail').value.trim().toLowerCase();
-            const phone = document.getElementById('newMemberPhone').value.trim();
-            const password = document.getElementById('newMemberPassword').value;
-            const biodata = document.getElementById('newMemberBiodata').value.trim();
-            
-            // Handle photo upload
-            const photoInput = document.getElementById('newMemberPhoto');
-            let photo = null;
-            if (photoInput.files && photoInput.files[0]) {
-                photo = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.readAsDataURL(photoInput.files[0]);
-                });
-            }
-            
-            if (!name || !email || !password) {
-                showAlert('membersAlert', 'Please fill in all required fields', 'error');
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/members', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name, email, phone, password, photo, biodata })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    showAlert('membersAlert', 'Member added successfully!', 'success');
-                    document.getElementById('addMemberForm').reset();
-                    loadMembers();
-                    
-                    // Show option to view member page
-                    setTimeout(() => {
-                        if (confirm('Member added! Would you like to go to the member page to see all members?')) {
-                            window.open('members.html', '_blank');
-                        }
-                    }, 1000);
-                } else {
-                    showAlert('membersAlert', data.error || 'Failed to add member', 'error');
-                }
-            } catch (error) {
-                showAlert('membersAlert', 'Error adding member: ' + error.message, 'error');
-            }
-        });
-
-        // Auto-refresh members every 30 seconds
-        setInterval(() => {
-            if (document.getElementById('adminPanel').style.display === 'block') {
-                loadMembers();
-            }
-        }, 30000);
-
-        // Load members
-        async function loadMembers() {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/members', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                const tbody = document.getElementById('membersTable');
-                tbody.innerHTML = '';
-                
-                if (!data.members || data.members.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No members found. Register members on the main site.</td></tr>';
-                    return;
-                }
-                
-                data.members.forEach(member => {
-                    const photoHtml = member.photo 
-                        ? `<img src="${member.photo}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">` 
-                        : '<span style="color: #999;">No Photo</span>';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${photoHtml}</td>
-                        <td>${member.fullName}</td>
-                        <td>${member.email}</td>
-                        <td>${member.phone || 'N/A'}</td>
-                        <td>${member.role}</td>
-                        <td><span class="status ${member.verified ? 'active' : 'pending'}">${member.verified ? 'Verified' : 'Pending'}</span></td>
-                        <td>
-                            <button onclick="deleteMember('${member.id}')" class="danger">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-                
-                // Update dashboard stats
-                document.getElementById('totalMembers').textContent = data.members.length;
-                document.getElementById('verifiedMembers').textContent = data.members.filter(m => m.verified).length;
-                document.getElementById('pendingVerifications').textContent = data.members.filter(m => !m.verified).length;
-            } catch (error) {
-                console.error('Error loading members:', error);
-                showAlert('membersAlert', 'Error loading members: ' + error.message, 'error');
-                const tbody = document.getElementById('membersTable');
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error loading members. Please refresh or re-login.</td></tr>';
-            }
-        }
-
-        // News form handler
-        document.getElementById('newsForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const title = document.getElementById('newsTitle').value.trim();
-            const content = document.getElementById('newsContent').value.trim();
-            const type = document.getElementById('newsType').value;
-            const eventDate = document.getElementById('newsEventDate').value || null;
-            
-            if (!title || !content) {
-                showAlert('newsAlert', 'Please fill in title and content', 'error');
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/news', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ title, content, type, eventDate })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    showAlert('newsAlert', 'Post published successfully!', 'success');
-                    document.getElementById('newsForm').reset();
-                    loadNews();
-                } else {
-                    showAlert('newsAlert', data.error || 'Failed to publish post', 'error');
-                }
-            } catch (error) {
-                showAlert('newsAlert', 'Error: ' + error.message, 'error');
-            }
-        });
-
-        // Load news
-        async function loadNews() {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/news', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-                const data = await response.json();
-                
-                const container = document.getElementById('newsList');
-                
-                if (!data.news || data.news.length === 0) {
-                    container.innerHTML = '<p>No news or events posted yet.</p>';
-                    return;
-                }
-                
-                let html = '';
-                data.news.forEach(item => {
-                    const typeLabel = item.type === 'event' ? '📅 Event' : '📰 News';
-                    const date = new Date(item.createdAt).toLocaleDateString();
-                    html += `
-                        <div class="content-item">
-                            <h4>${typeLabel}: ${item.title}</h4>
-                            <p style="color: #666; font-size: 0.9rem;">Posted on ${date}</p>
-                            <p>${item.content.substring(0, 150)}${item.content.length > 150 ? '...' : ''}</p>
-                            <div class="actions">
-                                <button onclick="deleteNews('${item.id}')" class="danger">Delete</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Error loading news:', error);
-            }
-        }
-
-        // Delete news
-        async function deleteNews(id) {
-            if (!confirm('Are you sure you want to delete this post?')) return;
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/news/' + id, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    showAlert('newsAlert', 'Post deleted successfully!', 'success');
-                    loadNews();
-                } else {
-                    showAlert('newsAlert', data.error || 'Failed to delete post', 'error');
-                }
-            } catch (error) {
-                showAlert('newsAlert', 'Error: ' + error.message, 'error');
-            }
-        }
-
-        // Load content
-        async function loadContent() {
-            try {
-                const response = await fetch('/api/admin/content');
-                const data = await response.json();
-                
-                if (data.contact) {
-                    document.getElementById('contactAddress').value = data.contact.address || '';
-                    document.getElementById('contactPhone').value = data.contact.phone || '';
-                    document.getElementById('contactWhatsApp').value = data.contact.whatsapp || '';
-                    document.getElementById('contactEmail').value = data.contact.email || '';
-                    document.getElementById('contactTikTok').value = data.contact.tiktok || '';
-                }
-            } catch (error) {
-                console.log('Using default content values');
-            }
-        }
-
-        // Contact form
-        document.getElementById('contactForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const contactData = {
-                address: document.getElementById('contactAddress').value,
-                phone: document.getElementById('contactPhone').value,
-                whatsapp: document.getElementById('contactWhatsApp').value,
-                email: document.getElementById('contactEmail').value,
-                tiktok: document.getElementById('contactTikTok').value
-            };
-            
-            try {
-                await fetch('/api/admin/content/contact', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(contactData)
-                });
-                showAlert('contentAlert', 'Contact information saved!', 'success');
-            } catch (error) {
-                showAlert('contentAlert', 'Contact information saved (demo mode)', 'success');
-            }
-        });
-
-        // About form
-        document.getElementById('aboutForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showAlert('contentAlert', 'About section saved!', 'success');
-        });
-
-        // Generate verification code
-        document.getElementById('generateCodeForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('codeEmail').value.trim().toLowerCase();
-            
-            if (!email) {
-                showAlert('verificationAlert', 'Please enter an email address', 'error');
-                return;
-            }
-            
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/verification/generate', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ email })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Fetch the generated code from server
-                    const codesRes = await fetch('/api/admin/verification-codes', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    const codesData = await codesRes.json();
-                    
-                    // Find the code for this email
-                    const codeEntry = (codesData.codes || []).find(c => c.email === email);
-                    if (codeEntry) {
-                        showAlert('verificationAlert', `Verification code for ${email}: ${codeEntry.code}`, 'success');
-                    } else {
-                        showAlert('verificationAlert', data.message || 'Verification code generated', 'success');
-                    }
-                    loadVerificationCodes();
-                } else {
-                    showAlert('verificationAlert', data.error || 'Failed to generate code', 'error');
-                }
-            } catch (error) {
-                showAlert('verificationAlert', 'Error generating code: ' + error.message, 'error');
-            }
-        });
-
-        async function loadVerificationCodes() {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await fetch('/api/admin/verification-codes', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                const codes = data.codes || [];
-                
-                const container = document.getElementById('activeCodes');
-                
-                if (codes.length === 0) {
-                    container.innerHTML = '<p>No active verification codes.</p>';
-                    return;
-                }
-                
-                container.innerHTML = codes.map(c => `
-                    <div class="code-item">
-                        <span>${c.email}</span>
-                        <span>${c.code} (expires: ${new Date(c.expires).toLocaleTimeString()})</span>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading verification codes:', error);
-                const container = document.getElementById('activeCodes');
-                container.innerHTML = '<p>Error loading verification codes.</p>';
-            }
-        }
-
-        // Settings form
-        document.getElementById('settingsForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            showAlert('settingsAlert', 'Settings saved!', 'success');
-        });
-
-        // Gallery form
-        document.getElementById('galleryForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const url = document.getElementById('newImageUrl').value;
-            if (url) {
-                showAlert('contentAlert', 'Image added to gallery!', 'success');
-                document.getElementById('newImageUrl').value = '';
-            }
-        });
-
-        async function deleteMember(id) {
-            if (confirm('Are you sure you want to delete this member?')) {
+        async function fetchJsonWithFallback(path, options = {}) {
+            let lastError = null;
+            for (const base of API_BASE_CANDIDATES) {
+                let response;
                 try {
-                    const token = localStorage.getItem('adminToken');
-                    await fetch(`/api/admin/members/${id}`, { 
-                        method: 'DELETE',
-                        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                    });
-                    loadMembers();
+                    response = await fetch(base + path, options);
                 } catch (error) {
-                    showAlert('membersAlert', 'Error deleting member: ' + error.message, 'error');
+                    lastError = error;
+                    continue;
                 }
+                const data = await parseJsonResponse(response);
+                if (response.ok) {
+                    activeApiBase = base;
+                    return data;
+                }
+                const message = data.error || data.message || "Request failed.";
+                if (response.status === 404 || /route not found/i.test(message)) {
+                    lastError = new Error(message);
+                    continue;
+                }
+                throw new Error(message);
+            }
+            throw new Error(lastError && lastError.message ? lastError.message : "Could not reach the server. Check the live backend or localhost:3000.");
+        }
+        function readFileAsDataUrl(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); }
+        function authHeaders(withJson = false) { const headers = { Authorization: "Bearer " + state.token }; if (withJson) headers["Content-Type"] = "application/json"; return headers; }
+        function defaultLocalAdminStore() {
+            return {
+                members: [],
+                posts: [],
+                content: {
+                    contact: { address: "", phone: "", whatsapp: "", email: "", tiktok: "" },
+                    links: { website: "", facebook: "", instagram: "", x: "", youtube: "", tiktok: "", whatsapp: "" },
+                    about: { text: "" },
+                    bankAccount: { bankName: "", accountNumber: "", accountName: "", branch: "", swiftCode: "", instructions: "" },
+                    imageAssets: {},
+                    privacy: { content: "", lastUpdated: null, updatedBy: null },
+                    security: { content: "", lastUpdated: null, updatedBy: null }
+                }
+            };
+        }
+        function getLocalAdminStore() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(LOCAL_ADMIN_STORE_KEY) || "null");
+                const defaults = defaultLocalAdminStore();
+                if (!parsed || typeof parsed !== "object") return defaults;
+                return {
+                    members: Array.isArray(parsed.members) ? parsed.members : defaults.members,
+                    posts: Array.isArray(parsed.posts) ? parsed.posts : defaults.posts,
+                    content: {
+                        ...defaults.content,
+                        ...(parsed.content || {}),
+                        contact: { ...defaults.content.contact, ...((parsed.content && parsed.content.contact) || {}) },
+                        links: { ...defaults.content.links, ...((parsed.content && parsed.content.links) || {}) },
+                        about: { ...defaults.content.about, ...((parsed.content && parsed.content.about) || {}) },
+                        bankAccount: { ...defaults.content.bankAccount, ...((parsed.content && parsed.content.bankAccount) || {}) },
+                        imageAssets: parsed.content && parsed.content.imageAssets && typeof parsed.content.imageAssets === "object" ? parsed.content.imageAssets : {},
+                        privacy: { ...defaults.content.privacy, ...((parsed.content && parsed.content.privacy) || {}) },
+                        security: { ...defaults.content.security, ...((parsed.content && parsed.content.security) || {}) }
+                    }
+                };
+            } catch {
+                return defaultLocalAdminStore();
             }
         }
+        function saveLocalAdminStore(store) { localStorage.setItem(LOCAL_ADMIN_STORE_KEY, JSON.stringify(store)); }
+        function saveSession(user, token, localMode = false) {
+            state.user = user;
+            state.token = token;
+            state.localMode = localMode;
+            localStorage.setItem("adminUser", JSON.stringify(user));
+            localStorage.setItem("adminToken", token);
+            localStorage.setItem("adminLocalMode", localMode ? "true" : "false");
+        }
+        function clearSession() {
+            state.user = null;
+            state.token = "";
+            state.localMode = false;
+            localStorage.removeItem("adminUser");
+            localStorage.removeItem("adminToken");
+            localStorage.removeItem("adminLocalMode");
+            setLoggedOutView();
+        }
+        function setLoggedOutView() { loginPanel.classList.remove("hidden"); dashboard.classList.remove("show"); }
+        function setLoggedInView() { loginPanel.classList.add("hidden"); dashboard.classList.add("show"); document.getElementById("welcomeText").textContent = "Signed in as " + (state.user?.email || "admin") + (state.localMode ? " (Local Mode)" : ""); }
+        function clearMemberForm() { document.getElementById("editMemberForm").reset(); document.getElementById("editMemberId").value = ""; document.getElementById("editMemberRole").value = "Member"; document.getElementById("editMemberVerified").value = "true"; hideAlert("editMemberAlert"); }
+        function fillMemberForm(member) { document.getElementById("editMemberId").value = member.id || ""; document.getElementById("editMemberName").value = member.fullName || ""; document.getElementById("editMemberEmail").value = member.email || ""; document.getElementById("editMemberPhone").value = member.phone || ""; document.getElementById("editMemberRole").value = member.role || "Member"; document.getElementById("editMemberVerified").value = member.verified ? "true" : "false"; document.getElementById("editMemberPassword").value = ""; document.getElementById("editMemberBiodata").value = member.biodata || ""; showAlert("editMemberAlert", "Member loaded.", "info"); }
+        function getImageConfig() {
+            const configured = new Set();
+            const items = IMAGE_FIELDS.map((item) => {
+                configured.add(item.key);
+                return { ...item, value: state.imageAssets[item.key] || "" };
+            });
+            Object.keys(state.imageAssets).forEach((key) => {
+                if (!configured.has(key)) items.push({ key, label: key, hint: "Custom image slot", value: state.imageAssets[key] || "" });
+            });
+            return items;
+        }
+        function renderImageManager() {
+            const fields = getImageConfig();
+            imageManager.innerHTML = fields.map((item) => {
+                const preview = item.value ? `<img src="${esc(item.value)}" alt="${esc(item.label)}">` : "<span>No image set</span>";
+                return `<div class="image-item" data-image-key="${esc(item.key)}">
+                    <div class="image-preview">${preview}</div>
+                    <div class="image-fields">
+                        <div class="image-meta">
+                            <div><strong>${esc(item.label)}</strong><small>${esc(item.hint || item.key)}</small></div>
+                            <span class="pill pending">${esc(item.key)}</span>
+                        </div>
+                        <div><label>Image URL or Data URL</label><input class="image-url-input" type="text" value="${esc(item.value || "")}" placeholder="https://... or uploaded file data"></div>
+                        <div><label>Upload Image File</label><input class="image-file-input" type="file" accept="image/*"></div>
+                        <div class="image-actions">
+                            <button class="secondary image-clear-btn" type="button">Remove Image</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+        function renderPostsModeration(posts) {
+            if (!Array.isArray(posts) || posts.length === 0) {
+                postsModerationList.innerHTML = '<div class="empty">No shared attachments found.</div>';
+                return;
+            }
+            const postsWithAttachments = posts.filter((post) => post.attachment && post.attachment.dataUrl);
+            if (!postsWithAttachments.length) {
+                postsModerationList.innerHTML = '<div class="empty">No shared attachments found.</div>';
+                return;
+            }
+            postsModerationList.innerHTML = postsWithAttachments.map((post) => {
+                const type = String(post.attachment.type || "");
+                const isVideo = type.startsWith("video/");
+                const preview = isVideo
+                    ? `<video controls preload="metadata"><source src="${esc(post.attachment.dataUrl)}" type="${esc(type)}"></video>`
+                    : `<img src="${esc(post.attachment.dataUrl)}" alt="${esc(post.attachment.name || "Shared attachment")}">`;
+                return `<article class="moderation-card" data-post-id="${esc(post.id)}">
+                    <div class="moderation-head">
+                        <strong>${esc(post.authorName || "Member")}</strong>
+                        <span class="pill pending">${esc(type || "attachment")}</span>
+                    </div>
+                    <p>${esc(post.text || post.attachment.name || "Shared attachment")}</p>
+                    <div class="moderation-meta">
+                        <span>${esc(post.attachment.name || "attachment")}</span>
+                        <span>${esc(formatDate(post.createdAt))}</span>
+                    </div>
+                    <div class="moderation-preview">${preview}</div>
+                    <div class="moderation-actions">
+                        <button class="secondary" type="button" data-post-action="remove-attachment" data-id="${esc(post.id)}">Remove Attachment</button>
+                        <button class="danger" type="button" data-post-action="delete-post" data-id="${esc(post.id)}">Delete Post</button>
+                    </div>
+                </article>`;
+            }).join("");
+        }
+        function renderMembers(members) {
+            if (!Array.isArray(members) || members.length === 0) {
+                membersTableBody.innerHTML = '<tr><td colspan="7" class="empty">No members found.</td></tr>';
+                document.getElementById("totalMembers").textContent = "0";
+                document.getElementById("verifiedMembers").textContent = "0";
+                document.getElementById("pendingMembers").textContent = "0";
+                return;
+            }
+            const verified = members.filter((m) => m.verified === true).length;
+            document.getElementById("totalMembers").textContent = String(members.length);
+            document.getElementById("verifiedMembers").textContent = String(verified);
+            document.getElementById("pendingMembers").textContent = String(members.length - verified);
+            membersTableBody.innerHTML = members.map((m) => `<tr><td>${esc(m.fullName || "-")}</td><td>${esc(m.email || "-")}</td><td>${esc(m.phone || "-")}</td><td>${esc(m.role || "Member")}</td><td><span class="pill ${m.verified ? "verified" : "pending"}">${m.verified ? "Verified" : "Pending"}</span></td><td>${esc(formatDate(m.createdAt))}</td><td><div class="actions"><button class="secondary" type="button" data-action="edit" data-id="${esc(m.id)}">Edit</button><button class="danger" type="button" data-action="delete" data-id="${esc(m.id)}">Delete</button></div></td></tr>`).join("");
+        }
+        async function fetchMembers() {
+            if (state.localMode) {
+                const store = getLocalAdminStore();
+                state.members = store.members || [];
+                renderMembers(state.members);
+                return;
+            }
+            const data = await fetchJson("/api/admin/members", { headers: authHeaders() });
+            state.members = data.members || [];
+            renderMembers(state.members);
+        }
+        async function fetchContent() {
+            if (state.localMode) {
+                const data = getLocalAdminStore().content;
+                state.imageAssets = data.imageAssets || {};
+                document.getElementById("contactAddress").value = data.contact?.address || "";
+                document.getElementById("contactPhone").value = data.contact?.phone || "";
+                document.getElementById("contactWhatsApp").value = data.contact?.whatsapp || "";
+                document.getElementById("contactEmail").value = data.contact?.email || "";
+                document.getElementById("contactTikTok").value = data.contact?.tiktok || "";
+                document.getElementById("websiteLink").value = data.links?.website || "";
+                document.getElementById("facebookLink").value = data.links?.facebook || "";
+                document.getElementById("instagramLink").value = data.links?.instagram || "";
+                document.getElementById("xLink").value = data.links?.x || "";
+                document.getElementById("youtubeLink").value = data.links?.youtube || "";
+                document.getElementById("tiktokLink").value = data.links?.tiktok || "";
+                document.getElementById("whatsappLink").value = data.links?.whatsapp || "";
+                document.getElementById("aboutText").value = data.about?.text || "";
+                document.getElementById("bankName").value = data.bankAccount?.bankName || "";
+                document.getElementById("accountNumber").value = data.bankAccount?.accountNumber || "";
+                document.getElementById("accountName").value = data.bankAccount?.accountName || "";
+                document.getElementById("bankBranch").value = data.bankAccount?.branch || "";
+                document.getElementById("swiftCode").value = data.bankAccount?.swiftCode || "";
+                document.getElementById("bankInstructions").value = data.bankAccount?.instructions || "";
+                renderImageManager();
+                return;
+            }
+            const data = await fetchJson("/api/admin/content", { headers: authHeaders() });
+            state.imageAssets = data.imageAssets || {};
+            document.getElementById("contactAddress").value = data.contact?.address || "";
+            document.getElementById("contactPhone").value = data.contact?.phone || "";
+            document.getElementById("contactWhatsApp").value = data.contact?.whatsapp || "";
+            document.getElementById("contactEmail").value = data.contact?.email || "";
+            document.getElementById("contactTikTok").value = data.contact?.tiktok || "";
+            document.getElementById("websiteLink").value = data.links?.website || "";
+            document.getElementById("facebookLink").value = data.links?.facebook || "";
+            document.getElementById("instagramLink").value = data.links?.instagram || "";
+            document.getElementById("xLink").value = data.links?.x || "";
+            document.getElementById("youtubeLink").value = data.links?.youtube || "";
+            document.getElementById("tiktokLink").value = data.links?.tiktok || "";
+            document.getElementById("whatsappLink").value = data.links?.whatsapp || "";
+            document.getElementById("aboutText").value = data.about?.text || "";
+            document.getElementById("bankName").value = data.bankAccount?.bankName || "";
+            document.getElementById("accountNumber").value = data.bankAccount?.accountNumber || "";
+            document.getElementById("accountName").value = data.bankAccount?.accountName || "";
+            document.getElementById("bankBranch").value = data.bankAccount?.branch || "";
+            document.getElementById("swiftCode").value = data.bankAccount?.swiftCode || "";
+            document.getElementById("bankInstructions").value = data.bankAccount?.instructions || "";
+            renderImageManager();
+        }
+        async function fetchPolicies() {
+            if (state.localMode) {
+                const content = getLocalAdminStore().content;
+                const privacy = content.privacy || {};
+                const security = content.security || {};
+                document.getElementById("privacyText").value = privacy.content || "";
+                document.getElementById("securityText").value = security.content || "";
+                document.getElementById("privacyMeta").textContent = privacy.lastUpdated ? "Last updated: " + formatDate(privacy.lastUpdated) + " by " + (privacy.updatedBy || "Admin") : "";
+                document.getElementById("securityMeta").textContent = security.lastUpdated ? "Last updated: " + formatDate(security.lastUpdated) + " by " + (security.updatedBy || "Admin") : "";
+                return;
+            }
+            const [privacy, security] = await Promise.all([fetchJson("/api/admin/privacy", { headers: authHeaders() }), fetchJson("/api/admin/security", { headers: authHeaders() })]);
+            document.getElementById("privacyText").value = privacy.content || "";
+            document.getElementById("securityText").value = security.content || "";
+            document.getElementById("privacyMeta").textContent = privacy.lastUpdated ? "Last updated: " + formatDate(privacy.lastUpdated) + " by " + (privacy.updatedBy || "Admin") : "";
+            document.getElementById("securityMeta").textContent = security.lastUpdated ? "Last updated: " + formatDate(security.lastUpdated) + " by " + (security.updatedBy || "Admin") : "";
+        }
+        async function fetchPosts() {
+            if (state.localMode) {
+                const data = getLocalAdminStore();
+                state.posts = data.posts || [];
+                renderPostsModeration(state.posts);
+                return;
+            }
+            const data = await fetchJson("/api/admin/posts", { headers: authHeaders() });
+            state.posts = data.posts || [];
+            renderPostsModeration(state.posts);
+        }
+        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts()]); }
+        async function restoreSession() { if (!state.user || !state.token) { setLoggedOutView(); return; } try { setLoggedInView(); await refreshAllData(); } catch { clearSession(); } }
+
+        document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("loginAlert");
+            const loginButton = document.getElementById("loginButton"); loginButton.disabled = true; loginButton.textContent = "Signing In...";
+            try {
+                const data = await fetchJsonWithFallback("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: document.getElementById("adminEmail").value.trim(), password: document.getElementById("adminPassword").value }) });
+                saveSession(data.user || {}, data.token, false); setLoggedInView(); await refreshAllData(); showAlert("dashboardAlert", "Dashboard loaded.", "success");
+            } catch (error) {
+                const email = document.getElementById("adminEmail").value.trim().toLowerCase();
+                const password = document.getElementById("adminPassword").value;
+                if (ALLOW_LOCAL_ADMIN_MODE && (/route not found/i.test(error.message || "") || /could not reach the server/i.test(error.message || "")) && email === LOCAL_ADMIN_EMAIL && password === LOCAL_ADMIN_PASSWORD) {
+                    saveSession({ email: LOCAL_ADMIN_EMAIL, role: "Admin", fullName: "Administrator" }, "local-admin-session", true);
+                    setLoggedInView();
+                    await refreshAllData();
+                    showAlert("dashboardAlert", "Dashboard loaded in local admin mode because the API route is unavailable.", "info");
+                } else {
+                    showAlert("loginAlert", error.message || "Login failed.", "error"); clearSession();
+                }
+            }
+            finally { loginButton.disabled = false; loginButton.textContent = "Sign In"; }
+        });
+        refreshButton.addEventListener("click", async () => { try { await refreshAllData(); showAlert("dashboardAlert", "Data refreshed.", "success"); } catch (error) { showAlert("dashboardAlert", error.message || "Could not refresh data.", "error"); } });
+        document.getElementById("logoutButton").addEventListener("click", () => { clearSession(); showAlert("loginAlert", "Logged out.", "success"); });
+        document.getElementById("addMemberForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("addMemberAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.members.push({
+                        id: "local_" + Date.now(),
+                        fullName: document.getElementById("newMemberName").value.trim(),
+                        email: document.getElementById("newMemberEmail").value.trim(),
+                        phone: document.getElementById("newMemberPhone").value.trim(),
+                        role: "Member",
+                        verified: true,
+                        biodata: document.getElementById("newMemberBiodata").value.trim(),
+                        createdAt: new Date().toISOString()
+                    });
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/members", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ name: document.getElementById("newMemberName").value.trim(), email: document.getElementById("newMemberEmail").value.trim(), phone: document.getElementById("newMemberPhone").value.trim(), password: document.getElementById("newMemberPassword").value, biodata: document.getElementById("newMemberBiodata").value.trim() }) });
+                }
+                event.target.reset(); await fetchMembers(); showAlert("addMemberAlert", "Member added.", "success");
+            } catch (error) { showAlert("addMemberAlert", error.message || "Could not add member.", "error"); }
+        });
+        document.getElementById("editMemberForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("editMemberAlert");
+            const memberId = document.getElementById("editMemberId").value; if (!memberId) { showAlert("editMemberAlert", "Select a member first.", "error"); return; }
+            const payload = { fullName: document.getElementById("editMemberName").value.trim(), email: document.getElementById("editMemberEmail").value.trim(), phone: document.getElementById("editMemberPhone").value.trim(), role: document.getElementById("editMemberRole").value, verified: document.getElementById("editMemberVerified").value === "true", biodata: document.getElementById("editMemberBiodata").value.trim() };
+            const password = document.getElementById("editMemberPassword").value.trim(); if (password) payload.password = password;
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    const index = store.members.findIndex((item) => item.id === memberId);
+                    if (index === -1) throw new Error("Member not found.");
+                    store.members[index] = { ...store.members[index], ...payload };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/members/" + encodeURIComponent(memberId), { method: "PATCH", headers: authHeaders(true), body: JSON.stringify(payload) });
+                }
+                await fetchMembers(); showAlert("editMemberAlert", "Member updated.", "success");
+            } catch (error) { showAlert("editMemberAlert", error.message || "Could not update member.", "error"); }
+        });
+        document.getElementById("clearEditButton").addEventListener("click", clearMemberForm);
+        membersTableBody.addEventListener("click", async (event) => {
+            const target = event.target; if (!(target instanceof HTMLElement)) return;
+            const id = target.dataset.id; const action = target.dataset.action; if (!id || !action) return;
+            const member = state.members.find((item) => item.id === id); if (!member) return;
+            if (action === "edit") { fillMemberForm(member); return; }
+            if (!confirm("Delete " + (member.fullName || member.email) + "?")) return;
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.members = store.members.filter((item) => item.id !== id);
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/members/" + encodeURIComponent(id), { method: "DELETE", headers: authHeaders() });
+                }
+                await fetchMembers(); if (document.getElementById("editMemberId").value === id) clearMemberForm(); showAlert("dashboardAlert", "Member deleted.", "success");
+            } catch (error) { showAlert("dashboardAlert", error.message || "Could not delete member.", "error"); }
+        });
+        document.getElementById("contactForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("contactAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.contact = { address: document.getElementById("contactAddress").value.trim(), phone: document.getElementById("contactPhone").value.trim(), whatsapp: document.getElementById("contactWhatsApp").value.trim(), email: document.getElementById("contactEmail").value.trim(), tiktok: document.getElementById("contactTikTok").value.trim() };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/content/contact", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ address: document.getElementById("contactAddress").value.trim(), phone: document.getElementById("contactPhone").value.trim(), whatsapp: document.getElementById("contactWhatsApp").value.trim(), email: document.getElementById("contactEmail").value.trim(), tiktok: document.getElementById("contactTikTok").value.trim() }) });
+                }
+                showAlert("contactAlert", "Contacts saved.", "success");
+            } catch (error) { showAlert("contactAlert", error.message || "Could not save contacts.", "error"); }
+        });
+        document.getElementById("linksForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("linksAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.links = { website: document.getElementById("websiteLink").value.trim(), facebook: document.getElementById("facebookLink").value.trim(), instagram: document.getElementById("instagramLink").value.trim(), x: document.getElementById("xLink").value.trim(), youtube: document.getElementById("youtubeLink").value.trim(), tiktok: document.getElementById("tiktokLink").value.trim(), whatsapp: document.getElementById("whatsappLink").value.trim() };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/content/links", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ website: document.getElementById("websiteLink").value.trim(), facebook: document.getElementById("facebookLink").value.trim(), instagram: document.getElementById("instagramLink").value.trim(), x: document.getElementById("xLink").value.trim(), youtube: document.getElementById("youtubeLink").value.trim(), tiktok: document.getElementById("tiktokLink").value.trim(), whatsapp: document.getElementById("whatsappLink").value.trim() }) });
+                }
+                showAlert("linksAlert", "Links saved.", "success");
+            } catch (error) { showAlert("linksAlert", error.message || "Could not save links.", "error"); }
+        });
+        document.getElementById("aboutForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("aboutAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.about = { text: document.getElementById("aboutText").value.trim() };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/content/about", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ text: document.getElementById("aboutText").value.trim() }) });
+                }
+                showAlert("aboutAlert", "About text saved.", "success");
+            }
+            catch (error) { showAlert("aboutAlert", error.message || "Could not save about text.", "error"); }
+        });
+        document.getElementById("bankAccountForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("bankAccountAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.bankAccount = { bankName: document.getElementById("bankName").value.trim(), accountNumber: document.getElementById("accountNumber").value.trim(), accountName: document.getElementById("accountName").value.trim(), branch: document.getElementById("bankBranch").value.trim(), swiftCode: document.getElementById("swiftCode").value.trim(), instructions: document.getElementById("bankInstructions").value.trim() };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/content/bank-account", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ bankName: document.getElementById("bankName").value.trim(), accountNumber: document.getElementById("accountNumber").value.trim(), accountName: document.getElementById("accountName").value.trim(), branch: document.getElementById("bankBranch").value.trim(), swiftCode: document.getElementById("swiftCode").value.trim(), instructions: document.getElementById("bankInstructions").value.trim() }) });
+                }
+                showAlert("bankAccountAlert", "Bank details saved.", "success");
+            } catch (error) { showAlert("bankAccountAlert", error.message || "Could not save bank details.", "error"); }
+        });
+        document.getElementById("privacyForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("privacyAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.privacy = { content: document.getElementById("privacyText").value, lastUpdated: new Date().toISOString(), updatedBy: LOCAL_ADMIN_EMAIL };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/privacy", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ content: document.getElementById("privacyText").value }) });
+                }
+                await fetchPolicies(); showAlert("privacyAlert", "Privacy policy saved.", "success");
+            }
+            catch (error) { showAlert("privacyAlert", error.message || "Could not save privacy policy.", "error"); }
+        });
+        document.getElementById("securityForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("securityAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.security = { content: document.getElementById("securityText").value, lastUpdated: new Date().toISOString(), updatedBy: LOCAL_ADMIN_EMAIL };
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/security", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ content: document.getElementById("securityText").value }) });
+                }
+                await fetchPolicies(); showAlert("securityAlert", "Security policy saved.", "success");
+            }
+            catch (error) { showAlert("securityAlert", error.message || "Could not save security policy.", "error"); }
+        });
+        imageManager.addEventListener("change", async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            const item = target.closest(".image-item");
+            if (!item) return;
+            const key = item.getAttribute("data-image-key") || "";
+            if (!key) return;
+            if (target.classList.contains("image-file-input")) {
+                const file = target.files && target.files[0];
+                if (!file) return;
+                try {
+                    state.imageAssets[key] = await readFileAsDataUrl(file);
+                    renderImageManager();
+                } catch (error) {
+                    showAlert("imagesAlert", error.message || "Could not read image file.", "error");
+                }
+                return;
+            }
+            if (target.classList.contains("image-url-input")) {
+                state.imageAssets[key] = target.value.trim();
+            }
+        });
+        imageManager.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (!target.classList.contains("image-clear-btn")) return;
+            const item = target.closest(".image-item");
+            if (!item) return;
+            const key = item.getAttribute("data-image-key") || "";
+            if (!key) return;
+            delete state.imageAssets[key];
+            renderImageManager();
+        });
+        document.getElementById("addCustomImageButton").addEventListener("click", () => {
+            const key = window.prompt("Enter a unique image key, for example home_banner_extra");
+            if (!key) return;
+            const trimmed = key.trim();
+            if (!trimmed) return;
+            if (!(trimmed in state.imageAssets)) state.imageAssets[trimmed] = "";
+            renderImageManager();
+        });
+        document.getElementById("saveImagesButton").addEventListener("click", async () => {
+            hideAlert("imagesAlert");
+            imageManager.querySelectorAll(".image-item").forEach((item) => {
+                const key = item.getAttribute("data-image-key") || "";
+                const input = item.querySelector(".image-url-input");
+                if (key && input instanceof HTMLInputElement) state.imageAssets[key] = input.value.trim();
+            });
+            const cleaned = {};
+            Object.entries(state.imageAssets).forEach(([key, value]) => {
+                const safeKey = String(key || "").trim();
+                const safeValue = String(value || "").trim();
+                if (safeKey && safeValue) cleaned[safeKey] = safeValue;
+            });
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    store.content.imageAssets = cleaned;
+                    saveLocalAdminStore(store);
+                    state.imageAssets = cleaned;
+                } else {
+                    const data = await fetchJson("/api/admin/content/images", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ imageAssets: cleaned }) });
+                    state.imageAssets = data.imageAssets || cleaned;
+                }
+                renderImageManager();
+                showAlert("imagesAlert", "Website images saved.", "success");
+            } catch (error) {
+                showAlert("imagesAlert", error.message || "Could not save website images.", "error");
+            }
+        });
+        postsModerationList.addEventListener("click", async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const postId = target.dataset.id;
+            const action = target.dataset.postAction;
+            if (!postId || !action) return;
+            try {
+                if (action === "remove-attachment") {
+                    if (!confirm("Remove this shared attachment but keep the post text?")) return;
+                    if (state.localMode) {
+                        const store = getLocalAdminStore();
+                        const post = store.posts.find((item) => item.id === postId);
+                        if (!post) throw new Error("Post not found.");
+                        post.attachment = null;
+                        saveLocalAdminStore(store);
+                    } else {
+                        await fetchJson("/api/admin/posts/" + encodeURIComponent(postId) + "/attachment", { method: "DELETE", headers: authHeaders() });
+                    }
+                    showAlert("postsAlert", "Attachment removed.", "success");
+                } else if (action === "delete-post") {
+                    if (!confirm("Delete this entire post and its attachment?")) return;
+                    if (state.localMode) {
+                        const store = getLocalAdminStore();
+                        store.posts = store.posts.filter((item) => item.id !== postId);
+                        saveLocalAdminStore(store);
+                    } else {
+                        await fetchJson("/api/admin/posts/" + encodeURIComponent(postId), { method: "DELETE", headers: authHeaders() });
+                    }
+                    showAlert("postsAlert", "Post deleted.", "success");
+                }
+                await fetchPosts();
+            } catch (error) {
+                showAlert("postsAlert", error.message || "Could not update shared attachment.", "error");
+            }
+        });
+        document.querySelectorAll(".tab-btn").forEach((button) => button.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach((item) => item.classList.remove("active"));
+            document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
+            button.classList.add("active"); document.getElementById("tab-" + button.dataset.tab).classList.add("active");
+        }));
+        document.getElementById("adminEmail").value = "admin@abious.org";
+        document.getElementById("adminPassword").value = "St!lla18";
+        clearMemberForm();
+        restoreSession();
     </script>
 </body>
 </html>

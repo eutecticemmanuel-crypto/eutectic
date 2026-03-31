@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Members - Abious Rehabilitation Initiative</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-theme.css">
     <style>
         :root {
             --primary: #0d6e5e;
@@ -16,18 +20,21 @@
         }
 
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #f0fdf9 0%, #ecfeff 50%, #f0fdf4 100%);
             min-height: 100vh;
         }
 
         header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: rgba(255,255,255,0.08);
             color: white;
             padding: 30px 20px;
             text-align: center;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 28px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
         }
 
         header h1 {
@@ -44,6 +51,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 30px 20px;
+            position: relative;
+            z-index: 2;
         }
 
         .section-title {
@@ -59,11 +68,12 @@
         }
 
         .member-card {
-            background: white;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 18px 44px rgba(0,0,0,0.14);
             transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.72);
         }
 
         .member-card:hover {
@@ -145,9 +155,10 @@
         .no-members {
             text-align: center;
             padding: 40px;
-            color: #666;
-            background: white;
-            border-radius: 10px;
+            color: #3b4f4a;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.72);
         }
 
         .loading {
@@ -188,10 +199,27 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-page">
+    <div class="live-wallpaper" aria-hidden="true">
+        <div class="theme-orb one"></div>
+        <div class="theme-orb two"></div>
+        <div class="theme-orb three"></div>
+        <div class="theme-particles">
+            <span class="theme-particle" style="--size: 8px; --left: 8%; --duration: 19s; --delay: -1s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 18%; --duration: 25s; --delay: -8s;"></span>
+            <span class="theme-particle" style="--size: 10px; --left: 28%; --duration: 21s; --delay: -4s;"></span>
+            <span class="theme-particle" style="--size: 7px; --left: 39%; --duration: 24s; --delay: -12s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 48%; --duration: 20s; --delay: -6s;"></span>
+        </div>
+    </div>
     <header>
-        <h1>Our Members</h1>
-        <p>Meet the amazing people of Abious Rehabilitation Initiative</p>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img data-image-key="members_logo" src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="Abious Logo" style="width: 60px; height: 60px; border-radius: 12px; object-fit: cover; border: 2px solid rgba(255,255,255,0.5); box-shadow: 0 3px 10px rgba(0,0,0,0.2);">
+            <div>
+                <h1>Our Members</h1>
+                <p>Meet the amazing people of Abious Rehabilitation Initiative</p>
+            </div>
+        </div>
     </header>
 
     <div class="container">
@@ -208,12 +236,39 @@
     </div>
 
     <script>
+        const LIVE_API_BASE = 'https://abious-rehabilitation-center.onrender.com';
+        const API_BASE_CANDIDATES = Array.from(new Set([
+            location.origin.startsWith('http') ? location.origin : '',
+            (!location.origin.startsWith('http') || ['localhost', '127.0.0.1'].includes(location.hostname)) ? 'http://localhost:3000' : '',
+            LIVE_API_BASE
+        ].filter(Boolean)));
+        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+
+        async function fetchApiJson(path) {
+            let lastError = new Error('Unable to reach the backend.');
+            for (const base of API_BASE_CANDIDATES) {
+                try {
+                    const response = await fetch(base + path);
+                    if (response.status === 404) {
+                        lastError = new Error('API route not found.');
+                        continue;
+                    }
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Request failed.');
+                    activeApiBase = base;
+                    return data;
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+            throw lastError;
+        }
+
         async function loadMembers() {
             const container = document.getElementById('membersContainer');
             
             try {
-                const response = await fetch('/api/public/members');
-                const data = await response.json();
+                const data = await fetchApiJson('/api/public/members');
                 
                 if (!data.members || data.members.length === 0) {
                     container.innerHTML = `
@@ -267,12 +322,27 @@
                 container.innerHTML = `
                     <div class="no-members">
                         <p>Unable to load members.</p>
-                        <p>Please try again later.</p>
+                        <p>Check that the backend is running and reachable.</p>
                     </div>
                 `;
             }
         }
         
+        (async () => {
+            const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+            try {
+                const response = await fetch((activeApiBase || apiBase) + "/api/site-content");
+                const data = await response.json();
+                const imageAssets = data && data.imageAssets ? data.imageAssets : {};
+                document.querySelectorAll("[data-image-key]").forEach((img) => {
+                    const key = img.getAttribute("data-image-key");
+                    if (key && imageAssets[key]) img.src = imageAssets[key];
+                });
+            } catch (error) {
+                console.warn("Could not load managed site images.", error);
+            }
+        })();
+
         // Load members on page load
         loadMembers();
     </script>

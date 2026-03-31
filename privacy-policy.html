@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | Abious Foundation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-theme.css">
+    <style>
+        :root {
+            --bg: #f2f7f4;
+            --surface: #ffffff;
+            --ink: #182220;
+            --ink-soft: #576563;
+            --primary: #0f766e;
+            --primary-deep: #0c4a44;
+            --accent: #d97706;
+            --accent-light: #fbbf24;
+            --line: #d9e7df;
+            --radius: 18px;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        body {
+            color: var(--ink);
+            font-family: "Manrope", "Segoe UI", sans-serif;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 22px 18px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 28px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-family: "Sora", sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-deep);
+            margin: 0 0 10px 0;
+        }
+
+        .subtitle {
+            color: var(--ink-soft);
+            font-size: 18px;
+        }
+
+        .content {
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9));
+            border-radius: var(--radius);
+            padding: 48px;
+            box-shadow: 0 20px 50px rgba(9, 46, 43, 0.16);
+            border: 1px solid rgba(255,255,255,0.72);
+        }
+
+        h2 {
+            font-family: "Sora", sans-serif;
+            font-size: 24px;
+            color: var(--primary-deep);
+            margin: 40px 0 16px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--line);
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: var(--primary);
+            margin: 24px 0 12px 0;
+        }
+
+        p {
+            margin: 12px 0;
+            color: var(--ink-soft);
+        }
+
+        ul, ol {
+            margin: 12px 0;
+            padding-left: 24px;
+            color: var(--ink-soft);
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(15, 118, 110, 0.05) 100%);
+            border-left: 4px solid var(--primary);
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 0 12px 12px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .info-card {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .info-card h4 {
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card p {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary-deep);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 24px;
+            color: var(--ink-soft);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+        }
+
+        th {
+            background: var(--bg);
+            color: var(--primary-deep);
+            font-weight: 600;
+        }
+
+        .contact-box {
+            background: var(--bg);
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 24px;
+        }
+
+        .contact-box h3 {
+            margin-top: 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            .content {
+                padding: 24px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body class="theme-page">
+    <div class="live-wallpaper" aria-hidden="true">
+        <div class="theme-orb one"></div>
+        <div class="theme-orb two"></div>
+        <div class="theme-orb three"></div>
+        <div class="theme-particles">
+            <span class="theme-particle" style="--size: 8px; --left: 8%; --duration: 19s; --delay: -1s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 18%; --duration: 25s; --delay: -8s;"></span>
+            <span class="theme-particle" style="--size: 10px; --left: 28%; --duration: 21s; --delay: -4s;"></span>
+            <span class="theme-particle" style="--size: 7px; --left: 39%; --duration: 24s; --delay: -12s;"></span>
+            <span class="theme-particle" style="--size: 12px; --left: 48%; --duration: 20s; --delay: -6s;"></span>
+        </div>
+    </div>
+    <div class="container">
+        <header>
+            <div class="logo">🏥</div>
+            <h1>Privacy Policy</h1>
+            <p class="subtitle">Abious Foundation Rehabilitation Center</p>
+        </header>
+
+        <a href="abious_rehabilitation_center2.html" class="back-link">
+            ← Back to Home
+        </a>
+
+        <div class="content">
+            <p><strong>Last Updated:</strong> March 2026</p>
+            <p>At Abious Foundation, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our website, member portal, and Chrome extension.</p>
+
+            <div class="highlight-box">
+                <strong>📋 Quick Summary</strong><br>
+                We collect only necessary information, never sell your data, and implement strong security measures to protect your privacy.
+            </div>
+
+            <h2>1. Information We Collect</h2>
+
+            <h3>1.1 Personal Information</h3>
+            <p>We may collect the following types of personal information:</p>
+            <ul>
+                <li><strong>Contact Information:</strong> Name, email address, phone number</li>
+                <li><strong>Account Credentials:</strong> Username, encrypted password</li>
+                <li><strong>Profile Information:</strong> Profile picture, member details</li>
+                <li><strong>Communication Data:</strong> Messages you send us, feedback</li>
+            </ul>
+
+            <h3>1.2 Automatically Collected Information</h3>
+            <ul>
+                <li><strong>Device Information:</strong> Browser type, operating system, device type</li>
+                <li><strong>Usage Data:</strong> Pages visited, time spent, features used</li>
+                <li><strong>Analytics Data:</strong> Anonymous usage statistics for improvement</li>
+            </ul>
+
+            <h2>2. How We Use Your Information</h2>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4>🔐 Account Management</h4>
+                    <p>Create and manage your member account</p>
+                </div>
+                <div class="info-card">
+                    <h4>📬 Communications</h4>
+                    <p>Send updates, newsletters, and respond to inquiries</p>
+                </div>
+                <div class="info-card">
+                    <h4>📊 Service Improvement</h4>
+                    <p>Analyze usage to improve our services</p>
+                </div>
+                <div class="info-card">
+                    <h4>🛡️ Security</h4>
+                    <p>Detect and prevent fraud, abuse, and security threats</p>
+                </div>
+            </div>
+
+            <h2>3. Data Sharing & Disclosure</h2>
+
+            <h3>3.1 We Do NOT Sell Your Data</h3>
+            <p>Abious Foundation does <strong>not sell, rent, or trade</strong> your personal information to third parties.</p>
+
+            <h3>3.2 When We May Share Data</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Recipient</th>
+                        <th>Purpose</th>
+                        <th>Data Shared</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Service Providers</td>
+                        <td>Hosting, analytics, email delivery</td>
+                        <td>Limited to necessary functions</td>
+                    </tr>
+                    <tr>
+                        <td>Legal Authorities</td>
+                        <td>Compliance with law enforcement</td>
+                        <td>When legally required</td>
+                    </tr>
+                    <tr>
+                        <td>Emergency Services</td>
+                        <td>Health/safety emergencies</td>
+                        <td>Only when necessary</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>4. Data Storage & Security</h2>
+
+            <h3>4.1 Where Your Data is Stored</h3>
+            <ul>
+                <li><strong>Primary Database:</strong> MongoDB Atlas (Cloud hosting with data centers)</li>
+                <li><strong>Backup Storage:</strong> Encrypted cloud backups</li>
+                <li><strong>Extension Data:</strong> Local browser storage (not synced to cloud)</li>
+            </ul>
+
+            <h3>4.2 Security Measures</h3>
+            <ul>
+                <li>TLS encryption for all data transmission</li>
+                <li>AES-256 encryption for stored data</li>
+                <li>Regular security audits and vulnerability assessments</li>
+                <li>Employee training on data protection</li>
+                <li>Access controls and authentication requirements</li>
+            </ul>
+
+            <h2>5. Your Rights</h2>
+
+            <p>Under applicable privacy laws, you have the following rights:</p>
+            <ul>
+                <li><strong>Right to Access:</strong> Request a copy of your personal data</li>
+                <li><strong>Right to Rectification:</strong> Request correction of inaccurate data</li>
+                <li><strong>Right to Erasure:</strong> Request deletion of your personal data ("Right to be forgotten")</li>
+                <li><strong>Right to Restrict Processing:</strong> Limit how we use your data</li>
+                <li><strong>Right to Data Portability:</strong> Request your data in a machine-readable format</li>
+                <li><strong>Right to Object:</strong> Object to processing for certain purposes</li>
+                <li><strong>Right to Withdraw Consent:</strong> Withdraw consent at any time</li>
+            </ul>
+
+            <h2>6. Cookies & Tracking Technologies</h2>
+
+            <h3>6.1 Types of Cookies We Use</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cookie Type</th>
+                        <th>Purpose</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Essential Cookies</td>
+                        <td>Core functionality, login sessions</td>
+                        <td>Session</td>
+                    </tr>
+                    <tr>
+                        <td>Analytics Cookies</td>
+                        <td>Understand website usage</td>
+                        <td>Up to 1 year</td>
+                    </tr>
+                    <tr>
+                        <td>Preference Cookies</td>
+                        <td>Remember your settings</td>
+                        <td>Up to 1 year</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>6.2 Managing Cookies</h3>
+            <p>You can control or disable cookies through your browser settings. Note that some features may not work properly without cookies.</p>
+
+            <h2>7. Children's Privacy</h2>
+            <p>Our services are not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child under 13, please contact us immediately.</p>
+
+            <h2>8. Browser Extension Privacy</h2>
+
+            <p>Our Chrome/Edge extension (Abious Foundation) has the following privacy practices:</p>
+            <ul>
+                <li><strong>Local Storage:</strong> Extension settings stored locally in your browser</li>
+                <li><strong>No Cloud Sync:</strong> Personal data is NOT synced to cloud services</li>
+                <li><strong>Limited Permissions:</strong> Only requests necessary permissions for functionality</li>
+                <li><strong>No Tracking:</strong> Does not track browsing history or collect analytics</li>
+                <li><strong>Open Source:</strong> Extension code can be reviewed for transparency</li>
+            </ul>
+
+            <h2>9. Third-Party Services</h2>
+
+            <p>We use trusted third-party services that have their own privacy policies:</p>
+            <ul>
+                <li><strong>MongoDB Atlas:</strong> Database hosting - <a href="https://www.mongodb.com/legal/privacy-policy" target="_blank">Privacy Policy</a></li>
+                <li><strong>Render:</strong> Cloud hosting - <a href="https://render.com/privacy" target="_blank">Privacy Policy</a></li>
+                <li><strong>Google Fonts:</strong> Typography - <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a></li>
+            </ul>
+
+            <h2>10. Data Retention</h2>
+
+            <p>We retain personal information only for as long as necessary:</p>
+            <ul>
+                <li><strong>Active Accounts:</strong> Retained while account is active</li>
+                <li><strong>Inactive Accounts:</strong> Data retained for 2 years after last login</li>
+                <li><strong>Deleted Accounts:</strong> Data permanently deleted within 30 days</li>
+                <li><strong>Backup Data:</strong> Automatically purged after retention period</li>
+            </ul>
+
+            <h2>11. International Data Transfers</h2>
+            <p>Your data may be stored and processed in servers outside your country. We ensure appropriate safeguards are in place for international data transfers, including Standard Contractual Clauses and adequacy decisions.</p>
+
+            <h2>12. Changes to This Policy</h2>
+            <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by:</p>
+            <ul>
+                <li>Posting the new policy on this page</li>
+                <li>Updating the "Last Updated" date</li>
+                <li>Sending an email notification for significant changes</li>
+            </ul>
+
+            <h2>13. Contact Information</h2>
+
+            <div class="contact-box">
+                <h3>📬 Contact Us</h3>
+                <p>If you have questions, want to exercise your rights, or need more information about our privacy practices:</p>
+                <p>
+                    <strong>Email:</strong> privacy@abiousfoundation.org<br>
+                    <strong>Subject Line:</strong> Privacy Inquiry
+                </p>
+                <p>We will respond to your request within 30 days.</p>
+            </div>
+
+            <p style="margin-top: 30px;"><em>We are committed to protecting your privacy and maintaining transparency in all our data practices. Thank you for trusting Abious Foundation with your information.</em></p>
+        </div>
+
+        <footer>
+            <nav class="nav-links">
+                <a href="security-policy.html">Security Policy</a>
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="abious_rehabilitation_center2.html">Home</a>
+            </nav>
+            <p>&copy; 2026 Abious Foundation. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

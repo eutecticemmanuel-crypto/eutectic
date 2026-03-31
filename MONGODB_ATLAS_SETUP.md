@@ -1,82 +1,58 @@
 # MongoDB Atlas Setup Guide for Abious Rehabilitation
 
-This guide will help you set up a free MongoDB Atlas database for your website.
+This guide helps you connect the site to MongoDB Atlas so members, logins, verification codes, and website content stay live in the cloud.
 
-## Step 1: Create MongoDB Atlas Account
+## Step 1: Create Atlas
 
-1. Go to: **https://www.mongodb.com/cloud/atlas/register**
-2. Enter your email and create a password
-3. Verify your email address
+1. Open `https://www.mongodb.com/cloud/atlas/register`
+2. Create an account and verify your email
+3. Create a free `M0` cluster
 
-## Step 2: Create Free Cluster
+## Step 2: Create A Database User
 
-1. After login, click **"Create"** to start a new project
-2. Select **"Free"** (M0) cluster - it's free forever
-3. Choose **AWS** as cloud provider
-4. Select region closest to you (e.g., `eu-central-1` Frankfurt or `us-east-1`)
-5. Click **"Create Cluster"**
-6. Wait 1-3 minutes for it to deploy
+1. Open `Database Access`
+2. Add a new user, for example `abious_admin`
+3. Save the password somewhere safe
 
-## Step 3: Create Database User
+## Step 3: Allow Network Access
 
-1. Click **"Database Access"** in left sidebar
-2. Click **"Add New Database User"**
-3. Username: `abious_admin`
-4. Password: Create a strong password (COPY IT - you'll need it!)
-5. Click **"Add User"**
+1. Open `Network Access`
+2. Add `0.0.0.0/0`
+3. Confirm
 
-## Step 4: Allow Network Access
+## Step 4: Copy The Connection String
 
-1. Click **"Network Access"** in left sidebar  
-2. Click **"Add IP Address"**
-3. Select **"Allow Access from Anywhere" (0.0.0.0/0)**
-4. Click **"Confirm"**
+Use the Drivers option and copy a string like this:
 
-## Step 5: Get Connection String
-
-1. Click **"Database"** in left sidebar
-2. Click **"Connect"** button on your cluster
-3. Select **"Drivers"**
-4. Copy the connection string - it looks like:
-```
-mongodb+srv://abious_admin:<YOUR_PASSWORD>@cluster0.xxx.mongodb.net/?retryWrites=true&w=majority
+```text
+mongodb+srv://abious_admin:<PASSWORD>@cluster0.xxx.mongodb.net/abious_rehab?retryWrites=true&w=majority&appName=AbiousRehab
 ```
 
-## Step 6: Run Server with MongoDB Atlas
+## Step 5: Add It To This Project
 
-Replace `<YOUR_PASSWORD>` with your actual password, then run:
+1. Copy `.env.example` to `.env`
+2. Replace the `MONGODB_URI` value with your Atlas string
+3. Keep the database name in the URL, for example `abious_rehab`
+
+Example:
+
+```env
+MONGODB_URI=mongodb+srv://abious_admin:YOUR_PASSWORD_HERE@cluster0.xxx.mongodb.net/abious_rehab?retryWrites=true&w=majority&appName=AbiousRehab
+```
+
+You can also test it from PowerShell:
 
 ```powershell
-$env:MONGODB_URI = "mongodb+srv://abious_admin:YOUR_PASSWORD_HERE@cluster0.xxx.mongodb.net/?retryWrites=true&w=majority"
-node server.js
-```
-
-## Alternative: Quick Start Command
-
-Once you have your connection string, create a batch file:
-
-```batch
-@echo off
-set MONGODB_URI=your_mongodb_atlas_connection_string_here
+$env:MONGODB_URI = "mongodb+srv://abious_admin:YOUR_PASSWORD_HERE@cluster0.xxx.mongodb.net/abious_rehab?retryWrites=true&w=majority&appName=AbiousRehab"
 node server.js
 ```
 
 ## Verification
 
-When the server starts, you should see:
-```
-=== MongoDB Configuration ===
-Using MongoDB Atlas from MONGODB_URI
-============================
-✓ Connected to MongoDB successfully
-```
+When the server starts successfully, the log should show that MongoDB Atlas is being used and that the connection succeeded.
 
 ## Troubleshooting
 
-- **Connection timeout**: Make sure you added 0.0.0.0/0 to Network Access
-- **Authentication failed**: Check your username and password in connection string
-- **Cluster not ready**: Wait a few minutes after creating cluster
-
-## Need Help?
-
-If you encounter issues, copy the exact error message and share it for assistance.
+- Connection timeout: check Network Access and make sure `0.0.0.0/0` exists.
+- Authentication failed: recheck the username, password, and URL encoding in the connection string.
+- Cluster not ready: wait a few minutes after creating the cluster.

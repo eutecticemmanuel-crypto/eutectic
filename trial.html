@@ -676,19 +676,51 @@
         @media (max-width: 680px) {
             .shell {
                 width: min(100% - 22px, 1180px);
-                padding-top: 18px;
+                padding-top: 14px;
+                padding-bottom: 26px;
             }
 
             .topbar {
-                flex-direction: column;
-                align-items: stretch;
+                flex-direction: row;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 18px;
+            }
+
+            .brand {
+                flex: 1;
+                min-width: 0;
+                padding: 8px 12px 8px 8px;
+                gap: 10px;
+            }
+
+            .brand img {
+                width: 46px;
+                height: 46px;
+                border-radius: 14px;
+            }
+
+            .brand-copy strong {
+                font-size: 0.82rem;
+            }
+
+            .brand-copy span {
+                font-size: 0.74rem;
             }
 
             .badge {
-                text-align: center;
+                flex: 0 0 auto;
+                max-width: 122px;
+                padding: 9px 12px;
+                text-align: left;
+                font-size: 0.76rem;
+                line-height: 1.4;
             }
 
-            .hero-card,
+            .hero-card {
+                padding: 26px 18px;
+            }
+
             .gallery-card,
             .quote-card {
                 border-radius: 24px;
@@ -704,12 +736,51 @@
                 grid-column: span 1;
             }
 
+            .cta-row {
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
             .cta {
-                width: 100%;
+                min-width: 0;
+                width: auto;
+                flex: 1 1 calc(50% - 10px);
+                padding: 13px 16px;
+                font-size: 0.92rem;
             }
 
             h1 {
                 max-width: 100%;
+                font-size: clamp(2rem, 10vw, 2.8rem);
+            }
+
+            .lead {
+                margin: 16px 0 20px;
+                font-size: 0.96rem;
+                line-height: 1.7;
+            }
+
+            .hero-stats .stat {
+                padding: 15px 14px;
+            }
+
+            .quote-card {
+                padding: 20px 18px;
+            }
+
+            .mini-links {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                margin-top: 16px;
+                padding-bottom: 4px;
+                scrollbar-width: thin;
+            }
+
+            .mini-links a {
+                flex: 0 0 auto;
+                white-space: nowrap;
+                font-size: 0.88rem;
+                padding: 9px 12px;
             }
 
             .reel-frame {
@@ -718,6 +789,21 @@
 
             .reel-body {
                 min-height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .badge {
+                max-width: 96px;
+                padding-inline: 10px;
+            }
+
+            .cta {
+                flex-basis: 100%;
             }
         }
     </style>

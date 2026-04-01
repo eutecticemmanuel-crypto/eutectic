@@ -862,11 +862,19 @@ function getMailTransporter() {
             host: SMTP_HOST,
             port: SMTP_PORT,
             secure: SMTP_SECURE,
-            family: SMTP_FAMILY,
+            service: SMTP_HOST && SMTP_HOST.includes("gmail") ? "gmail" : undefined,
+            family: 4, // force IPv4 to avoid IPv6 ENETUNREACH in restricted environments
+            localAddress: "0.0.0.0",
             name: process.env.SMTP_CLIENT_NAME || "abious-rehabilitation-center",
             auth: {
                 user: SMTP_USER,
                 pass: SMTP_PASS
+            },
+            connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 20000),
+            greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 15000),
+            socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 20000),
+            tls: {
+                rejectUnauthorized: true
             }
         });
     }

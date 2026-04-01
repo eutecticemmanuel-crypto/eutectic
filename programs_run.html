@@ -116,6 +116,79 @@
         .links a.alt {
             background: var(--accent);
         }
+
+        .menu-wrap {
+            display: none;
+            position: relative;
+            z-index: 200;
+            margin-top: 12px;
+        }
+
+        .menu-toggle {
+            width: 44px;
+            height: 44px;
+            border: 2px solid rgba(255,255,255,0.85);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.25);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .menu-toggle:hover, .menu-toggle:focus-visible {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,1);
+            outline: none;
+        }
+
+        .menu-panel {
+            position: absolute;
+            top: 58px;
+            right: 0;
+            background: rgba(15, 42, 37, 0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            width: min(280px, 92vw);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-12px);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+            padding: 10px;
+        }
+
+        .menu-wrap.open .menu-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .menu-panel a {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            color: #fff;
+            text-decoration: none;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .menu-panel a span:last-child {
+            color: #d1f7e7;
+            opacity: 0.9;
+            font-size: 0.84rem;
+        }
+
+        @media (max-width: 900px) {
+            .menu-wrap { display: inline-flex; }
+        }
+
+        @media (min-width: 901px) {
+            .menu-wrap { display: none; }
+        }
     </style>
 </head>
 <body class="theme-page">
@@ -140,6 +213,27 @@
             </div>
         </div>
     </header>
+
+    <div class="menu-wrap" aria-label="Mobile site menu" role="navigation">
+        <button class="menu-toggle" type="button" aria-label="Open site menu" aria-expanded="false" aria-controls="site-menu">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+                <path d="M3 5h18v14H3z" stroke="currentColor" stroke-width="2" fill="none"/>
+                <path d="M3 5h6v4H3z" fill="currentColor" opacity="0.8"/>
+                <path d="M9 5h6v4H9z" fill="currentColor" opacity="0.6"/>
+                <path d="M15 5h6v4H15z" fill="currentColor" opacity="0.4"/>
+            </svg>
+        </button>
+        <div class="menu-panel" id="site-menu">
+            <a href="trial.html"><span>Home</span><span>Page</span></a>
+            <a href="abious_rehabilitation_ceter.html"><span>Main Site</span><span>Section</span></a>
+            <a href="abious_rehabilitation_center2.html"><span>Member Hub</span><span>Open</span></a>
+            <a href="programs_run.html"><span>Programs</span><span>Current</span></a>
+            <a href="news.html"><span>News</span><span>Updates</span></a>
+            <a href="members.html"><span>Members</span><span>Details</span></a>
+            <a href="register.html"><span>Register</span><span>Join</span></a>
+            <a href="admin.html"><span>Admin</span><span>Secure</span></a>
+        </div>
+    </div>
 
     <main class="wrap">
         <article class="row">
@@ -187,6 +281,50 @@
     <footer style="background: linear-gradient(130deg, #0f6258, #1d8c7f); color: white; padding: 20px; text-align: center; margin-top: 20px;">
         <p>"The Spirit of the Lord GOD is upon me, because the LORD has anointed me to bring good news to the afflicted; He has sent me to bind up the brokenhearted, to proclaim liberty to the captives and freedom to the prisoners; to proclaim the favorable year of the LORD and the day of vengeance of our God; to comfort all who mourn, to grant those who mourn in Zion, giving them a garland instead of ashes, the oil of gladness instead of mourning, the mantle of praise instead of a spirit of fainting. So they will be called oaks of righteousness, the planting of the LORD, that He may be glorified." - Isaiah 61:1-3</p>
     </footer>
+    <script>
+        (function() {
+            const menuWrap = document.querySelector(".menu-wrap");
+            const menuToggle = document.querySelector(".menu-toggle");
+            const menuPanel = document.querySelector(".menu-panel");
+
+            if (menuWrap && menuToggle && menuPanel) {
+                const closeMenu = () => {
+                    menuWrap.classList.remove("open");
+                    menuToggle.setAttribute("aria-expanded", "false");
+                };
+
+                const openMenu = () => {
+                    menuWrap.classList.add("open");
+                    menuToggle.setAttribute("aria-expanded", "true");
+                };
+
+                menuToggle.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    if (menuWrap.classList.contains("open")) {
+                        closeMenu();
+                    } else {
+                        openMenu();
+                    }
+                });
+
+                document.addEventListener("click", (event) => {
+                    if (!menuWrap.contains(event.target)) {
+                        closeMenu();
+                    }
+                });
+
+                document.addEventListener("keydown", (event) => {
+                    if (event.key === "Escape") {
+                        closeMenu();
+                    }
+                });
+
+                menuPanel.querySelectorAll("a").forEach((link) => {
+                    link.addEventListener("click", closeMenu);
+                });
+            }
+        })();
+    </script>
     <script>
         (async () => {
             const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";

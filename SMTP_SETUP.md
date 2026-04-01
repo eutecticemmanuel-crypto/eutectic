@@ -17,6 +17,7 @@ VERIFICATION_SENDER_EMAIL=your-real-email@gmail.com
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_SECURE=true
+SMTP_FAMILY=4
 SMTP_USER=your-real-email@gmail.com
 SMTP_PASS=your-16-character-app-password
 ```
@@ -34,3 +35,4 @@ SMTP_PASS=your-16-character-app-password
 - Do not use your normal Gmail password here.
 - Use an app password only.
 - If you switch to another mail provider later, update `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS`.
+- `SMTP_FAMILY=4` forces IPv4 when the hosting environment cannot reach Gmail over IPv6.

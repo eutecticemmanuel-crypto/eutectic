@@ -32,6 +32,7 @@ const VERIFICATION_SENDER_EMAIL = process.env.VERIFICATION_SENDER_EMAIL || "isaa
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
 const SMTP_SECURE = String(process.env.SMTP_SECURE || "true") !== "false";
+const SMTP_FAMILY = Number(process.env.SMTP_FAMILY || 4);
 const SMTP_USER = process.env.SMTP_USER || VERIFICATION_SENDER_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "admin@abious.org").trim().toLowerCase();
@@ -826,6 +827,8 @@ function getMailTransporter() {
             host: SMTP_HOST,
             port: SMTP_PORT,
             secure: SMTP_SECURE,
+            family: SMTP_FAMILY,
+            name: process.env.SMTP_CLIENT_NAME || "abious-rehabilitation-center",
             auth: {
                 user: SMTP_USER,
                 pass: SMTP_PASS

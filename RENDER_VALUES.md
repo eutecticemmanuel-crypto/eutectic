@@ -25,6 +25,7 @@ Use these exact values when creating or updating the Render web service.
 - `SMTP_HOST` = `smtp.gmail.com`
 - `SMTP_PORT` = `465`
 - `SMTP_SECURE` = `true`
+- `SMTP_FAMILY` = `4`
 - `SMTP_USER` = `isaacnewton0767304563@gmail.com`
 - `SMTP_PASS` = `St!lla18`
 

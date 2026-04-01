@@ -41,6 +41,39 @@ const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1
 const VERIFICATION_APPROVAL_TTL_MS = Number(process.env.VERIFICATION_APPROVAL_TTL_MS || 30 * 60 * 1000);
 const PASSWORD_HASH_ITERATIONS = Number(process.env.PASSWORD_HASH_ITERATIONS || 120000);
 const VERIFICATION_TOKEN_SECRET = process.env.VERIFICATION_TOKEN_SECRET || crypto.randomBytes(32).toString("hex");
+const PUBLIC_BASE_URL = String(process.env.PUBLIC_BASE_URL || "").trim();
+
+if (ADMIN_PASSWORD === "admin@123") {
+    console.warn("⚠️ SECURITY WARNING: Using default admin password 'admin@123'. Set ADMIN_PASSWORD in environment variables before production deployment.");
+}
+
+function sanitizeInput(input) {
+    if (typeof input !== "string") return "";
+    return input.replace(/[<>"'`;(){}]/g, "").trim();
+}
+
+function sanitizeUserData(user) {
+    if (!user || typeof user !== "object") return user;
+    return {
+        ...user,
+        fullName: sanitizeInput(user.fullName || ""),
+        email: sanitizeInput((user.email || "").toLowerCase()),
+        phone: sanitizeInput(user.phone || ""),
+        biodata: sanitizeInput(user.biodata || ""),
+        interests: sanitizeInput(user.interests || ""),
+        role: sanitizeInput(user.role || "Member"),
+        photo: typeof user.photo === "string" ? sanitizeInput(user.photo) : null,
+        age: Number(user.age) || null,
+        id: sanitizeInput(user.id || ""),
+    };
+}
+
+function getAllowedOrigin() {
+    if (PUBLIC_BASE_URL) {
+        return PUBLIC_BASE_URL;
+    }
+    return "*";
+}
 let mailTransporter = null;
 const rateLimitBuckets = new Map();
 
@@ -805,11 +838,13 @@ function securityHeaders() {
     return {
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block",
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
         "Referrer-Policy": "strict-origin-when-cross-origin",
         "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
         "Cross-Origin-Opener-Policy": "same-origin",
         "Cross-Origin-Resource-Policy": "same-origin",
-        "Content-Security-Policy": "default-src 'self' data: blob: https:; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'self' http://localhost:3000 https://abious-rehabilitation-center.onrender.com https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https:;"
+        "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https:; media-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
     };
 }
 
@@ -977,11 +1012,13 @@ function writeStore(store) {
 }
 
 function sendJson(res, statusCode, payload) {
+    const corsOrigin = getAllowedOrigin();
     res.writeHead(statusCode, {
         "Content-Type": "application/json; charset=utf-8",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": corsOrigin,
         "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Credentials": "true",
         ...securityHeaders()
     });
     res.end(JSON.stringify(payload));
@@ -1075,10 +1112,12 @@ async function handleApi(req, res, urlObj) {
         }
 
         if (method === "OPTIONS") {
+            const corsOrigin = getAllowedOrigin();
             res.writeHead(204, {
-                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Origin": corsOrigin,
                 "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                "Access-Control-Allow-Credentials": "true",
                 ...securityHeaders()
             });
             res.end();
@@ -1213,21 +1252,21 @@ async function handleApi(req, res, urlObj) {
             }
 
             const member = store.users[memberIndex];
-            const nextEmail = body.email ? String(body.email).trim().toLowerCase() : member.email;
+            const nextEmail = body.email ? sanitizeInput(String(body.email).toLowerCase()) : member.email;
 
             if (store.users.some((u) => u.id !== memberId && u.email === nextEmail)) {
                 sendJson(res, 409, { error: "Email already registered" });
                 return true;
             }
 
-            member.fullName = String(body.fullName ?? body.name ?? member.fullName).trim() || member.fullName;
+            member.fullName = sanitizeInput(String(body.fullName ?? body.name ?? member.fullName));
             member.email = nextEmail;
-            member.phone = String(body.phone ?? member.phone ?? "").trim();
-            member.role = String(body.role ?? member.role ?? "Member").trim() || "Member";
-            member.biodata = String(body.biodata ?? member.biodata ?? "").trim();
+            member.phone = sanitizeInput(String(body.phone ?? member.phone ?? ""));
+            member.role = sanitizeInput(String(body.role ?? member.role ?? "Member"));
+            member.biodata = sanitizeInput(String(body.biodata ?? member.biodata ?? ""));
 
             if (body.photo !== undefined) {
-                member.photo = body.photo || null;
+                member.photo = body.photo ? sanitizeInput(String(body.photo)) : null;
             }
             if (body.verified !== undefined) {
                 member.verified = Boolean(body.verified);
@@ -1268,12 +1307,12 @@ async function handleApi(req, res, urlObj) {
             }
             
             const body = await getRequestBody(req);
-            const name = String(body.name || "").trim();
-            const email = String(body.email || "").trim().toLowerCase();
-            const phone = String(body.phone || "").trim();
+            const name = sanitizeInput(String(body.name || ""));
+            const email = sanitizeInput(String(body.email || "").toLowerCase());
+            const phone = sanitizeInput(String(body.phone || ""));
             const password = String(body.password || "");
-            const photo = body.photo || null; // Base64 encoded photo
-            const biodata = body.biodata || "";
+            const photo = body.photo ? sanitizeInput(String(body.photo)) : null; // Base64 encoded photo (sanitized)
+            const biodata = sanitizeInput(String(body.biodata || ""));
             
             if (!name || !email || !password) {
                 sendJson(res, 400, { error: "Name, email, and password are required" });
@@ -1286,7 +1325,7 @@ async function handleApi(req, res, urlObj) {
                 return true;
             }
             
-            const newMember = {
+            const newMember = sanitizeUserData({
                 id: "u_" + Date.now(),
                 fullName: name,
                 email,
@@ -1295,12 +1334,12 @@ async function handleApi(req, res, urlObj) {
                 phone,
                 age: null,
                 interests: "",
-                photo: photo, // Store base64 photo
+                photo: photo,
                 biodata: biodata,
                 createdAt: nowIso(),
                 lastLoginAt: null,
                 verified: true // Admin-created members are automatically verified
-            };
+            });
             
             store.users.push(newMember);
             await saveStore(store);
@@ -1350,13 +1389,13 @@ async function handleApi(req, res, urlObj) {
                 return true;
             }
             
-            // Update allowed fields
-            if (body.photo !== undefined) store.users[memberIndex].photo = body.photo;
-            if (body.biodata !== undefined) store.users[memberIndex].biodata = body.biodata;
-            if (body.phone !== undefined) store.users[memberIndex].phone = body.phone;
-            if (body.age !== undefined) store.users[memberIndex].age = body.age;
-            if (body.interests !== undefined) store.users[memberIndex].interests = body.interests;
-            if (body.fullName !== undefined) store.users[memberIndex].fullName = body.fullName;
+            // Update allowed fields (sanitize to prevent injection/XSS)
+            if (body.photo !== undefined) store.users[memberIndex].photo = body.photo ? sanitizeInput(String(body.photo)) : null;
+            if (body.biodata !== undefined) store.users[memberIndex].biodata = sanitizeInput(String(body.biodata));
+            if (body.phone !== undefined) store.users[memberIndex].phone = sanitizeInput(String(body.phone));
+            if (body.age !== undefined) store.users[memberIndex].age = Number(body.age) || null;
+            if (body.interests !== undefined) store.users[memberIndex].interests = sanitizeInput(String(body.interests));
+            if (body.fullName !== undefined) store.users[memberIndex].fullName = sanitizeInput(String(body.fullName));
             
             await saveStore(store);
             
@@ -1828,7 +1867,8 @@ async function handleApi(req, res, urlObj) {
                 delivery = { delivered: false, reason: mailError.message };
             }
 
-            console.log(`Verification code for ${email} from ${VERIFICATION_SENDER_EMAIL}: ${code}`);
+            // Avoid logging verification codes in production logs for security.
+            // console.log(`Verification code for ${email} from ${VERIFICATION_SENDER_EMAIL}: ${code}`);
             
             sendJson(res, 200, {
                 success: true,
@@ -1888,8 +1928,8 @@ async function handleApi(req, res, urlObj) {
                 return true;
             }
             const body = await getRequestBody(req);
-            const fullName = String(body.fullName || "").trim();
-            const email = String(body.email || "").trim().toLowerCase();
+            const fullName = sanitizeInput(String(body.fullName || ""));
+            const email = sanitizeInput(String(body.email || "").toLowerCase());
             const password = String(body.password || "");
             const verificationToken = String(body.verificationToken || "");
 

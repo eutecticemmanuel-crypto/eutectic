@@ -214,82 +214,155 @@
             justify-content: center;
             width: 52px;
             height: 52px;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text);
+            border: 2px solid var(--accent-soft);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(216, 161, 61, 0.15), rgba(241, 199, 109, 0.08));
+            color: var(--accent-soft);
             backdrop-filter: blur(18px);
-            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
             cursor: pointer;
             transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+            position: relative;
         }
 
         .menu-toggle:hover,
         .menu-toggle:focus-visible {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(241, 199, 109, 0.4);
+            transform: scale(1.05);
+            background: linear-gradient(135deg, rgba(216, 161, 61, 0.25), rgba(241, 199, 109, 0.15));
+            border-color: var(--accent);
+            box-shadow: 0 14px 34px rgba(216, 161, 61, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             outline: none;
         }
 
-        .menu-toggle svg {
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hamburger span {
             width: 20px;
-            height: 20px;
+            height: 2.5px;
+            border-radius: 2px;
+            background: currentColor;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(1) {
+            transform: rotate(45deg) translate(7px, 7px);
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -7px);
         }
 
         .menu-panel {
             position: absolute;
-            top: calc(100% + 12px);
+            top: calc(100% + 14px);
             right: 0;
-            min-width: 240px;
-            padding: 12px;
+            min-width: 280px;
+            max-width: 90vw;
+            padding: 16px;
             display: grid;
-            gap: 8px;
-            border-radius: 22px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            background: rgba(6, 19, 16, 0.94);
-            backdrop-filter: blur(22px);
-            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.34);
+            gap: 10px;
+            border-radius: 24px;
+            border: 2px solid rgba(241, 199, 109, 0.3);
+            background: linear-gradient(180deg, rgba(6, 19, 16, 0.96), rgba(3, 12, 10, 0.92));
+            backdrop-filter: blur(28px);
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.08);
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-8px);
-            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+            transform: translateY(-12px) scale(0.95);
+            transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s ease;
             z-index: 5;
         }
 
         .menu-wrap.open .menu-panel {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
+        }
+
+        .menu-panel::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: rgba(6, 19, 16, 0.96);
+            border: 2px solid rgba(241, 199, 109, 0.3);
+            border-bottom: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+
+        .menu-section-label {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(241, 199, 109, 0.6);
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .menu-section-label:first-child {
+            margin-top: 0;
         }
 
         .menu-panel a {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
+            gap: 12px;
+            padding: 14px 16px;
             border-radius: 16px;
             color: var(--text);
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
 
         .menu-panel a:hover,
         .menu-panel a:focus-visible {
-            background: rgba(216, 161, 61, 0.14);
-            border-color: rgba(241, 199, 109, 0.3);
-            transform: translateX(-2px);
+            background: rgba(216, 161, 61, 0.18);
+            border-color: rgba(241, 199, 109, 0.4);
+            transform: translateX(-4px);
             outline: none;
+            box-shadow: inset 0 1px 2px rgba(241, 199, 109, 0.1);
         }
 
-        .menu-panel a span:last-child {
+        .menu-panel a .icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .menu-panel a strong {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .menu-panel a .badge-mini {
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(216, 161, 61, 0.25);
             color: #ffe6aa;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             letter-spacing: 0.04em;
             text-transform: uppercase;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .hero {
@@ -694,6 +767,352 @@
             letter-spacing: 0.04em;
         }
 
+        /* News Section Styles */
+        .news-section {
+            margin-top: 48px;
+            padding: 40px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .news-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .news-header h2 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 2rem;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-admin {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 2px solid;
+            background: transparent;
+            color: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.92rem;
+        }
+
+        .btn-add-news {
+            border-color: var(--accent-soft);
+            color: var(--accent-soft);
+        }
+
+        .btn-add-news:hover {
+            background: rgba(216, 161, 61, 0.15);
+            box-shadow: 0 8px 24px rgba(216, 161, 61, 0.2);
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .news-card {
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 44%);
+            pointer-events: none;
+        }
+
+        .news-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(241, 199, 109, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+        }
+
+        .news-card.event {
+            border-left: 4px solid var(--accent);
+        }
+
+        .news-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+
+        .news-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            background: rgba(216, 161, 61, 0.15);
+            color: #ffe6aa;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .news-date {
+            color: var(--muted);
+        }
+
+        .news-card h3 {
+            margin: 0 0 12px;
+            font-family: "Sora", sans-serif;
+            font-size: 1.2rem;
+            line-height: 1.3;
+            color: var(--text);
+        }
+
+        .news-card-content {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .news-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            z-index: 1;
+        }
+
+        .news-author {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .news-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: var(--text);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-small:hover {
+            background: rgba(216, 161, 61, 0.2);
+            color: var(--accent-soft);
+        }
+
+        .news-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+        }
+
+        .news-empty p {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        /* Admin Modal/Dialog */
+        .admin-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .admin-modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, rgba(13, 45, 38, 0.98), rgba(6, 19, 16, 0.96));
+            border: 2px solid rgba(241, 199, 109, 0.3);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.6);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1.6rem;
+            color: var(--accent-soft);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close:hover {
+            color: var(--accent-soft);
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-soft);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(241, 199, 109, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
+            color: #1f1608;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(216, 161, 61, 0.3);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .status-message.success {
+            display: block;
+            background: rgba(78, 199, 161, 0.15);
+            border: 1px solid rgba(78, 199, 161, 0.3);
+            color: #a8f5e0;
+        }
+
+        .status-message.error {
+            display: block;
+            background: rgba(255, 143, 107, 0.15);
+            border: 1px solid rgba(255, 143, 107, 0.3);
+            color: #ffb8a0;
+        }
+
         @keyframes drift {
             0%, 100% {
                 transform: translate3d(0, 0, 0) scale(1);
@@ -796,6 +1215,39 @@
                 text-align: left;
                 font-size: 0.76rem;
                 line-height: 1.4;
+            }
+
+            .news-section {
+                padding: 28px 18px;
+                margin-top: 32px;
+            }
+
+            .news-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .news-header h2 {
+                font-size: 1.4rem;
+            }
+
+            .admin-controls {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn-admin {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 24px;
+                max-width: 95vw;
             }
 
             .menu-toggle {
@@ -922,6 +1374,47 @@
             </div>
             <div class="topbar-actions">
                 <div class="badge">Story-led care, practical support, and visible hope</div>
+                <div class="menu-wrap">
+                    <button class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                        <div class="hamburger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+                    <nav class="menu-panel">
+                        <div class="menu-section-label">Main</div>
+                        <a href="abious_rehabilitation_ceter.html">
+                            <span class="icon">🏢</span>
+                            <strong>Main Website</strong>
+                        </a>
+                        <a href="programs_run.html">
+                            <span class="icon">📋</span>
+                            <strong>Our Programs</strong>
+                        </a>
+                        <a href="members.html">
+                            <span class="icon">👥</span>
+                            <strong>Our Members</strong>
+                        </a>
+                        
+                        <div class="menu-section-label" style="margin-top: 12px;">Resources</div>
+                        <a href="privacy-policy.html">
+                            <span class="icon">🔐</span>
+                            <strong>Privacy Policy</strong>
+                        </a>
+                        <a href="security-policy.html">
+                            <span class="icon">⚔️</span>
+                            <strong>Security</strong>
+                        </a>
+                        
+                        <div class="menu-section-label" style="margin-top: 12px;">Admin</div>
+                        <a href="#" onclick="toggleAdminPanel(); return false;">
+                            <span class="icon">⚙️</span>
+                            <strong>Admin Panel</strong>
+                            <span class="badge-mini">Restricted</span>
+                        </a>
+                    </nav>
+                </div>
             </div>
         </div>
 
@@ -1016,9 +1509,77 @@
                 </section>
             </div>
         </main>
+
+        <!-- News Section -->
+        <section class="news-section">
+            <div class="news-header">
+                <h2>Latest News & Updates</h2>
+                <div class="admin-controls" id="adminControls" style="display: none;">
+                    <button class="btn-admin btn-add-news" onclick="openAddNewsModal()">
+                        ➕ Add News
+                    </button>
+                </div>
+            </div>
+
+            <div id="newsList" class="news-grid">
+                <div class="news-empty">
+                    <p>Loading news...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Modal for Adding/Editing News -->
+        <div id="newsModal" class="admin-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Manage News</h3>
+                    <button class="btn-close" onclick="closeNewsModal()">✕</button>
+                </div>
+
+                <div id="statusMessage" class="status-message"></div>
+
+                <form id="newsForm" onsubmit="submitNews(event)">
+                    <div class="form-group">
+                        <label for="newsTitle">Title *</label>
+                        <input type="text" id="newsTitle" placeholder="News headline" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newsType">Type *</label>
+                        <select id="newsType" required>
+                            <option value="news">📰 News</option>
+                            <option value="event">📅 Event</option>
+                            <option value="announcement">📣 Announcement</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newsContent">Content *</label>
+                        <textarea id="newsContent" placeholder="Write your news content here..." required></textarea>
+                    </div>
+
+                    <div class="form-group" style="display: none;" id="eventDateGroup">
+                        <label for="eventDate">Event Date</label>
+                        <input type="date" id="eventDate">
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-modal btn-submit">Publish</button>
+                        <button type="button" class="btn-modal btn-cancel" onclick="closeNewsModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <script>
-        (async () => {
+        const API_BASE = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+        let currentAdminSession = null;
+        let isAdminAuthenticated = false;
+
+        // ============================================
+        // MENU FUNCTIONALITY
+        // ============================================
+        function initMenu() {
             const menuWrap = document.querySelector(".menu-wrap");
             const menuToggle = document.querySelector(".menu-toggle");
             const menuPanel = document.querySelector(".menu-panel");
@@ -1026,15 +1587,18 @@
             if (menuWrap && menuToggle && menuPanel) {
                 const closeMenu = () => {
                     menuWrap.classList.remove("open");
+                    menuToggle.classList.remove("active");
                     menuToggle.setAttribute("aria-expanded", "false");
                 };
 
                 const openMenu = () => {
                     menuWrap.classList.add("open");
+                    menuToggle.classList.add("active");
                     menuToggle.setAttribute("aria-expanded", "true");
                 };
 
-                menuToggle.addEventListener("click", () => {
+                menuToggle.addEventListener("click", (e) => {
+                    e.stopPropagation();
                     if (menuWrap.classList.contains("open")) {
                         closeMenu();
                     } else {
@@ -1055,13 +1619,213 @@
                 });
 
                 menuPanel.querySelectorAll("a").forEach((link) => {
-                    link.addEventListener("click", closeMenu);
+                    link.addEventListener("click", (e) => {
+                        // Don't close if it's the admin panel link
+                        if (!link.href.includes("#")) {
+                            closeMenu();
+                        }
+                    });
                 });
             }
+        }
 
-            const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+        // ============================================
+        // ADMIN FUNCTIONALITY
+        // ============================================
+        function toggleAdminPanel() {
+            if (isAdminAuthenticated) {
+                document.getElementById("newsModal").classList.add("open");
+            } else {
+                const adminPassword = prompt("Enter admin password:");
+                if (adminPassword) {
+                    authenticateAdmin(adminPassword);
+                }
+            }
+        }
+
+        async function authenticateAdmin(password) {
             try {
-                const response = await fetch(apiBase + "/api/site-content");
+                const response = await fetch(API_BASE + "/api/admin/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: "admin@abious.org", password })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.sessionToken) {
+                    isAdminAuthenticated = true;
+                    currentAdminSession = data.sessionToken;
+                    localStorage.setItem("adminSession", data.sessionToken);
+                    document.getElementById("adminControls").style.display = "flex";
+                    document.getElementById("newsModal").classList.add("open");
+                    showStatus("Admin authenticated successfully", "success");
+                } else {
+                    showStatus("Invalid admin password", "error");
+                }
+            } catch (error) {
+                console.error("Authentication error:", error);
+                showStatus("Authentication failed", "error");
+            }
+        }
+
+        function openAddNewsModal() {
+            document.getElementById("newsForm").reset();
+            document.getElementById("newsModal").classList.add("open");
+        }
+
+        function closeNewsModal() {
+            document.getElementById("newsModal").classList.remove("open");
+            document.getElementById("statusMessage").textContent = "";
+            document.getElementById("statusMessage").className = "status-message";
+        }
+
+        async function submitNews(event) {
+            event.preventDefault();
+
+            if (!isAdminAuthenticated) {
+                showStatus("Admin authentication required", "error");
+                return;
+            }
+
+            const title = document.getElementById("newsTitle").value.trim();
+            const content = document.getElementById("newsContent").value.trim();
+            const type = document.getElementById("newsType").value;
+            const eventDate = document.getElementById("eventDate").value || null;
+
+            if (!title || !content) {
+                showStatus("Please fill in all required fields", "error");
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + "/api/admin/news", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Session": currentAdminSession
+                    },
+                    body: JSON.stringify({ title, content, type, eventDate })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus("✓ News published and emails sent to all members!", "success");
+                    setTimeout(() => {
+                        closeNewsModal();
+                        loadNews();
+                    }, 1500);
+                } else {
+                    showStatus(data.error || "Failed to publish news", "error");
+                }
+            } catch (error) {
+                console.error("Error submitting news:", error);
+                showStatus("Error publishing news", "error");
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById("statusMessage");
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+        }
+
+        // ============================================
+        // NEWS DISPLAY
+        // ============================================
+        async function loadNews() {
+            try {
+                const response = await fetch(API_BASE + "/api/news");
+                const data = await response.json();
+                displayNews(data.news || []);
+            } catch (error) {
+                console.error("Error loading news:", error);
+                document.getElementById("newsList").innerHTML = `
+                    <div class="news-empty">
+                        <p>Unable to load news at this time</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayNews(news) {
+            const newsList = document.getElementById("newsList");
+
+            if (!news || news.length === 0) {
+                newsList.innerHTML = `
+                    <div class="news-empty">
+                        <p>No news available yet. Stay tuned for updates!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            newsList.innerHTML = news.map(item => {
+                const date = new Date(item.createdAt);
+                const formattedDate = date.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                });
+
+                const typeEmoji = {
+                    "news": "📰",
+                    "event": "📅",
+                    "announcement": "📣"
+                };
+                const emoji = typeEmoji[item.type] || "📰";
+
+                return `
+                    <div class="news-card ${item.type === 'event' ? 'event' : ''}">
+                        <div class="news-card-meta">
+                            <span class="news-type">${emoji} ${item.type}</span>
+                            <span class="news-date">${formattedDate}</span>
+                        </div>
+                        <h3>${escapeHtml(item.title)}</h3>
+                        <div class="news-card-content">${escapeHtml(item.content)}</div>
+                        <div class="news-card-footer">
+                            <span class="news-author">By ${escapeHtml(item.author || "Administrator")}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        (async () => {
+            // Initialize menu
+            initMenu();
+
+            // Check for existing admin session
+            const savedSession = localStorage.getItem("adminSession");
+            if (savedSession) {
+                try {
+                    const response = await fetch(API_BASE + "/api/admin/members", {
+                        headers: { "X-Admin-Session": savedSession }
+                    });
+                    if (response.ok) {
+                        isAdminAuthenticated = true;
+                        currentAdminSession = savedSession;
+                        document.getElementById("adminControls").style.display = "flex";
+                    }
+                } catch (e) {
+                    // Session invalid
+                }
+            }
+
+            // Load news
+            loadNews();
+
+            // Load managed site images
+            try {
+                const response = await fetch(API_BASE + "/api/site-content");
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
                 document.querySelectorAll("[data-image-key]").forEach((img) => {
@@ -1071,12 +1835,25 @@
                 document.querySelectorAll("[data-image-bg-key]").forEach((card) => {
                     const key = card.getAttribute("data-image-bg-key");
                     if (key && imageAssets[key]) {
-                        card.style.background = "linear-gradient(180deg, rgba(3, 12, 10, 0.12), rgba(3, 12, 10, 0.72)), url(\"" + imageAssets[key] + "\") center/cover no-repeat";
+                        card.style.background = `linear-gradient(180deg, rgba(3, 12, 10, 0.12), rgba(3, 12, 10, 0.72)), url("${imageAssets[key]}") center/cover no-repeat`;
                     }
                 });
             } catch (error) {
                 console.warn("Could not load managed site images.", error);
             }
+
+            // Handle news type change to show/hide event date field
+            document.getElementById("newsType").addEventListener("change", function() {
+                const eventDateGroup = document.getElementById("eventDateGroup");
+                eventDateGroup.style.display = this.value === "event" ? "block" : "none";
+            });
+
+            // Close modal when clicking outside
+            document.getElementById("newsModal").addEventListener("click", function(event) {
+                if (event.target === this) {
+                    closeNewsModal();
+                }
+            });
         })();
     </script>
 </body>

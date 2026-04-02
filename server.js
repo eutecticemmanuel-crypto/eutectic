@@ -913,6 +913,110 @@ async function sendVerificationEmail(recipientEmail, code) {
     };
 }
 
+async function sendNewsNotificationEmails(newsItem) {
+    const transporter = getMailTransporter();
+    if (!transporter) {
+        console.warn("Email not configured: cannot send news notifications");
+        return {
+            delivered: false,
+            reason: "smtp_not_configured"
+        };
+    }
+
+    try {
+        // Get all users
+        const users = await getUsers();
+        if (!users || users.length === 0) {
+            console.warn("No users found to send news notification to");
+            return {
+                delivered: false,
+                reason: "no_users"
+            };
+        }
+
+        const typeEmoji = {
+            "news": "📰",
+            "event": "📅",
+            "announcement": "📣"
+        };
+        const emoji = typeEmoji[newsItem.type] || "📰";
+
+        const emailContent = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #071814 0%, #0d2d26 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+                    <h2 style="margin: 0; color: #fff; font-size: 24px;">🌿 Abious Rehabilitation Initiative</h2>
+                    <p style="margin: 8px 0 0 0; color: #a8f5e0;">Motor of Life for All</p>
+                </div>
+
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; border-left: 4px solid #d8a13d;">
+                    <span style="display: inline-block; background: #d8a13d; color: #1f1608; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; margin-bottom: 12px;">${emoji} ${newsItem.type.toUpperCase()}</span>
+                    
+                    <h3 style="margin: 12px 0 8px 0; color: #071814; font-size: 18px;">${newsItem.title}</h3>
+                    
+                    <p style="margin: 0 0 12px 0; color: #333; line-height: 1.6;">${newsItem.content}</p>
+                    
+                    <p style="margin: 12px 0 0 0; color: #666; font-size: 12px;">
+                        Posted on ${new Date(newsItem.createdAt).toLocaleDateString("en-US", { 
+                            year: "numeric", 
+                            month: "long", 
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        })} by ${newsItem.author || "Administrator"}
+                    </p>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="color: #666; font-size: 12px; margin: 0;">
+                        This is an automated notification from Abious Rehabilitation Initiative. 
+                        You're receiving this because you're a member of our community.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        // Send emails to all users
+        const emailPromises = users.map(user => {
+            if (!user.email) return Promise.resolve(null);
+            
+            return transporter.sendMail({
+                from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+                to: user.email,
+                subject: `${emoji} New ${newsItem.type}: ${newsItem.title}`,
+                html: emailContent,
+                text: `
+                    Abious Rehabilitation Initiative
+                    Motor of Life for All
+                    
+                    ${newsItem.type.toUpperCase()}: ${newsItem.title}
+                    
+                    ${newsItem.content}
+                    
+                    Posted: ${new Date(newsItem.createdAt).toLocaleDateString("en-US")}
+                    By: ${newsItem.author || "Administrator"}
+                `
+            }).catch(error => {
+                console.error(`Failed to send email to ${user.email}:`, error.message);
+                return null;
+            });
+        });
+
+        await Promise.all(emailPromises);
+        console.log(`✓ News notification sent to ${users.length} members`);
+        return {
+            delivered: true,
+            recipientCount: users.length
+        };
+    } catch (error) {
+        console.error("Error sending news notifications:", error);
+        return {
+            delivered: false,
+            reason: "send_failed",
+            error: error.message
+        };
+    }
+}
+
 function ensureStore() {
     if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -1480,6 +1584,15 @@ async function handleApi(req, res, urlObj) {
             const news = await getNews();
             news.push(newItem);
             await saveNews(news);
+
+            // Send email notifications to all users
+            try {
+                const emailResult = await sendNewsNotificationEmails(newItem);
+                console.log("News notification result:", emailResult);
+            } catch (error) {
+                console.error("Error sending news notifications:", error);
+                // Don't fail the request if emails fail to send
+            }
             
             sendJson(res, 201, { success: true, news: newItem });
             return true;

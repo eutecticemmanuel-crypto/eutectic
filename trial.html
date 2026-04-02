@@ -1413,6 +1413,11 @@
                             <strong>Admin Panel</strong>
                             <span class="badge-mini">Restricted</span>
                         </a>
+                        <a href="#" onclick="openProgramsManager(); return false;">
+                            <span class="icon">🛠️</span>
+                            <strong>Manage Programs</strong>
+                            <span class="badge-mini">Admin</span>
+                        </a>
                     </nav>
                 </div>
             </div>
@@ -1518,12 +1523,33 @@
                     <button class="btn-admin btn-add-news" onclick="openAddNewsModal()">
                         ➕ Add News
                     </button>
+                    <button class="btn-admin btn-add-news" onclick="openProgramsManager()">
+                        🛠️ Manage Programs
+                    </button>
                 </div>
             </div>
 
             <div id="newsList" class="news-grid">
                 <div class="news-empty">
                     <p>Loading news...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Programs Section -->
+        <section class="news-section" id="programsSection" style="display: none;">
+            <div class="news-header">
+                <h2>Programs (Admin)</h2>
+                <div class="admin-controls">
+                    <button class="btn-admin btn-add-news" onclick="openAddProgramModal()">
+                        ➕ Add Program
+                    </button>
+                </div>
+            </div>
+
+            <div id="programsList" class="news-grid">
+                <div class="news-empty">
+                    <p>Loading programs...</p>
                 </div>
             </div>
         </section>
@@ -1570,11 +1596,58 @@
                 </form>
             </div>
         </div>
+
+        <!-- Program Modal -->
+        <div id="programModal" class="admin-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="programModalTitle">Add Program</h3>
+                    <button class="btn-close" onclick="closeProgramModal()">✕</button>
+                </div>
+
+                <div id="programStatusMessage" class="status-message"></div>
+
+                <form id="programForm" onsubmit="submitProgram(event)">
+                    <input type="hidden" id="programId" value="" />
+
+                    <div class="form-group">
+                        <label for="programTitle">Program Title *</label>
+                        <input type="text" id="programTitle" placeholder="Program name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programDescription">Description *</label>
+                        <textarea id="programDescription" placeholder="Program description" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programLink">Optional link (e.g., program details page)</label>
+                        <input type="url" id="programLink" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programCategory">Category</label>
+                        <select id="programCategory">
+                            <option value="rehab">Rehabilitation</option>
+                            <option value="education">Education</option>
+                            <option value="community">Community</option>
+                            <option value="general">General</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-modal btn-submit">Save Program</button>
+                        <button type="button" class="btn-modal btn-cancel" onclick="closeProgramModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <script>
         const API_BASE = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
         let currentAdminSession = null;
         let isAdminAuthenticated = false;
+        let programsById = {}; // stored in UI for editing
 
         // ============================================
         // MENU FUNCTIONALITY
@@ -1788,6 +1861,192 @@
                     </div>
                 `;
             }).join("");
+        }
+
+        // ============================================
+        // PROGRAM MANAGEMENT
+        // ============================================
+        function openProgramsManager() {
+            if (!isAdminAuthenticated) {
+                toggleAdminPanel();
+                return;
+            }
+            document.getElementById("programsSection").style.display = "block";
+            loadPrograms();
+        }
+
+        function openAddProgramModal() {
+            document.getElementById("programModalTitle").textContent = "Add Program";
+            document.getElementById("programId").value = "";
+            document.getElementById("programTitle").value = "";
+            document.getElementById("programDescription").value = "";
+            document.getElementById("programLink").value = "";
+            document.getElementById("programCategory").value = "general";
+            document.getElementById("programStatusMessage").className = "status-message";
+            document.getElementById("programStatusMessage").textContent = "";
+            document.getElementById("programModal").classList.add("open");
+        }
+
+        function openEditProgramModal(programId) {
+            const program = programsById[programId];
+            if (!program) {
+                showProgramStatus("Program data not found", "error");
+                return;
+            }
+            document.getElementById("programModalTitle").textContent = "Edit Program";
+            document.getElementById("programId").value = program.id;
+            document.getElementById("programTitle").value = program.title;
+            document.getElementById("programDescription").value = program.description || "";
+            document.getElementById("programLink").value = program.link || "";
+            document.getElementById("programCategory").value = program.category || "general";
+            document.getElementById("programStatusMessage").className = "status-message";
+            document.getElementById("programStatusMessage").textContent = "";
+            document.getElementById("programModal").classList.add("open");
+        }
+
+        function closeProgramModal() {
+            document.getElementById("programModal").classList.remove("open");
+            document.getElementById("programStatusMessage").className = "status-message";
+            document.getElementById("programStatusMessage").textContent = "";
+        }
+
+        async function submitProgram(event) {
+            event.preventDefault();
+
+            if (!isAdminAuthenticated) {
+                showProgramStatus("Admin authentication required", "error");
+                return;
+            }
+
+            const id = document.getElementById("programId").value;
+            const title = document.getElementById("programTitle").value.trim();
+            const description = document.getElementById("programDescription").value.trim();
+            const link = document.getElementById("programLink").value.trim();
+            const category = document.getElementById("programCategory").value;
+
+            if (!title || !description) {
+                showProgramStatus("Title and description are required", "error");
+                return;
+            }
+
+            const payload = { title, description, link, category };
+            const method = id ? "PUT" : "POST";
+            const endpoint = id ? `${API_BASE}/api/admin/resources/${id}` : `${API_BASE}/api/admin/resources`;
+
+            try {
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Admin-Session": currentAdminSession
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showProgramStatus(`Program ${id ? "updated" : "created"} successfully`, "success");
+                    setTimeout(() => {
+                        closeProgramModal();
+                        loadPrograms();
+                    }, 900);
+                } else {
+                    showProgramStatus(data.error || "Failed to save program", "error");
+                }
+            } catch (error) {
+                console.error("Error saving program:", error);
+                showProgramStatus("Error saving program", "error");
+            }
+        }
+
+        function showProgramStatus(message, type) {
+            const status = document.getElementById("programStatusMessage");
+            status.textContent = message;
+            status.className = `status-message ${type}`;
+        }
+
+        async function loadPrograms() {
+            try {
+                const response = await fetch(API_BASE + "/api/resources");
+                const data = await response.json();
+                displayPrograms(data.resources || []);
+            } catch (error) {
+                console.error("Error loading programs:", error);
+                document.getElementById("programsList").innerHTML = `
+                    <div class="news-empty">
+                        <p>Unable to load programs at this time</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayPrograms(items) {
+            const programsList = document.getElementById("programsList");
+
+            if (!items || items.length === 0) {
+                programsList.innerHTML = `
+                    <div class="news-empty">
+                        <p>No programs found. Add one to begin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            programsById = {};
+            programsList.innerHTML = items.map(item => {
+                programsById[item.id] = item;
+                const date = new Date(item.createdAt || item.updatedAt || Date.now());
+                const formattedDate = date.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric"
+                });
+
+                return `
+                    <div class="news-card">
+                        <div class="news-card-meta">
+                            <span class="news-type">🏷️ ${escapeHtml(item.category || "General")}</span>
+                            <span class="news-date">${formattedDate}</span>
+                        </div>
+                        <h3>${escapeHtml(item.title)}</h3>
+                        <div class="news-card-content">${escapeHtml(item.description || "")}</div>
+                        <div class="news-card-footer">
+                            <span class="news-author">Program ID: ${escapeHtml(item.id)}</span>
+                            <div class="news-actions">
+                                <button type="button" class="btn-small" onclick='openEditProgramModal("${item.id}")'>✏️ Edit</button>
+                                <button type="button" class="btn-small" onclick='deleteProgram("${item.id}")'>🗑 Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function deleteProgram(id) {
+            if (!isAdminAuthenticated || !id) {
+                showProgramStatus("Admin authentication required", "error");
+                return;
+            }
+
+            if (!confirm("Delete this program permanently?")) return;
+
+            try {
+                const response = await fetch(API_BASE + "/api/admin/resources/" + encodeURIComponent(id), {
+                    method: "DELETE",
+                    headers: {
+                        "X-Admin-Session": currentAdminSession
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    loadPrograms();
+                } else {
+                    showProgramStatus(data.error || "Failed to delete program", "error");
+                }
+            } catch (error) {
+                console.error("Error deleting program:", error);
+                showProgramStatus("Error deleting program", "error");
+            }
         }
 
         function escapeHtml(text) {

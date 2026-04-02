@@ -1676,30 +1676,66 @@ async function handleApi(req, res, urlObj) {
             return true;
         }
 
-        // Admin: Delete resource
-        if (method === "DELETE" && pathname.startsWith("/api/admin/resources/")) {
+        // Admin: Update resource (e.g., add/edit program)
+        if ((method === "PUT" || method === "PATCH") && pathname.startsWith("/api/admin/resources/")) {
             const user = requireUser(req, store);
             if (!user || user.role !== "Admin") {
                 sendJson(res, 403, { error: "Admin access required" });
                 return true;
             }
-            
+
             const resourceId = pathname.split("/").pop();
-            
+            const body = await getRequestBody(req);
+            const title = String(body.title || "").trim();
+            const description = String(body.description || "").trim();
+            const link = body.link || null;
+            const category = String(body.category || "general").trim();
+
+            if (!title) {
+                sendJson(res, 400, { error: "Title is required" });
+                return true;
+            }
+
             if (useFirebase && firestore) {
-                await firebaseDeleteDoc('resources', resourceId);
+                const resources = await getResources();
+                const index = resources.findIndex(r => r.id === resourceId);
+                if (index === -1) {
+                    sendJson(res, 404, { error: "Resource not found" });
+                    return true;
+                }
+                resources[index] = {
+                    ...resources[index],
+                    title,
+                    description,
+                    link,
+                    category,
+                    updatedAt: nowIso()
+                };
+                await saveResources(resources);
             } else {
                 const resources = await getResources();
-                const filtered = resources.filter(r => r.id !== resourceId);
-                await saveResources(filtered);
+                const index = resources.findIndex(r => r.id === resourceId);
+                if (index === -1) {
+                    sendJson(res, 404, { error: "Resource not found" });
+                    return true;
+                }
+                resources[index] = {
+                    ...resources[index],
+                    title,
+                    description,
+                    link,
+                    category,
+                    updatedAt: nowIso()
+                };
+                await saveResources(resources);
             }
-            
-            sendJson(res, 200, { success: true });
+
+            sendJson(res, 200, { success: true, resource: { id: resourceId, title, description, link, category, updatedAt: nowIso() } });
             return true;
         }
 
-        // Public: Get resources
-        if (method === "GET" && pathname === "/api/resources") {
+        // Admin: Delete resource
+        if (method === "DELETE" && pathname.startsWith("/api/admin/resources/")) {
             const resources = await getResources();
             const sorted = resources.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             sendJson(res, 200, { resources: sorted });

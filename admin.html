@@ -128,6 +128,8 @@
                     </div>
                     <div class="tabs" style="margin-top:16px;">
                         <button class="tab-btn active" data-tab="members" type="button">Members</button>
+                        <button class="tab-btn" data-tab="news" type="button">News</button>
+                        <button class="tab-btn" data-tab="programs" type="button">Programs</button>
                         <button class="tab-btn" data-tab="site" type="button">Website Data</button>
                         <button class="tab-btn" data-tab="policies" type="button">Policies</button>
                         <button class="tab-btn" data-tab="media" type="button">Media</button>
@@ -184,6 +186,31 @@
                         </div>
                     </div>
                 </section>
+
+                <section id="tab-news" class="tab-panel card">
+                    <div class="header" style="margin-bottom:16px; justify-content:space-between; align-items:center;">
+                        <div><h2>News Management</h2><p>Publish and monitor news notifications (emails sent to members on publish).</p></div>
+                        <button class="btn primary" type="button" id="addNewsButton">Add News</button>
+                    </div>
+                    <div class="actions" style="margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+                        <button class="secondary" type="button" id="refreshNewsButton">Refresh News</button>
+                    </div>
+                    <div id="newsList" class="table-wrap" style="margin-top:12px;"></div>
+                    <div id="newsAlert" class="alert"></div>
+                </section>
+
+                <section id="tab-programs" class="tab-panel card">
+                    <div class="header" style="margin-bottom:16px; justify-content:space-between; align-items:center;">
+                        <div><h2>Program Management</h2><p>Create, update, or delete program entries.</p></div>
+                        <button class="btn primary" type="button" id="addProgramButton">Add Program</button>
+                    </div>
+                    <div class="actions" style="margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+                        <button class="secondary" type="button" id="refreshProgramsButton">Refresh Programs</button>
+                    </div>
+                    <div id="programsList" class="table-wrap" style="margin-top:12px;"></div>
+                    <div id="programAlert" class="alert"></div>
+                </section>
+
 
                 <section id="tab-site" class="tab-panel card">
                     <div class="editor-grid">
@@ -399,7 +426,9 @@
             return {
                 members: [],
                 posts: [],
+                news: [],
                 content: {
+                    programs: [],
                     contact: { address: "", phone: "", whatsapp: "", email: "", tiktok: "" },
                     links: { website: "", facebook: "", instagram: "", x: "", youtube: "", tiktok: "", whatsapp: "" },
                     about: { text: "" },
@@ -418,9 +447,11 @@
                 return {
                     members: Array.isArray(parsed.members) ? parsed.members : defaults.members,
                     posts: Array.isArray(parsed.posts) ? parsed.posts : defaults.posts,
+                    news: Array.isArray(parsed.news) ? parsed.news : defaults.news,
                     content: {
                         ...defaults.content,
                         ...(parsed.content || {}),
+                        programs: Array.isArray(parsed.content?.programs) ? parsed.content.programs : defaults.content.programs,
                         contact: { ...defaults.content.contact, ...((parsed.content && parsed.content.contact) || {}) },
                         links: { ...defaults.content.links, ...((parsed.content && parsed.content.links) || {}) },
                         about: { ...defaults.content.about, ...((parsed.content && parsed.content.about) || {}) },
@@ -623,7 +654,98 @@
             state.posts = data.posts || [];
             renderPostsModeration(state.posts);
         }
-        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts()]); }
+        async function fetchNews() {
+            if (state.localMode) {
+                const news = getLocalAdminStore().news || [];
+                renderNews(news);
+                return;
+            }
+            const data = await fetchJson("/api/news", { headers: authHeaders() });
+            const news = data.news || [];
+            renderNews(news);
+        }
+
+        async function fetchPrograms() {
+            if (state.localMode) {
+                const programs = getLocalAdminStore().content.programs || [];
+                renderPrograms(programs);
+                return;
+            }
+            const data = await fetchJson("/api/resources", { headers: authHeaders() });
+            const programs = data.resources || [];
+            renderPrograms(programs);
+        }
+
+        function renderNews(news) {
+            const table = document.getElementById("newsList");
+            if (!Array.isArray(news) || news.length === 0) {
+                table.innerHTML = '<div class="empty">No news available.</div>';
+                return;
+            }
+            table.innerHTML = `<table><thead><tr><th>Type</th><th>Title</th><th>Author</th><th>Date</th><th>Actions</th></tr></thead><tbody>${news.map(item => `<tr data-id="${esc(item.id)}"><td>${esc(item.type)}</td><td>${esc(item.title)}</td><td>${esc(item.author)}</td><td>${esc(formatDate(item.createdAt))}</td><td><button class="secondary" data-news-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-news-action="delete" data-id="${esc(item.id)}">Delete</button></td></tr>`).join("")}</tbody></table>`;
+        }
+
+        function renderPrograms(programs) {
+            const table = document.getElementById("programsList");
+            if (!Array.isArray(programs) || programs.length === 0) {
+                table.innerHTML = '<div class="empty">No programs available.</div>';
+                return;
+            }
+            table.innerHTML = `<table><thead><tr><th>Category</th><th>Title</th><th>Description</th><th>Link</th><th>Actions</th></tr></thead><tbody>${programs.map(item => `<tr data-id="${esc(item.id)}"><td>${esc(item.category)}</td><td>${esc(item.title)}</td><td>${esc(item.description)}</td><td>${item.link ? `<a href="${esc(item.link)}" target="_blank">Open</a>` : "-"}</td><td><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></td></tr>`).join("")}</tbody></table>`;
+        }
+
+        async function createOrUpdateNews(payload, editId) {
+            try {
+                const method = editId ? "PUT" : "POST";
+                const path = editId ? `/api/admin/news/${encodeURIComponent(editId)}` : "/api/admin/news";
+                const options = { method, headers: authHeaders(true), body: JSON.stringify(payload) };
+                await fetchJson(path, options);
+                showAlert("newsAlert", "News saved successfully.", "success");
+                await fetchNews();
+                return true;
+            } catch (error) {
+                showAlert("newsAlert", error.message || "Could not save news.", "error");
+                return false;
+            }
+        }
+
+        async function deleteNews(id) {
+            if (!confirm("Delete this news item?")) return;
+            try {
+                await fetchJson(`/api/admin/news/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+                showAlert("newsAlert", "News deleted successfully.", "success");
+                await fetchNews();
+            } catch (error) {
+                showAlert("newsAlert", error.message || "Could not delete news.", "error");
+            }
+        }
+
+        async function createOrUpdateProgram(payload, editId) {
+            try {
+                const method = editId ? "PUT" : "POST";
+                const path = editId ? `/api/admin/resources/${encodeURIComponent(editId)}` : "/api/admin/resources";
+                await fetchJson(path, { method, headers: authHeaders(true), body: JSON.stringify(payload) });
+                showAlert("programAlert", "Program saved successfully.", "success");
+                await fetchPrograms();
+                return true;
+            } catch (error) {
+                showAlert("programAlert", error.message || "Could not save program.", "error");
+                return false;
+            }
+        }
+
+        async function deleteProgram(id) {
+            if (!confirm("Delete this program?")) return;
+            try {
+                await fetchJson(`/api/admin/resources/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+                showAlert("programAlert", "Program deleted successfully.", "success");
+                await fetchPrograms();
+            } catch (error) {
+                showAlert("programAlert", error.message || "Could not delete program.", "error");
+            }
+        }
+
+        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms()]); }
         async function restoreSession() { if (!state.user || !state.token) { setLoggedOutView(); return; } try { setLoggedInView(); await refreshAllData(); } catch { clearSession(); } }
 
         document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
@@ -706,6 +828,71 @@
                 await fetchMembers(); if (document.getElementById("editMemberId").value === id) clearMemberForm(); showAlert("dashboardAlert", "Member deleted.", "success");
             } catch (error) { showAlert("dashboardAlert", error.message || "Could not delete member.", "error"); }
         });
+
+        document.getElementById("newsList").addEventListener("click", async (event) => {
+            const target = event.target; if (!(target instanceof HTMLElement)) return;
+            const action = target.dataset.newsAction; const id = target.dataset.id;
+            if (!action || !id) return;
+            if (action === "edit") {
+                const item = (await fetchJson("/api/news", { headers: authHeaders() })).news.find((n) => n.id === id);
+                if (!item) { showAlert("newsAlert", "News item not found.", "error"); return; }
+                const updatedTitle = prompt("Update news title:", item.title); if (!updatedTitle) return;
+                const updatedContent = prompt("Update news content:", item.content); if (!updatedContent) return;
+                await createOrUpdateNews({ title: updatedTitle, content: updatedContent, type: item.type, eventDate: item.eventDate }, id);
+            }
+            if (action === "delete") {
+                await deleteNews(id);
+            }
+        });
+
+        document.getElementById("programsList").addEventListener("click", async (event) => {
+            const target = event.target; if (!(target instanceof HTMLElement)) return;
+            const action = target.dataset.programAction; const id = target.dataset.id;
+            if (!action || !id) return;
+            if (action === "edit") {
+                const programs = await fetchJson("/api/resources", { headers: authHeaders() }).then((d) => d.resources || []);
+                const item = programs.find((p) => p.id === id);
+                if (!item) { showAlert("programAlert", "Program not found.", "error"); return; }
+                const newTitle = prompt("Program title:", item.title); if (!newTitle) return;
+                const newDesc = prompt("Program description:", item.description); if (!newDesc) return;
+                const newLink = prompt("Program link (optional):", item.link || "");
+                const newCategory = prompt("Program category:", item.category || "general") || "general";
+                await createOrUpdateProgram({ title: newTitle, description: newDesc, link: newLink, category: newCategory }, id);
+            }
+            if (action === "delete") {
+                await deleteProgram(id);
+            }
+        });
+
+        document.getElementById("addNewsButton").addEventListener("click", async () => {
+            const title = prompt("News title:"); if (!title) return;
+            const content = prompt("News content:"); if (!content) return;
+            const type = prompt("News type (news/event/announcement):", "news") || "news";
+            const eventDate = type === "event" ? prompt("Event date (YYYY-MM-DD):", "") : null;
+            await createOrUpdateNews({ title, content, type, eventDate }, null);
+        });
+
+        document.getElementById("refreshNewsButton").addEventListener("click", async () => { await fetchNews(); showAlert("newsAlert", "News refreshed.", "success"); });
+
+        document.getElementById("addProgramButton").addEventListener("click", async () => {
+            const title = prompt("Program title:"); if (!title) return;
+            const description = prompt("Program description:"); if (!description) return;
+            const link = prompt("Program link (optional):", "");
+            const category = prompt("Program category:", "general") || "general";
+            await createOrUpdateProgram({ title, description, link, category }, null);
+        });
+
+        document.getElementById("refreshProgramsButton").addEventListener("click", async () => { await fetchPrograms(); showAlert("programAlert", "Programs refreshed.", "success"); });
+
+        document.querySelectorAll(".tab-btn").forEach((button) => button.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach((item) => item.classList.remove("active"));
+            document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
+            button.classList.add("active"); document.getElementById("tab-" + button.dataset.tab).classList.add("active");
+        }));
+        document.getElementById("adminEmail").value = "admin@abious.org";
+        document.getElementById("adminPassword").value = "St!lla18";
+        clearMemberForm();
+        restoreSession();
         document.getElementById("contactForm").addEventListener("submit", async (event) => {
             event.preventDefault(); hideAlert("contactAlert");
             try {

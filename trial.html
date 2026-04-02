@@ -1654,19 +1654,39 @@
         let programsById = {}; // stored in UI for editing
 
         async function apiFetch(path, options = {}) {
+            const normalizedPath = path.startsWith("/") ? path : `/${path}`;
             let lastError = null;
+            let firstNotFoundResponse = null;
+
             for (const base of API_BASE_CANDIDATES) {
-                const url = base ? `${base}${path}` : path;
+                const normalizedBase = base.replace(/\/+$/, "");
+                const url = normalizedBase ? `${normalizedBase}${normalizedPath}` : normalizedPath;
+                console.debug("[apiFetch] trying", url, options);
+
                 try {
                     const response = await fetch(url, options);
-                    if (response.ok || [400,401,403,404,500].includes(response.status)) {
+
+                    if (response.ok) {
                         return response;
                     }
+
+                    if (response.status === 404) {
+                        firstNotFoundResponse = firstNotFoundResponse || response;
+                        continue;
+                    }
+
+                    // Return errors that are not route miss; caller handles invalid credentials, forbidden, etc.
+                    return response;
                 } catch (err) {
+                    console.warn("[apiFetch] network error", url, err);
                     lastError = err;
-                    continue;
                 }
             }
+
+            if (firstNotFoundResponse) {
+                return firstNotFoundResponse;
+            }
+
             throw lastError || new Error("API route not found");
         }
 
@@ -1750,10 +1770,10 @@
                 });
 
                 const data = await response.json();
-                if (response.ok && data.sessionToken) {
+                if (response.ok && data.token) {
                     isAdminAuthenticated = true;
-                    currentAdminSession = data.sessionToken;
-                    localStorage.setItem("adminSession", data.sessionToken);
+                    currentAdminSession = data.token;
+                    localStorage.setItem("adminSession", data.token);
                     document.getElementById("adminControls").style.display = "flex";
                     document.getElementById("newsModal").classList.add("open");
                     showStatus("Admin authenticated successfully", "success");
@@ -1800,7 +1820,7 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-Admin-Session": currentAdminSession
+                        "Authorization": "Bearer " + currentAdminSession
                     },
                     body: JSON.stringify({ title, content, type, eventDate })
                 });
@@ -1963,7 +1983,7 @@
                     method,
                     headers: {
                         "Content-Type": "application/json",
-                        "X-Admin-Session": currentAdminSession
+                        "Authorization": "Bearer " + currentAdminSession
                     },
                     body: JSON.stringify(payload)
                 });
@@ -2059,7 +2079,7 @@
                 const response = await apiFetch("/api/admin/resources/" + encodeURIComponent(id), {
                     method: "DELETE",
                     headers: {
-                        "X-Admin-Session": currentAdminSession
+                        "Authorization": "Bearer " + currentAdminSession
                     }
                 });
                 const data = await response.json();
@@ -2092,7 +2112,7 @@
             if (savedSession) {
                 try {
                     const response = await apiFetch("/api/admin/members", {
-                        headers: { "X-Admin-Session": savedSession }
+                        headers: { "Authorization": "Bearer " + savedSession }
                     });
                     if (response.ok) {
                         isAdminAuthenticated = true;

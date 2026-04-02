@@ -1644,10 +1644,35 @@
         </div>
     </div>
     <script>
-        const API_BASE = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+        const API_BASE_CANDIDATES = [
+            location.origin.startsWith("http") ? "" : "http://localhost:3000",
+            "https://abious-rehabilitation-center.onrender.com"
+        ].filter(Boolean);
+
         let currentAdminSession = null;
         let isAdminAuthenticated = false;
         let programsById = {}; // stored in UI for editing
+
+        async function apiFetch(path, options = {}) {
+            let lastError = null;
+            for (const base of API_BASE_CANDIDATES) {
+                const url = base ? `${base}${path}` : path;
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok || [400,401,403,404,500].includes(response.status)) {
+                        return response;
+                    }
+                } catch (err) {
+                    lastError = err;
+                    continue;
+                }
+            }
+            throw lastError || new Error("API route not found");
+        }
+
+        function toApiPath(path) {
+            return path;
+        }
 
         // ============================================
         // MENU FUNCTIONALITY
@@ -1718,7 +1743,7 @@
 
         async function authenticateAdmin(password) {
             try {
-                const response = await fetch(API_BASE + "/api/admin/login", {
+                const response = await apiFetch("/api/admin/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email: "admin@abious.org", password })
@@ -1771,7 +1796,7 @@
             }
 
             try {
-                const response = await fetch(API_BASE + "/api/admin/news", {
+                const response = await apiFetch("/api/admin/news", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1807,7 +1832,7 @@
         // ============================================
         async function loadNews() {
             try {
-                const response = await fetch(API_BASE + "/api/news");
+                const response = await apiFetch("/api/news");
                 const data = await response.json();
                 displayNews(data.news || []);
             } catch (error) {
@@ -1931,10 +1956,10 @@
 
             const payload = { title, description, link, category };
             const method = id ? "PUT" : "POST";
-            const endpoint = id ? `${API_BASE}/api/admin/resources/${id}` : `${API_BASE}/api/admin/resources`;
+            const endpoint = id ? `/api/admin/resources/${id}` : "/api/admin/resources";
 
             try {
-                const response = await fetch(endpoint, {
+                const response = await apiFetch(endpoint, {
                     method,
                     headers: {
                         "Content-Type": "application/json",
@@ -1967,7 +1992,7 @@
 
         async function loadPrograms() {
             try {
-                const response = await fetch(API_BASE + "/api/resources");
+                const response = await apiFetch("/api/resources");
                 const data = await response.json();
                 displayPrograms(data.resources || []);
             } catch (error) {
@@ -2031,7 +2056,7 @@
             if (!confirm("Delete this program permanently?")) return;
 
             try {
-                const response = await fetch(API_BASE + "/api/admin/resources/" + encodeURIComponent(id), {
+                const response = await apiFetch("/api/admin/resources/" + encodeURIComponent(id), {
                     method: "DELETE",
                     headers: {
                         "X-Admin-Session": currentAdminSession
@@ -2066,7 +2091,7 @@
             const savedSession = localStorage.getItem("adminSession");
             if (savedSession) {
                 try {
-                    const response = await fetch(API_BASE + "/api/admin/members", {
+                    const response = await apiFetch("/api/admin/members", {
                         headers: { "X-Admin-Session": savedSession }
                     });
                     if (response.ok) {
@@ -2084,7 +2109,7 @@
 
             // Load managed site images
             try {
-                const response = await fetch(API_BASE + "/api/site-content");
+                const response = await apiFetch("/api/site-content");
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
                 document.querySelectorAll("[data-image-key]").forEach((img) => {

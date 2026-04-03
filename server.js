@@ -1736,9 +1736,24 @@ async function handleApi(req, res, urlObj) {
 
         // Admin: Delete resource
         if (method === "DELETE" && pathname.startsWith("/api/admin/resources/")) {
-            const resources = await getResources();
-            const sorted = resources.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            sendJson(res, 200, { resources: sorted });
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const resourceId = pathname.split("/").pop();
+            let resources = await getResources();
+            resources = resources.filter(r => r.id !== resourceId);
+            
+            if (useFirebase && firestore) {
+                await saveResources(resources);
+            } else if (useMongoDB && db) {
+                await saveResources(resources);
+            } else {
+                await saveResources(resources);
+            }
+            
+            sendJson(res, 200, { success: true });
             return true;
         }
 
@@ -1813,6 +1828,57 @@ async function handleApi(req, res, urlObj) {
             siteContent.gallery = Array.isArray(body.gallery) ? body.gallery.filter(Boolean) : [];
             await saveSiteContent(siteContent);
             sendJson(res, 200, { success: true, gallery: siteContent.gallery });
+            return true;
+        }
+
+        // Public: Get gallery
+        if (method === "GET" && pathname === "/api/gallery") {
+            const gallery = siteContent.gallery || [];
+            sendJson(res, 200, { gallery: gallery });
+            return true;
+        }
+
+        // Admin: Add to gallery
+        if (method === "POST" && pathname === "/api/admin/gallery") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const body = await getRequestBody(req);
+            const galleryItem = {
+                id: crypto.randomUUID ? crypto.randomUUID() : "item_" + Date.now(),
+                title: String(body.title || "Gallery Item").trim(),
+                type: String(body.type || "image").trim(),
+                url: String(body.url || "").trim(),
+                caption: String(body.caption || "").trim(),
+                uploadedBy: String(body.uploadedBy || user.fullName || user.email || "Admin").trim(),
+                createdAt: nowIso()
+            };
+            if (!siteContent.gallery) siteContent.gallery = [];
+            siteContent.gallery.push(galleryItem);
+            await saveSiteContent(siteContent);
+            sendJson(res, 201, { success: true, item: galleryItem });
+            return true;
+        }
+
+        // Admin: Delete gallery item
+        if (method === "DELETE" && pathname.startsWith("/api/admin/gallery/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const itemId = pathname.split("/").pop();
+            if (!siteContent.gallery) siteContent.gallery = [];
+            const index = siteContent.gallery.findIndex(item => item.id === itemId);
+            if (index === -1) {
+                sendJson(res, 404, { error: "Gallery item not found" });
+                return true;
+            }
+            siteContent.gallery.splice(index, 1);
+            await saveSiteContent(siteContent);
+            sendJson(res, 200, { success: true });
             return true;
         }
 

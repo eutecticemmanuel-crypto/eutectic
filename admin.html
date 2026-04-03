@@ -317,6 +317,25 @@
                         </div>
 
                         <div class="box full-width-box">
+                            <h3>Member Gallery</h3>
+                            <p>Manage photos, videos, and media uploaded by members to the shared gallery.</p>
+                            <form id="addGalleryItemForm" class="stack" style="margin-top:14px;">
+                                <div><label for="galleryItemTitle">Title</label><input id="galleryItemTitle" type="text" placeholder="e.g., Team Activity Photo"></div>
+                                <div><label for="galleryItemType">Media Type</label><select id="galleryItemType"><option value="image">Image</option><option value="video">Video</option><option value="other">Other Media</option></select></div>
+                                <div><label for="galleryItemUrl">Media URL or Upload</label><input id="galleryItemUrl" type="url" placeholder="https://... or upload file below"></div>
+                                <div><label for="galleryItemFile">Upload File</label><input id="galleryItemFile" type="file" accept="image/*,video/*"></div>
+                                <div><label for="galleryItemCaption">Caption</label><textarea id="galleryItemCaption" placeholder="Brief description of the media..."></textarea></div>
+                                <div class="actions"><button class="primary" type="submit">Add to Gallery</button></div>
+                            </form>
+                            <div id="galleryAlert" class="alert"></div>
+                            <div id="galleryList" class="moderation-list" style="margin-top:16px;"></div>
+                            <div class="actions" style="margin-top:16px;">
+                                <button id="refreshGalleryButton" class="secondary" type="button">Refresh Gallery</button>
+                                <button id="saveGalleryButton" class="primary" type="button">Save Gallery</button>
+                            </div>
+                        </div>
+
+                        <div class="box full-width-box">
                             <h3>Shared Attachments Moderation</h3>
                             <p>Review member posts with attachments and remove either the attachment only or the entire post.</p>
                             <div id="postsModerationList" class="moderation-list" style="margin-top:16px;"></div>
@@ -345,6 +364,7 @@
             user: (() => { try { return JSON.parse(localStorage.getItem("adminUser") || "null"); } catch { return null; } })(),
             members: [],
             posts: [],
+            galleryItems: [],
             imageAssets: {},
             localMode: localStorage.getItem("adminLocalMode") === "true"
         };
@@ -427,6 +447,7 @@
                 members: [],
                 posts: [],
                 news: [],
+                gallery: [],
                 content: {
                     programs: [],
                     contact: { address: "", phone: "", whatsapp: "", email: "", tiktok: "" },
@@ -448,6 +469,7 @@
                     members: Array.isArray(parsed.members) ? parsed.members : defaults.members,
                     posts: Array.isArray(parsed.posts) ? parsed.posts : defaults.posts,
                     news: Array.isArray(parsed.news) ? parsed.news : defaults.news,
+                    gallery: Array.isArray(parsed.gallery) ? parsed.gallery : defaults.gallery,
                     content: {
                         ...defaults.content,
                         ...(parsed.content || {}),
@@ -694,6 +716,74 @@
             table.innerHTML = `<table><thead><tr><th>Category</th><th>Title</th><th>Description</th><th>Link</th><th>Actions</th></tr></thead><tbody>${programs.map(item => `<tr data-id="${esc(item.id)}"><td>${esc(item.category)}</td><td>${esc(item.title)}</td><td>${esc(item.description)}</td><td>${item.link ? `<a href="${esc(item.link)}" target="_blank">Open</a>` : "-"}</td><td><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></td></tr>`).join("")}</tbody></table>`;
         }
 
+        async function fetchGallery() {
+            if (state.localMode) {
+                const store = getLocalAdminStore();
+                state.galleryItems = store.gallery || [];
+                renderGallery(state.galleryItems);
+                return;
+            }
+            const data = await fetchJson("/api/gallery", { headers: authHeaders() });
+            state.galleryItems = data.gallery || [];
+            renderGallery(state.galleryItems);
+        }
+
+        function renderGallery(galleryItems) {
+            const list = document.getElementById("galleryList");
+            if (!Array.isArray(galleryItems) || galleryItems.length === 0) {
+                list.innerHTML = '<div class="empty">No gallery items yet.</div>';
+                return;
+            }
+            list.innerHTML = galleryItems.map((item) => {
+                const isVideo = item.type === "video";
+                const preview = isVideo
+                    ? `<video controls preload="metadata" style="width:100%;max-height:200px;"><source src="${esc(item.url || item.dataUrl)}" type="video/mp4"></video>`
+                    : `<img src="${esc(item.url || item.dataUrl)}" alt="${esc(item.title)}" style="width:100%;max-height:200px;object-fit:cover;">`;
+                return `<article class="moderation-card" data-gallery-id="${esc(item.id)}">
+                    <div class="moderation-head">
+                        <strong>${esc(item.title || "Gallery Item")}</strong>
+                        <span class="pill pending">${esc(item.type || "media")}</span>
+                    </div>
+                    <p>${esc(item.caption || "")}</p>
+                    <div class="moderation-meta">
+                        <span>${esc(item.uploadedBy || "Admin")}</span>
+                        <span>${esc(formatDate(item.createdAt))}</span>
+                    </div>
+                    <div class="moderation-preview">${preview}</div>
+                    <div class="moderation-actions">
+                        <button class="secondary" type="button" data-gallery-action="delete" data-id="${esc(item.id)}">Remove</button>
+                    </div>
+                </article>`;
+            }).join("");
+        }
+
+        async function addGalleryItem(payload) {
+            try {
+                const method = "POST";
+                const path = "/api/admin/gallery";
+                const options = { method, headers: authHeaders(true), body: JSON.stringify(payload) };
+                await fetchJson(path, options);
+                showAlert("galleryAlert", "Gallery item added successfully.", "success");
+                document.getElementById("addGalleryItemForm").reset();
+                await fetchGallery();
+                return true;
+            } catch (error) {
+                showAlert("galleryAlert", error.message || "Could not add gallery item.", "error");
+                return false;
+            }
+        }
+
+        async function deleteGalleryItem(id) {
+            if (!confirm("Remove this gallery item?")) return;
+            try {
+                await fetchJson(`/api/admin/gallery/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+                showAlert("galleryAlert", "Gallery item removed successfully.", "success");
+                await fetchGallery();
+            } catch (error) {
+                showAlert("galleryAlert", error.message || "Could not delete gallery item.", "error");
+            }
+        }
+
         async function createOrUpdateNews(payload, editId) {
             try {
                 const method = editId ? "PUT" : "POST";
@@ -745,7 +835,7 @@
             }
         }
 
-        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms()]); }
+        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery()]); }
         async function restoreSession() { if (!state.user || !state.token) { setLoggedOutView(); return; } try { setLoggedInView(); await refreshAllData(); } catch { clearSession(); } }
 
         document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
@@ -1077,6 +1167,92 @@
                 await fetchPosts();
             } catch (error) {
                 showAlert("postsAlert", error.message || "Could not update shared attachment.", "error");
+            }
+        });
+        document.getElementById("addGalleryItemForm").addEventListener("submit", async (event) => {
+            event.preventDefault(); hideAlert("galleryAlert");
+            try {
+                const file = document.getElementById("galleryItemFile").files?.[0];
+                let url = document.getElementById("galleryItemUrl").value.trim();
+                
+                if (file) {
+                    url = await readFileAsDataUrl(file);
+                }
+                
+                if (!url) {
+                    showAlert("galleryAlert", "Please provide an image URL or upload a file.", "error");
+                    return;
+                }
+                
+                const payload = {
+                    title: document.getElementById("galleryItemTitle").value.trim(),
+                    type: document.getElementById("galleryItemType").value || "image",
+                    url: url,
+                    caption: document.getElementById("galleryItemCaption").value.trim(),
+                    uploadedBy: state.user?.fullName || state.user?.email || "Admin"
+                };
+                
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    const newItem = {
+                        id: "local_" + Date.now(),
+                        ...payload,
+                        createdAt: new Date().toISOString()
+                    };
+                    store.gallery.push(newItem);
+                    saveLocalAdminStore(store);
+                } else {
+                    await fetchJson("/api/admin/gallery", { method: "POST", headers: authHeaders(true), body: JSON.stringify(payload) });
+                }
+                
+                showAlert("galleryAlert", "Gallery item added successfully.", "success");
+                document.getElementById("addGalleryItemForm").reset();
+                await fetchGallery();
+            } catch (error) {
+                showAlert("galleryAlert", error.message || "Could not add gallery item.", "error");
+            }
+        });
+        document.getElementById("galleryList").addEventListener("click", async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const galleryId = target.dataset.id;
+            const action = target.dataset.galleryAction;
+            if (!galleryId || !action) return;
+            
+            if (action === "delete") {
+                if (!confirm("Remove this gallery item?")) return;
+                try {
+                    if (state.localMode) {
+                        const store = getLocalAdminStore();
+                        store.gallery = store.gallery.filter((item) => item.id !== galleryId);
+                        saveLocalAdminStore(store);
+                    } else {
+                        await fetchJson("/api/admin/gallery/" + encodeURIComponent(galleryId), { method: "DELETE", headers: authHeaders() });
+                    }
+                    showAlert("galleryAlert", "Gallery item removed.", "success");
+                    await fetchGallery();
+                } catch (error) {
+                    showAlert("galleryAlert", error.message || "Could not delete gallery item.", "error");
+                }
+            }
+        });
+        document.getElementById("refreshGalleryButton").addEventListener("click", async () => {
+            try { await fetchGallery(); showAlert("galleryAlert", "Gallery refreshed.", "success"); }
+            catch (error) { showAlert("galleryAlert", error.message || "Could not refresh gallery.", "error"); }
+        });
+        document.getElementById("saveGalleryButton").addEventListener("click", async () => {
+            hideAlert("galleryAlert");
+            try {
+                if (state.localMode) {
+                    const store = getLocalAdminStore();
+                    saveLocalAdminStore(store);
+                    showAlert("galleryAlert", "Gallery saved locally.", "success");
+                } else {
+                    await fetchJson("/api/admin/content/gallery", { method: "POST", headers: authHeaders(true), body: JSON.stringify({ gallery: state.galleryItems }) });
+                    showAlert("galleryAlert", "Gallery saved successfully.", "success");
+                }
+            } catch (error) {
+                showAlert("galleryAlert", error.message || "Could not save gallery.", "error");
             }
         });
         document.querySelectorAll(".tab-btn").forEach((button) => button.addEventListener("click", () => {

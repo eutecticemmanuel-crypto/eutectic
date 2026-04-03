@@ -817,6 +817,29 @@
             </div>
         </section>
 
+        <section id="member-gallery">
+            <h2>Member Gallery</h2>
+            <p>Photos and videos shared by our community members.</p>
+            <div class="auth-status" id="galleryAuthStatus"></div>
+            <div id="memberGalleryContainer" class="image-gallery"></div>
+            <div style="margin-top: 30px; padding: 20px; background: rgba(13, 110, 94, 0.05); border-radius: 12px; display: none;" id="galleryUploadSection">
+                <h3 style="margin-top: 0;">Share Your Photo or Video</h3>
+                <form id="galleryUploadForm">
+                    <label for="uploadTitle">Title</label>
+                    <input id="uploadTitle" type="text" placeholder="Give your photo/video a title..." required>
+                    
+                    <label for="uploadCaption">Caption</label>
+                    <textarea id="uploadCaption" placeholder="Add a brief description..."></textarea>
+                    
+                    <label for="uploadFile">Choose File</label>
+                    <input id="uploadFile" type="file" accept="image/*,video/*" required>
+                    
+                    <button type="submit" class="btn-accent">Upload to Gallery</button>
+                    <div id="uploadStatus" class="auth-status"></div>
+                </form>
+            </div>
+        </section>
+
         <section id="faqs">
             <h2>Frequently Asked Questions</h2>
             <details>
@@ -993,6 +1016,7 @@
             <p><strong>WhatsApp:</strong> <a href="https://wa.me/256745490032" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></p>
             <p><strong>Email:</strong> eutecticemmanuel@gmail.com</p>
             <p><strong>TikTok:</strong> <a href="https://www.tiktok.com/search?q=abious%20rehabilitation%20initiative&t=1774816862008" target="_blank" rel="noopener noreferrer">Abious Rehabilitation Initiative on TikTok</a></p>
+            <p><strong>X (Twitter):</strong> <a href="https://x.com/abiousinitiativ/status/2040087007414591569?s=48" target="_blank" rel="noopener noreferrer">Check Out Our Latest Post on X</a></p>
             <p><strong>Hours:</strong> Monday - Friday: 9 AM - 6 PM</p>
         </section>
 
@@ -1446,15 +1470,116 @@
         (async () => {
             try {
                 const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
-                const response = await fetch((activeApiBase || apiBase) + "/api/site-content");
+                const response = await fetch((apiBase) + "/api/site-content");
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
                 document.querySelectorAll("[data-image-key]").forEach((img) => {
                     const key = img.getAttribute("data-image-key");
                     if (key && imageAssets[key]) img.src = imageAssets[key];
                 });
+                
+                // Load member gallery
+                try {
+                    const galleryResponse = await fetch(apiBase + "/api/gallery");
+                    const galleryData = await galleryResponse.json();
+                    const galleryItems = galleryData.gallery || [];
+                    const container = document.getElementById("memberGalleryContainer");
+                    
+                    if (container) {
+                        if (galleryItems.length === 0) {
+                            container.innerHTML = '<p style="text-align: center; color: #666; width: 100%;">No gallery items yet. Be the first to share!</p>';
+                        } else {
+                            container.innerHTML = galleryItems.map(item => {
+                                const isVideo = item.type === "video";
+                                if (isVideo) {
+                                    return `<a href="${item.url}" target="_blank" style="position: relative; display: inline-block;">
+                                        <video style="width: 280px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); transition: all 0.4s ease;" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'; this.style.boxShadow='0 12px 30px rgba(0, 0, 0, 0.25)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.15)'">
+                                            <source src="${item.url}" type="video/mp4">
+                                        </video>
+                                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 36px; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">▶️</div>
+                                    </a>`;
+                                } else {
+                                    return `<img src="${item.url}" alt="${item.title || 'Gallery Item'}" style="width: 280px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); transition: all 0.4s ease; cursor: pointer;" onclick="window.open(this.src, '_blank')" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'; this.style.boxShadow='0 12px 30px rgba(0, 0, 0, 0.25)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.15)'" title="${item.caption || item.title || 'Gallery Item'}">`;
+                                }
+                            }).join("");
+                        }
+                    }
+                } catch (error) {
+                    console.warn("Could not load member gallery.", error);
+                }
+                
+                // Setup gallery upload form
+                const uploadForm = document.getElementById("galleryUploadForm");
+                const uploadSection = document.getElementById("galleryUploadSection");
+                const uploadStatus = document.getElementById("uploadStatus");
+                const showUploadStatus = (message, type) => {
+                    uploadStatus.textContent = message;
+                    uploadStatus.className = "auth-status " + type;
+                };
+                
+                if (uploadForm) {
+                    const userToken = localStorage.getItem("abiousAuthToken");
+                    const userData = localStorage.getItem("abiousUser");
+                    
+                    if (userToken && userData) {
+                        if (uploadSection) uploadSection.style.display = "block";
+                        
+                        uploadForm.addEventListener("submit", async (e) => {
+                            e.preventDefault();
+                            
+                            try {
+                                const file = document.getElementById("uploadFile").files[0];
+                                if (!file) {
+                                    showUploadStatus("Please select a file.", "error");
+                                    return;
+                                }
+                                
+                                const reader = new FileReader();
+                                reader.onload = async (event) => {
+                                    try {
+                                        const payload = {
+                                            title: document.getElementById("uploadTitle").value.trim(),
+                                            caption: document.getElementById("uploadCaption").value.trim(),
+                                            type: file.type.startsWith("video/") ? "video" : "image",
+                                            url: event.target.result,
+                                            uploadedBy: userData ? JSON.parse(userData).fullName || JSON.parse(userData).email : "Member"
+                                        };
+                                        
+                                        const response = await fetch(apiBase + "/api/admin/gallery", {
+                                            method: "POST",
+                                            headers: {
+                                                "Content-Type": "application/json",
+                                                "Authorization": "Bearer " + userToken
+                                            },
+                                            body: JSON.stringify(payload)
+                                        });
+                                        
+                                        if (response.ok) {
+                                            showUploadStatus("Upload successful! Your photo will appear in the gallery soon.", "ok");
+                                            uploadForm.reset();
+                                            setTimeout(() => location.reload(), 1500);
+                                        } else {
+                                            const error = await response.json();
+                                            showUploadStatus(error.error || "Upload failed. Please try again.", "error");
+                                        }
+                                    } catch (error) {
+                                        showUploadStatus("Error uploading. Please try again.", "error");
+                                    }
+                                };
+                                reader.readAsDataURL(file);
+                            } catch (error) {
+                                showUploadStatus("Error with your file. Please try again.", "error");
+                            }
+                        });
+                    } else {
+                        if (uploadSection) {
+                            uploadSection.innerHTML = '<p style="text-align: center; color: #666;">Log in to share photos and videos in our community gallery!</p>';
+                            uploadSection.style.display = "block";
+                        }
+                    }
+                }
             } catch (error) {
-                console.warn("Could not load managed site images.", error);
+                console.warn("Could not load site content.", error);
             }
         })();
     </script>

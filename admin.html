@@ -354,7 +354,14 @@
             (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
             LIVE_API_BASE
         ].filter(Boolean)));
+        const API_VERSION_PREFIX = "/api/v2";
         let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+
+        function getApiUrl(path) {
+            if (path.startsWith("/api/v2")) return path;
+            if (path.startsWith("/api")) return API_VERSION_PREFIX + path.slice(4);
+            return path;
+        }
         const LOCAL_ADMIN_EMAIL = "admin@abious.org";
         const LOCAL_ADMIN_PASSWORD = "St!lla18";
         const ALLOW_LOCAL_ADMIN_MODE = !location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -406,9 +413,10 @@
             return data;
         }
         async function fetchJson(path, options = {}) {
+            const apiPath = getApiUrl(path);
             let response;
             try {
-                response = await fetch(activeApiBase + path, options);
+                response = await fetch(activeApiBase + apiPath, options);
             } catch {
                 throw new Error("Could not reach the server. Check the live backend or localhost:3000.");
             }
@@ -417,11 +425,12 @@
             return data;
         }
         async function fetchJsonWithFallback(path, options = {}) {
+            const apiPath = getApiUrl(path);
             let lastError = null;
             for (const base of API_BASE_CANDIDATES) {
                 let response;
                 try {
-                    response = await fetch(base + path, options);
+                    response = await fetch(base + apiPath, options);
                 } catch (error) {
                     lastError = error;
                     continue;

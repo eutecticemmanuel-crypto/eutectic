@@ -1217,15 +1217,6 @@ async function handleApi(req, res, urlObj) {
         const method = req.method || "GET";
         let pathname = urlObj.pathname;
 
-        // New API version support: all calls should use /api/v2/*
-        if (pathname.startsWith("/api/v2")) {
-            pathname = "/api" + pathname.slice(7); // map /api/v2/foo -> /api/foo
-        } else if (pathname.startsWith("/api/")) {
-            // Old v1 API is deprecated and retired, return 410 to signal move
-            sendJson(res, 410, { error: "API v1 is retired. Use /api/v2/* endpoints." });
-            return true;
-        }
-
         if (useFirebase || useMongoDB) {
             siteContent = await getSiteContent();
         } else {

@@ -355,11 +355,10 @@
             (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
             LIVE_API_BASE
         ].filter(Boolean)));
-        const API_VERSION_PREFIX = "/api/v2";
+        const API_VERSION_PREFIX = "/api";
         let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
 
         function getApiUrl(path) {
-            if (path.startsWith("/api/v2")) return path;
             if (path.startsWith("/api")) return API_VERSION_PREFIX + path.slice(4);
             return path;
         }
@@ -871,7 +870,7 @@
         refreshButton.addEventListener("click", async () => { try { await refreshAllData(); showAlert("dashboardAlert", "Data refreshed.", "success"); } catch (error) { showAlert("dashboardAlert", error.message || "Could not refresh data.", "error"); } });
         document.getElementById("healthCheckButton").addEventListener("click", async () => {
             try {
-                const data = await fetchJsonWithFallback("/api/v2/health");
+                const data = await fetchJsonWithFallback("/api/health");
                 showAlert("dashboardAlert", `API health ok: ${data.now || "unknown"} (mongodb=${data.mongodb}, firebase=${data.firebase})`, "success");
             } catch (err) {
                 showAlert("dashboardAlert", err.message || "API health check failed.", "error");

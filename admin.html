@@ -432,7 +432,7 @@
                     return data;
                 }
                 const message = data.error || data.message || "Request failed.";
-                if (response.status === 404 || /route not found/i.test(message)) {
+                if (response.status === 404 || /route not found/i.test(message) || /not found/i.test(message)) {
                     lastError = new Error(message);
                     continue;
                 }

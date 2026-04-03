@@ -769,8 +769,8 @@
         async function addGalleryItem(payload) {
             try {
                 const method = "POST";
-                const path = "/api/admin/gallery";
-                const options = { method, headers: authHeaders(true), body: JSON.stringify(payload) };
+                const path = "/api/gallery";
+                const options = { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
                 await fetchJson(path, options);
                 showAlert("galleryAlert", "Gallery item added successfully.", "success");
                 document.getElementById("addGalleryItemForm").reset();

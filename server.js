@@ -1838,6 +1838,28 @@ async function handleApi(req, res, urlObj) {
             return true;
         }
 
+        // Public: Add to gallery (no admin auth required)
+        if (method === "POST" && pathname === "/api/gallery") {
+            const body = await getRequestBody(req);
+            const galleryItem = {
+                id: crypto.randomUUID ? crypto.randomUUID() : "item_" + Date.now(),
+                title: String(body.title || "Gallery Item").trim(),
+                type: String(body.type || "image").trim(),
+                url: String(body.url || "").trim(),
+                caption: String(body.caption || "").trim(),
+                uploadedBy: String(body.uploadedBy || "Guest").trim(),
+                createdAt: nowIso()
+            };
+            if (!galleryItem.url && body.dataUrl) {
+                galleryItem.url = String(body.dataUrl).trim();
+            }
+            if (!siteContent.gallery) siteContent.gallery = [];
+            siteContent.gallery.push(galleryItem);
+            await saveSiteContent(siteContent);
+            sendJson(res, 201, { success: true, item: galleryItem });
+            return true;
+        }
+
         // Admin: Add to gallery
         if (method === "POST" && pathname === "/api/admin/gallery") {
             const user = requireUser(req, store);

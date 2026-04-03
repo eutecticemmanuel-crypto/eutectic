@@ -118,6 +118,7 @@
                         <div><h2>Workspace</h2><p id="welcomeText">Connected.</p></div>
                         <div class="actions">
                             <button id="refreshButton" class="secondary" type="button">Refresh</button>
+                            <button id="healthCheckButton" class="secondary" type="button">API Health</button>
                             <button id="logoutButton" class="secondary" type="button">Log Out</button>
                         </div>
                     </div>
@@ -868,6 +869,14 @@
             finally { loginButton.disabled = false; loginButton.textContent = "Sign In"; }
         });
         refreshButton.addEventListener("click", async () => { try { await refreshAllData(); showAlert("dashboardAlert", "Data refreshed.", "success"); } catch (error) { showAlert("dashboardAlert", error.message || "Could not refresh data.", "error"); } });
+        document.getElementById("healthCheckButton").addEventListener("click", async () => {
+            try {
+                const data = await fetchJsonWithFallback("/api/v2/health");
+                showAlert("dashboardAlert", `API health ok: ${data.now || "unknown"} (mongodb=${data.mongodb}, firebase=${data.firebase})`, "success");
+            } catch (err) {
+                showAlert("dashboardAlert", err.message || "API health check failed.", "error");
+            }
+        });
         document.getElementById("logoutButton").addEventListener("click", () => { clearSession(); showAlert("loginAlert", "Logged out.", "success"); });
         document.getElementById("addMemberForm").addEventListener("submit", async (event) => {
             event.preventDefault(); hideAlert("addMemberAlert");

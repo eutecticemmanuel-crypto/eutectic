@@ -952,6 +952,91 @@
             font-size: 1.1rem;
         }
 
+        .programs-board {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .programs-board::before {
+            content: "";
+            position: absolute;
+            inset: -12% auto auto -6%;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .programs-board::after {
+            content: "";
+            position: absolute;
+            right: -50px;
+            bottom: -70px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(216, 161, 61, 0.18), transparent 72%);
+            pointer-events: none;
+        }
+
+        .panel-copy {
+            max-width: 620px;
+        }
+
+        .programs-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .metric-chip {
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(5, 18, 15, 0.42);
+            backdrop-filter: blur(14px);
+        }
+
+        .metric-chip strong {
+            display: block;
+            font-family: "Sora", sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 6px;
+        }
+
+        .metric-chip span {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .program-dashboard-card {
+            display: grid;
+            gap: 14px;
+        }
+
+        .program-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .program-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #d7ffe7;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .program-link:hover {
+            text-decoration: underline;
+        }
+
         /* Admin Modal/Dialog */
         .admin-modal {
             display: none;
@@ -1242,6 +1327,10 @@
             }
 
             .news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .programs-metrics {
                 grid-template-columns: 1fr;
             }
 
@@ -1537,13 +1626,31 @@
         </section>
 
         <!-- Programs Section -->
-        <section class="news-section" id="programsSection" style="display: none;">
+        <section class="news-section programs-board" id="programsSection" style="display: none;">
             <div class="news-header">
-                <h2>Programs (Admin)</h2>
+                <div class="panel-copy">
+                    <h2>Programs Dashboard</h2>
+                    <p>Shape the programs bar with the same polished dashboard feel as the rest of the experience.</p>
+                </div>
                 <div class="admin-controls">
                     <button class="btn-admin btn-add-news" onclick="openAddProgramModal()">
                         ➕ Add Program
                     </button>
+                </div>
+            </div>
+
+            <div class="programs-metrics">
+                <div class="metric-chip">
+                    <strong id="trialProgramCount">0</strong>
+                    <span>Total programs</span>
+                </div>
+                <div class="metric-chip">
+                    <strong id="trialProgramLinkedCount">0</strong>
+                    <span>With links</span>
+                </div>
+                <div class="metric-chip">
+                    <strong id="trialProgramCategoryCount">0</strong>
+                    <span>Categories</span>
                 </div>
             </div>
 
@@ -2027,6 +2134,12 @@
 
         function displayPrograms(items) {
             const programsList = document.getElementById("programsList");
+            const count = Array.isArray(items) ? items.length : 0;
+            const linkedCount = Array.isArray(items) ? items.filter(item => item.link).length : 0;
+            const categoryCount = Array.isArray(items) ? new Set(items.map(item => String(item.category || "general").toLowerCase())).size : 0;
+            document.getElementById("trialProgramCount").textContent = String(count);
+            document.getElementById("trialProgramLinkedCount").textContent = String(linkedCount);
+            document.getElementById("trialProgramCategoryCount").textContent = String(categoryCount);
 
             if (!items || items.length === 0) {
                 programsList.innerHTML = `
@@ -2048,15 +2161,15 @@
                 });
 
                 return `
-                    <div class="news-card">
-                        <div class="news-card-meta">
+                    <div class="news-card program-dashboard-card">
+                        <div class="news-card-meta program-topline">
                             <span class="news-type">🏷️ ${escapeHtml(item.category || "General")}</span>
                             <span class="news-date">${formattedDate}</span>
                         </div>
                         <h3>${escapeHtml(item.title)}</h3>
                         <div class="news-card-content">${escapeHtml(item.description || "")}</div>
                         <div class="news-card-footer">
-                            <span class="news-author">Program ID: ${escapeHtml(item.id)}</span>
+                            ${item.link ? `<a class="program-link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Open Program</a>` : `<span class="news-author">No linked page yet</span>`}
                             <div class="news-actions">
                                 <button type="button" class="btn-small" onclick='openEditProgramModal("${item.id}")'>✏️ Edit</button>
                                 <button type="button" class="btn-small" onclick='deleteProgram("${item.id}")'>🗑 Delete</button>

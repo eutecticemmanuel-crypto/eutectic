@@ -4,33 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg:#f1ede4; --bg-deep:#e6dcc8; --card:rgba(255,255,255,.82); --card-strong:#fffdf8; --soft:rgba(255,250,241,.86); --line:rgba(122,102,73,.18); --text:#1f2937; --muted:#6b7280; --primary:#0f766e; --primary-dark:#115e59; --accent:#c08427; --danger:#b91c1c; --success:#166534; --shadow:0 26px 60px rgba(36,32,24,.12); }
+        :root { --bg:#071814; --bg-mid:#0d2d26; --bg-deep:#133d33; --card:rgba(255,255,255,.09); --card-strong:rgba(255,255,255,.13); --soft:rgba(255,255,255,.08); --line:rgba(255,255,255,.14); --text:#f6fbf8; --muted:rgba(246,251,248,.72); --primary:#d8a13d; --primary-dark:#b8821e; --accent:#4ec7a1; --danger:#dc2626; --success:#16a34a; --shadow:0 28px 70px rgba(0,0,0,.32); }
         * { box-sizing:border-box; }
-        body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:
-            radial-gradient(circle at top left, rgba(192,132,39,.18), transparent 24%),
-            radial-gradient(circle at right 18%, rgba(15,118,110,.18), transparent 26%),
-            linear-gradient(135deg, var(--bg) 0%, #f7f3ea 45%, var(--bg-deep) 100%); }
+        body { margin:0; font-family:"Manrope","Segoe UI",Tahoma,sans-serif; color:var(--text); background:
+            radial-gradient(circle at top left, rgba(78,199,161,.16), transparent 24%),
+            radial-gradient(circle at right 18%, rgba(216,161,61,.16), transparent 26%),
+            linear-gradient(135deg, var(--bg) 0%, var(--bg-mid) 45%, var(--bg-deep) 100%); }
         body::before { content:""; position:fixed; inset:0; pointer-events:none; background:
-            linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at center, black 35%, transparent 82%); opacity:.24; }
+            linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px); background-size:42px 42px; mask-image:radial-gradient(circle at center, black 35%, transparent 82%); opacity:.24; }
         .page { position:relative; width:min(1600px, calc(100% - 24px)); margin:0 auto; padding:24px 0 36px; z-index:1; }
-        .card { background:var(--card); border:1px solid rgba(255,255,255,.7); border-radius:26px; box-shadow:var(--shadow); backdrop-filter:blur(18px); padding:24px; }
+        .page::before { content:""; position:fixed; inset:0; pointer-events:none; background:
+            radial-gradient(circle at 18% 20%, rgba(255,255,255,.08), transparent 18%),
+            radial-gradient(circle at 80% 18%, rgba(216,161,61,.12), transparent 22%),
+            radial-gradient(circle at 74% 74%, rgba(78,199,161,.12), transparent 22%); filter:blur(16px); z-index:-1; }
+        .card { background:var(--card); border:1px solid var(--line); border-radius:26px; box-shadow:var(--shadow); backdrop-filter:blur(18px); padding:24px; }
         .header,.row,.tabs,.actions,.form2 { display:flex; gap:12px; flex-wrap:wrap; }
         .header { justify-content:space-between; align-items:center; margin-bottom:16px; }
         .layout { display:grid; grid-template-columns:320px minmax(0,1fr); gap:16px; }
-        h1,h2,h3 { margin:0; }
+        h1,h2,h3 { margin:0; font-family:"Sora","Manrope",sans-serif; }
         p { margin:8px 0 0; color:var(--muted); line-height:1.5; }
         button,a.btn { appearance:none; border:0; border-radius:999px; padding:11px 16px; font:inherit; font-weight:700; cursor:pointer; text-decoration:none; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
         button:hover,a.btn:hover { transform:translateY(-1px); }
-        .primary { color:#fff; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow:0 14px 28px rgba(15,118,110,.22); }
-        .secondary { color:var(--text); background:rgba(255,255,255,.8); border:1px solid var(--line); }
+        .primary { color:#1f1608; background:linear-gradient(135deg, var(--primary), #f1c76d); box-shadow:0 14px 28px rgba(216,161,61,.24); }
+        .secondary { color:var(--text); background:rgba(255,255,255,.08); border:1px solid var(--line); }
         .danger { color:#fff; background:var(--danger); }
         .stack { display:grid; gap:12px; }
         .form2 > div { flex:1 1 220px; }
         label { display:block; margin-bottom:6px; font-weight:700; }
-        input,textarea,select { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:16px; font:inherit; color:var(--text); background:rgba(255,255,255,.92); box-shadow:inset 0 1px 0 rgba(255,255,255,.9); }
-        input:focus,textarea:focus,select:focus { outline:3px solid rgba(15,118,110,.14); border-color:rgba(15,118,110,.35); }
+        input,textarea,select { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:16px; font:inherit; color:var(--text); background:rgba(255,255,255,.08); box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }
+        input:focus,textarea:focus,select:focus { outline:3px solid rgba(216,161,61,.14); border-color:rgba(216,161,61,.35); }
         textarea { min-height:100px; resize:vertical; }
         .alert { display:none; margin-top:12px; padding:12px 14px; border-radius:14px; }
         .alert.show { display:block; }
@@ -41,11 +48,11 @@
         .dashboard.show { display:grid; }
         .hidden { display:none !important; }
         .stats { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
-        .stat { padding:18px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,236,.68)); }
+        .stat { padding:18px; border:1px solid var(--line); border-radius:20px; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)); }
         .stat small { display:block; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.06em; }
         .stat strong { font-size:1.8rem; }
-        .tab-btn { background:rgba(255,255,255,.8); border:1px solid var(--line); }
-        .tab-btn.active { color:#fff; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+        .tab-btn { background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--text); }
+        .tab-btn.active { color:#1f1608; background:linear-gradient(135deg, var(--primary), #f1c76d); }
         .tab-panel { display:none; }
         .tab-panel.active { display:block; }
         .grid2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; }
@@ -58,41 +65,68 @@
         #securityText {
             min-height: 280px;
         }
-        .box { padding:18px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,248,236,.7)); }
-        .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.9); }
+        .box { padding:18px; border:1px solid var(--line); border-radius:22px; background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05)); }
+        .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.06); }
         table { width:100%; min-width:800px; border-collapse:collapse; }
-        th,td { padding:13px 14px; border-bottom:1px solid #ece9e1; text-align:left; vertical-align:top; }
-        th { background:linear-gradient(180deg, rgba(15,118,110,.09), rgba(15,118,110,.04)); font-size:.82rem; text-transform:uppercase; letter-spacing:.05em; }
+        th,td { padding:13px 14px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:top; }
+        th { background:linear-gradient(180deg, rgba(216,161,61,.16), rgba(216,161,61,.05)); font-size:.82rem; text-transform:uppercase; letter-spacing:.05em; }
         .pill { display:inline-flex; padding:6px 10px; border-radius:999px; font-size:.84rem; font-weight:700; }
         .pill.verified { color:var(--success); background:#dcfce7; }
         .pill.pending { color:#b45309; background:#fef3c7; }
         .empty { padding:20px; color:var(--muted); text-align:center; }
         .image-manager { display:grid; gap:14px; }
-        .image-item { display:grid; grid-template-columns:140px minmax(0,1fr); gap:16px; padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.88); }
-        .image-preview { width:100%; aspect-ratio:4/3; border-radius:16px; border:1px solid var(--line); background:#f8f5ef; display:grid; place-items:center; overflow:hidden; color:var(--muted); font-size:.82rem; text-align:center; }
+        .image-item { display:grid; grid-template-columns:140px minmax(0,1fr); gap:16px; padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.08); }
+        .image-preview { width:100%; aspect-ratio:4/3; border-radius:16px; border:1px solid var(--line); background:#0f211c; display:grid; place-items:center; overflow:hidden; color:var(--muted); font-size:.82rem; text-align:center; }
         .image-preview img { width:100%; height:100%; object-fit:cover; display:block; }
         .image-fields { display:grid; gap:10px; }
         .image-meta { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .image-meta small { display:block; color:var(--muted); margin-top:4px; }
         .image-actions { display:flex; gap:10px; flex-wrap:wrap; }
         .moderation-list { display:grid; gap:14px; }
-        .moderation-card { padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.88); }
+        .moderation-card { padding:16px; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.08); }
         .moderation-head,.moderation-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .moderation-meta { margin-top:10px; color:var(--muted); font-size:.9rem; }
-        .moderation-preview { margin-top:12px; border-radius:16px; overflow:hidden; border:1px solid var(--line); background:#f8f5ef; }
+        .moderation-preview { margin-top:12px; border-radius:16px; overflow:hidden; border:1px solid var(--line); background:#0f211c; }
         .moderation-preview img,.moderation-preview video { display:block; width:100%; max-height:320px; object-fit:cover; background:#101817; }
         .moderation-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
-        @media (max-width:1024px) { .layout,.grid2,.stats,.editor-grid { grid-template-columns:1fr; } }
+        .workspace-banner { position:relative; overflow:hidden; }
+        .workspace-banner::before { content:""; position:absolute; inset:-30% auto auto -8%; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.16), transparent 68%); pointer-events:none; }
+        .workspace-banner::after { content:""; position:absolute; right:-60px; bottom:-80px; width:240px; height:240px; border-radius:50%; background:radial-gradient(circle, rgba(78,199,161,.20), transparent 70%); pointer-events:none; }
+        .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.12); font-size:.82rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+        .eyebrow::before { content:""; width:10px; height:10px; border-radius:50%; background:#ffe6aa; box-shadow:0 0 0 4px rgba(255,230,170,.18); }
+        .login-panel { background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)); }
+        .dashboard-shell { display:grid; gap:16px; }
+        .workspace-grid { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(320px,.8fr); gap:16px; align-items:stretch; }
+        .glass-box { padding:18px; border-radius:22px; border:1px solid var(--line); background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); }
+        .status-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+        .status-chip { padding:14px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.06); }
+        .status-chip strong { display:block; font-size:1.05rem; margin-bottom:6px; }
+        .program-hero { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr); gap:16px; margin-bottom:16px; }
+        .program-summary { display:grid; gap:12px; }
+        .mini-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+        .mini-stat { padding:16px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.06); }
+        .mini-stat small { display:block; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+        .mini-stat strong { font-size:1.5rem; }
+        .program-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; }
+        .program-card { position:relative; padding:18px; border-radius:22px; border:1px solid var(--line); background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)); overflow:hidden; }
+        .program-card::before { content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(255,255,255,.12), transparent 45%); pointer-events:none; }
+        .program-card-header,.program-card-meta,.program-card-actions { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+        .program-card-header { margin-bottom:12px; }
+        .program-card p { position:relative; z-index:1; margin:0 0 14px; }
+        .category-pill { display:inline-flex; padding:7px 11px; border-radius:999px; background:rgba(216,161,61,.18); color:#ffe6aa; font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+        .program-link { color:#a7f3d0; font-weight:700; text-decoration:none; }
+        .program-link:hover { text-decoration:underline; }
+        @media (max-width:1024px) { .layout,.grid2,.stats,.editor-grid,.workspace-grid,.program-hero,.mini-stats { grid-template-columns:1fr; } }
         @media (max-width:760px) { .image-item { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
     <div class="page">
-        <section class="card header" style="background:linear-gradient(135deg, rgba(17,94,89,.94), rgba(192,132,39,.82)); color:#fff; border-color:rgba(255,255,255,.24);">
+        <section class="card header workspace-banner" style="background:linear-gradient(135deg, rgba(6,19,16,.94), rgba(17,94,89,.82) 52%, rgba(216,161,61,.72)); color:#fff; border-color:rgba(255,255,255,.18);">
             <div>
-                <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">Admin Workspace</div>
+                <div class="eyebrow">Admin Workspace</div>
                 <h1 style="margin-top:14px;">Admin Dashboard</h1>
-                <p style="color:rgba(255,255,255,.84);max-width:52ch;">Manage members, public links, contacts, website copy, and policies from one cleaner control room.</p>
+                <p style="color:rgba(255,255,255,.84);max-width:52ch;">Manage members, public links, contacts, website copy, and programs from a cleaner dashboard control room.</p>
             </div>
             <div class="actions">
                 <a class="btn secondary" href="abious_rehabilitation_ceter.html">Public Site</a>
@@ -101,9 +135,9 @@
         </section>
 
         <div class="layout">
-            <aside id="loginPanel" class="card">
+            <aside id="loginPanel" class="card login-panel">
                 <h2>Admin Login</h2>
-                <p>Sign in to manage the site.</p>
+                <p>Sign in to manage the site with the API 1 dashboard workspace.</p>
                 <form id="adminLoginForm" class="stack" style="margin-top:16px;">
                     <div><label for="adminEmail">Email</label><input id="adminEmail" type="email" required></div>
                     <div><label for="adminPassword">Password</label><input id="adminPassword" type="password" required></div>
@@ -112,20 +146,30 @@
                 <div id="loginAlert" class="alert"></div>
             </aside>
 
-            <main id="dashboard" class="dashboard">
+            <main id="dashboard" class="dashboard dashboard-shell">
                 <section class="card">
-                    <div class="header" style="margin-bottom:0;">
-                        <div><h2>Workspace</h2><p id="welcomeText">Connected.</p></div>
-                        <div class="actions">
-                            <button id="refreshButton" class="secondary" type="button">Refresh</button>
-                            <button id="healthCheckButton" class="secondary" type="button">API Health</button>
-                            <button id="logoutButton" class="secondary" type="button">Log Out</button>
+                    <div class="workspace-grid">
+                        <div class="glass-box">
+                            <div class="header" style="margin-bottom:0;">
+                                <div><h2>Workspace</h2><p id="welcomeText">Connected.</p></div>
+                            </div>
+                            <div class="stats" style="margin-top:16px;">
+                                <div class="stat"><small>Total Members</small><strong id="totalMembers">0</strong></div>
+                                <div class="stat"><small>Verified</small><strong id="verifiedMembers">0</strong></div>
+                                <div class="stat"><small>Pending</small><strong id="pendingMembers">0</strong></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="stats" style="margin-top:16px;">
-                        <div class="stat"><small>Total Members</small><strong id="totalMembers">0</strong></div>
-                        <div class="stat"><small>Verified</small><strong id="verifiedMembers">0</strong></div>
-                        <div class="stat"><small>Pending</small><strong id="pendingMembers">0</strong></div>
+                        <div class="glass-box">
+                            <div class="actions" style="justify-content:flex-end;">
+                                <button id="refreshButton" class="secondary" type="button">Refresh</button>
+                                <button id="healthCheckButton" class="secondary" type="button">API Health</button>
+                                <button id="logoutButton" class="secondary" type="button">Log Out</button>
+                            </div>
+                            <div class="status-grid" style="margin-top:16px;">
+                                <div class="status-chip"><strong>API 1 Ready</strong><span style="color:var(--muted);">This page uses direct `/api/...` routes.</span></div>
+                                <div class="status-chip"><strong>Content Control</strong><span style="color:var(--muted);">Programs, members, policies, and media in one workspace.</span></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="tabs" style="margin-top:16px;">
                         <button class="tab-btn active" data-tab="members" type="button">Members</button>
@@ -201,14 +245,29 @@
                 </section>
 
                 <section id="tab-programs" class="tab-panel card">
-                    <div class="header" style="margin-bottom:16px; justify-content:space-between; align-items:center;">
-                        <div><h2>Program Management</h2><p>Create, update, or delete program entries.</p></div>
-                        <button class="btn primary" type="button" id="addProgramButton">Add Program</button>
+                    <div class="program-hero">
+                        <div class="glass-box">
+                            <div class="eyebrow">Programs Hub</div>
+                            <h2 style="margin-top:14px;">Program Dashboard</h2>
+                            <p>Create, update, and spotlight programs from the same dashboard language used across the public experience.</p>
+                            <div class="actions" style="margin-top:16px;">
+                                <button class="btn primary" type="button" id="addProgramButton">Add Program</button>
+                                <button class="secondary" type="button" id="refreshProgramsButton">Refresh Programs</button>
+                            </div>
+                        </div>
+                        <div class="program-summary">
+                            <div class="mini-stats">
+                                <div class="mini-stat"><small>Total</small><strong id="programCount">0</strong></div>
+                                <div class="mini-stat"><small>Linked</small><strong id="programLinkedCount">0</strong></div>
+                                <div class="mini-stat"><small>Categories</small><strong id="programCategoryCount">0</strong></div>
+                            </div>
+                            <div class="glass-box">
+                                <h3 style="margin-bottom:10px;">Program Focus</h3>
+                                <p style="margin:0;">Use this section to keep rehabilitation, education, community, and general initiatives visually organized and easy to manage.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="actions" style="margin-bottom:12px; gap:10px; flex-wrap:wrap;">
-                        <button class="secondary" type="button" id="refreshProgramsButton">Refresh Programs</button>
-                    </div>
-                    <div id="programsList" class="table-wrap" style="margin-top:12px;"></div>
+                    <div id="programsList" class="program-grid"></div>
                     <div id="programAlert" class="alert"></div>
                 </section>
 
@@ -355,12 +414,11 @@
             (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
             LIVE_API_BASE
         ].filter(Boolean)));
-        const API_VERSION_PREFIX = "/api";
         let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
 
         function getApiUrl(path) {
-            if (path.startsWith("/api")) return API_VERSION_PREFIX + path.slice(4);
-            return path;
+            if (!path) return "/api";
+            return path.startsWith("/") ? path : "/" + path;
         }
         const LOCAL_ADMIN_EMAIL = "admin@abious.org";
         const LOCAL_ADMIN_PASSWORD = "St!lla18";
@@ -724,11 +782,16 @@
 
         function renderPrograms(programs) {
             const table = document.getElementById("programsList");
+            const linkedCount = Array.isArray(programs) ? programs.filter((item) => item.link).length : 0;
+            const categoryCount = Array.isArray(programs) ? new Set(programs.map((item) => String(item.category || "general").toLowerCase())).size : 0;
+            document.getElementById("programCount").textContent = String(Array.isArray(programs) ? programs.length : 0);
+            document.getElementById("programLinkedCount").textContent = String(linkedCount);
+            document.getElementById("programCategoryCount").textContent = String(categoryCount);
             if (!Array.isArray(programs) || programs.length === 0) {
                 table.innerHTML = '<div class="empty">No programs available.</div>';
                 return;
             }
-            table.innerHTML = `<table><thead><tr><th>Category</th><th>Title</th><th>Description</th><th>Link</th><th>Actions</th></tr></thead><tbody>${programs.map(item => `<tr data-id="${esc(item.id)}"><td>${esc(item.category)}</td><td>${esc(item.title)}</td><td>${esc(item.description)}</td><td>${item.link ? `<a href="${esc(item.link)}" target="_blank">Open</a>` : "-"}</td><td><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></td></tr>`).join("")}</tbody></table>`;
+            table.innerHTML = programs.map(item => `<article class="program-card" data-id="${esc(item.id)}"><div class="program-card-header"><span class="category-pill">${esc(item.category || "general")}</span><span>${esc(formatDate(item.updatedAt || item.createdAt))}</span></div><h3>${esc(item.title)}</h3><p>${esc(item.description || "No description yet.")}</p><div class="program-card-meta">${item.link ? `<a class="program-link" href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">Open resource</a>` : `<span style="color:var(--muted);">No external link</span>`}<span style="color:var(--muted);">ID ${esc(item.id)}</span></div><div class="program-card-actions" style="margin-top:14px;"><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></div></article>`).join("");
         }
 
         async function fetchGallery() {

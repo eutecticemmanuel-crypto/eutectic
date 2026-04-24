@@ -1669,12 +1669,14 @@ async function handleApi(req, res, urlObj) {
             return true;
         }
 
-        // Admin: Get all resources
-        if (method === "GET" && pathname === "/api/admin/resources") {
-            const user = requireUser(req, store);
-            if (!user || user.role !== "Admin") {
-                sendJson(res, 403, { error: "Admin access required" });
-                return true;
+        // Public/Admin: Get resources
+        if (method === "GET" && (pathname === "/api/resources" || pathname === "/api/admin/resources")) {
+            if (pathname === "/api/admin/resources") {
+                const user = requireUser(req, store);
+                if (!user || user.role !== "Admin") {
+                    sendJson(res, 403, { error: "Admin access required" });
+                    return true;
+                }
             }
             const resources = await getResources();
             sendJson(res, 200, { resources });

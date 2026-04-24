@@ -1598,6 +1598,47 @@ async function handleApi(req, res, urlObj) {
             return true;
         }
 
+        // Admin: Update news/event
+        if ((method === "PUT" || method === "PATCH") && pathname.startsWith("/api/admin/news/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+
+            const newsId = pathname.split("/").pop();
+            const body = await getRequestBody(req);
+            const title = String(body.title || "").trim();
+            const content = String(body.content || "").trim();
+            const type = String(body.type || "news").trim();
+            const eventDate = body.eventDate || null;
+
+            if (!title || !content) {
+                sendJson(res, 400, { error: "Title and content are required" });
+                return true;
+            }
+
+            const news = await getNews();
+            const index = news.findIndex((item) => item.id === newsId);
+            if (index === -1) {
+                sendJson(res, 404, { error: "News item not found" });
+                return true;
+            }
+
+            news[index] = {
+                ...news[index],
+                title,
+                content,
+                type,
+                eventDate,
+                updatedAt: nowIso()
+            };
+            await saveNews(news);
+
+            sendJson(res, 200, { success: true, news: news[index] });
+            return true;
+        }
+
         // Admin: Delete news/event
         if (method === "DELETE" && pathname.startsWith("/api/admin/news/")) {
             const user = requireUser(req, store);
@@ -2503,15 +2544,22 @@ function getLanAddresses() {
     return Array.from(new Set(addresses));
 }
 
-server.listen(PORT, HOST, async () => {
+async function startServer() {
     ensureStore();
-    
-    // Try to connect to MongoDB
+
+    // Finish storage initialization before accepting requests.
     await connectMongoDB();
     siteContent = await getSiteContent();
-    
-    console.log(`Abious backend running at http://localhost:${PORT}`);
-    getLanAddresses().forEach((ip) => {
-        console.log(`LAN access: http://${ip}:${PORT}`);
+
+    server.listen(PORT, HOST, () => {
+        console.log(`Abious backend running at http://localhost:${PORT}`);
+        getLanAddresses().forEach((ip) => {
+            console.log(`LAN access: http://${ip}:${PORT}`);
+        });
     });
+}
+
+startServer().catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
 });

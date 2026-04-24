@@ -371,6 +371,8 @@
             user: (() => { try { return JSON.parse(localStorage.getItem("adminUser") || "null"); } catch { return null; } })(),
             members: [],
             posts: [],
+            news: [],
+            programs: [],
             galleryItems: [],
             imageAssets: {},
             localMode: localStorage.getItem("adminLocalMode") === "true"
@@ -688,22 +690,26 @@
         async function fetchNews() {
             if (state.localMode) {
                 const news = getLocalAdminStore().news || [];
+                state.news = news;
                 renderNews(news);
                 return;
             }
-            const data = await fetchJson("/api/news", { headers: authHeaders() });
+            const data = await fetchJson("/api/admin/news", { headers: authHeaders() });
             const news = data.news || [];
+            state.news = news;
             renderNews(news);
         }
 
         async function fetchPrograms() {
             if (state.localMode) {
                 const programs = getLocalAdminStore().content.programs || [];
+                state.programs = programs;
                 renderPrograms(programs);
                 return;
             }
-            const data = await fetchJson("/api/resources", { headers: authHeaders() });
+            const data = await fetchJson("/api/admin/resources", { headers: authHeaders() });
             const programs = data.resources || [];
+            state.programs = programs;
             renderPrograms(programs);
         }
 
@@ -941,7 +947,7 @@
             const action = target.dataset.newsAction; const id = target.dataset.id;
             if (!action || !id) return;
             if (action === "edit") {
-                const item = (await fetchJson("/api/news", { headers: authHeaders() })).news.find((n) => n.id === id);
+                const item = state.news.find((n) => n.id === id);
                 if (!item) { showAlert("newsAlert", "News item not found.", "error"); return; }
                 const updatedTitle = prompt("Update news title:", item.title); if (!updatedTitle) return;
                 const updatedContent = prompt("Update news content:", item.content); if (!updatedContent) return;
@@ -957,8 +963,7 @@
             const action = target.dataset.programAction; const id = target.dataset.id;
             if (!action || !id) return;
             if (action === "edit") {
-                const programs = await fetchJson("/api/resources", { headers: authHeaders() }).then((d) => d.resources || []);
-                const item = programs.find((p) => p.id === id);
+                const item = state.programs.find((p) => p.id === id);
                 if (!item) { showAlert("programAlert", "Program not found.", "error"); return; }
                 const newTitle = prompt("Program title:", item.title); if (!newTitle) return;
                 const newDesc = prompt("Program description:", item.description); if (!newDesc) return;

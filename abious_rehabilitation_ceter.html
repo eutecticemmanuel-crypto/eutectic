@@ -308,18 +308,225 @@
             margin-top: 20px;
         }
 
-        .image-gallery img {
+        .media-slider {
+            position: relative;
+            margin-top: 24px;
+            overflow: hidden;
+            padding: 10px 0 6px;
+            mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+        }
+
+        .media-slider::before,
+        .media-slider::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .media-slider::before {
+            left: 0;
+            background: linear-gradient(90deg, rgba(240, 253, 249, 0.96), rgba(240, 253, 249, 0));
+        }
+
+        .media-slider::after {
+            right: 0;
+            background: linear-gradient(270deg, rgba(240, 253, 249, 0.96), rgba(240, 253, 249, 0));
+        }
+
+        .media-slider-track {
+            display: flex;
+            width: max-content;
+            gap: 20px;
+            animation: sliderScroll 34s linear infinite;
+            will-change: transform;
+        }
+
+        .media-slider:hover .media-slider-track {
+            animation-play-state: paused;
+        }
+
+        .image-gallery img,
+        .image-gallery video {
             width: 280px;
             height: 180px;
             object-fit: cover;
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
             transition: all 0.4s ease;
+            flex: 0 0 auto;
+            background: #fff;
         }
 
-        .image-gallery img:hover {
+        .image-gallery img:hover,
+        .image-gallery video:hover {
             transform: scale(1.05) rotate(2deg);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .image-gallery.is-slider {
+            display: block;
+            margin-top: 0;
+        }
+
+        .feedback-showcase {
+            position: relative;
+            padding: 1.5px;
+            border-radius: 30px;
+            background: linear-gradient(120deg, rgba(124, 230, 204, 0.95), rgba(18, 196, 176, 0.95), rgba(255, 214, 83, 0.92));
+            box-shadow: 0 20px 50px rgba(24, 76, 62, 0.12), 0 0 60px rgba(101, 224, 207, 0.18);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .feedback-showcase::before {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(circle at top right, rgba(102, 240, 223, 0.32), transparent 28%), radial-gradient(circle at bottom left, rgba(255, 216, 88, 0.28), transparent 24%);
+            filter: blur(28px);
+            pointer-events: none;
+        }
+
+        .feedback-frame {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: minmax(160px, 0.85fr) minmax(0, 1.45fr);
+            gap: 36px;
+            align-items: start;
+            padding: 44px 46px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.96);
+            min-height: 320px;
+        }
+
+        .feedback-title {
+            font-size: clamp(2rem, 2.5vw, 3rem);
+            font-weight: 800;
+            line-height: 0.95;
+            color: #132b27;
+            border: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feedback-title::after {
+            display: none;
+        }
+
+        .feedback-copy {
+            font-size: clamp(1.15rem, 1vw + 0.95rem, 1.75rem);
+            line-height: 1.6;
+            color: #122826;
+            margin: 0;
+            max-width: 24ch;
+        }
+
+        .feedback-author {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-top: 36px;
+        }
+
+        .feedback-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #dafaf2, #ccefdc);
+            box-shadow: 0 10px 24px rgba(14, 75, 62, 0.12);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #11443c;
+            flex: 0 0 auto;
+        }
+
+        .feedback-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .feedback-author strong {
+            display: block;
+            font-size: 1.65rem;
+            color: #18302c;
+        }
+
+        .feedback-author span {
+            display: block;
+            color: #7d8a89;
+            font-size: 1.02rem;
+            margin-top: 4px;
+        }
+
+        .reaction-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+            gap: 26px;
+            margin-top: 24px;
+            align-items: start;
+        }
+
+        .reaction-panel,
+        .reaction-form-card {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(16, 88, 73, 0.1);
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 18px 38px rgba(17, 64, 54, 0.08);
+        }
+
+        .reaction-panel h3,
+        .reaction-form-card h3 {
+            margin-top: 0;
+            color: #163631;
+        }
+
+        .reaction-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .reaction-tag {
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(13, 110, 94, 0.08);
+            color: #114b41;
+            font-weight: 700;
+            font-size: 0.92rem;
+        }
+
+        .comment-preview {
+            margin-top: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .comment-preview-card {
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(241,250,247,0.92));
+            border: 1px solid rgba(13, 110, 94, 0.08);
+        }
+
+        .comment-preview-card p {
+            margin: 8px 0 0;
+        }
+
+        @keyframes sliderScroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(calc(-50% - 10px)); }
         }
 
         form {
@@ -702,6 +909,20 @@
                 align-items: center;
             }
 
+            .feedback-frame,
+            .reaction-layout {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+
+            .feedback-frame {
+                padding: 28px 24px;
+            }
+
+            .feedback-author strong {
+                font-size: 1.3rem;
+            }
+
             .core-values {
                 flex-direction: column;
             }
@@ -818,17 +1039,17 @@
                 <li><strong>Gatherings:</strong> Social events and workshops to celebrate achievements and share experiences.</li>
                 <li><strong>Camps:</strong> Therapeutic camps offering adventure, therapy, and team-building in a supportive environment.</li>
             </ul>
-            <div class="image-gallery">
-                <img data-image-key="main_gallery_1" src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="WhatsApp Image 1">
-                <img data-image-key="main_gallery_2" src="WhatsApp Image 2025-12-03 at 00.16.30.jpeg" alt="WhatsApp Image 2">
-                <img data-image-key="main_gallery_3" src="WhatsApp Image 2025-12-03 at 00.17.33.jpeg" alt="WhatsApp Image 3">
-                <img data-image-key="main_gallery_4" src="WhatsApp Image 2025-12-03 at 00.17.36.jpeg" alt="WhatsApp Image 4">
-                <img data-image-key="main_gallery_5" src="WhatsApp Image 2025-12-03 at 00.17.39.jpeg" alt="WhatsApp Image 5">
-                <img data-image-key="main_gallery_6" src="WhatsApp Image 2025-12-03 at 00.17.40.jpeg" alt="WhatsApp Image 6">
-                <img data-image-key="main_gallery_7" src="WhatsApp Image 2025-12-03 at 00.17.42.jpeg" alt="WhatsApp Image 7">
-                <img data-image-key="main_gallery_8" src="WhatsApp Image 2025-12-03 at 11.23.19.jpeg" alt="WhatsApp Image 8">
-                <img data-image-key="main_gallery_9" src="WhatsApp Image 2025-12-03 at 11.23.21.jpeg" alt="WhatsApp Image 9">
-                <img data-image-key="main_gallery_10" src="WhatsApp Image 2025-12-03 at 11.23.22 (1).jpeg" alt="WhatsApp Image 10">
+            <div class="image-gallery media-slider">
+                <img data-image-key="main_gallery_1" src="WhatsApp Image 2025-12-03 at 00.15.55.jpeg" alt="Community gathering">
+                <img data-image-key="main_gallery_2" src="WhatsApp Image 2025-12-03 at 00.16.30.jpeg" alt="Group activity">
+                <img data-image-key="main_gallery_3" src="WhatsApp Image 2025-12-03 at 00.17.33.jpeg" alt="Youth mentoring session">
+                <img data-image-key="main_gallery_4" src="WhatsApp Image 2025-12-03 at 00.17.36.jpeg" alt="Community support workshop">
+                <img data-image-key="main_gallery_5" src="WhatsApp Image 2025-12-03 at 00.17.39.jpeg" alt="Recovery program moment">
+                <img data-image-key="main_gallery_6" src="WhatsApp Image 2025-12-03 at 00.17.40.jpeg" alt="Foundation outreach">
+                <img data-image-key="main_gallery_7" src="WhatsApp Image 2025-12-03 at 00.17.42.jpeg" alt="Member activity highlight">
+                <img data-image-key="main_gallery_8" src="WhatsApp Image 2025-12-03 at 11.23.19.jpeg" alt="Community event scene">
+                <img data-image-key="main_gallery_9" src="WhatsApp Image 2025-12-03 at 11.23.21.jpeg" alt="Member spotlight">
+                <img data-image-key="main_gallery_10" src="WhatsApp Image 2025-12-03 at 11.23.22 (1).jpeg" alt="Shared activity photo">
             </div>
         </section>
 
@@ -836,7 +1057,7 @@
             <h2>Member Gallery</h2>
             <p>Photos and videos shared by our community members.</p>
             <div class="auth-status" id="galleryAuthStatus"></div>
-            <div id="memberGalleryContainer" class="image-gallery"></div>
+            <div id="memberGalleryContainer" class="image-gallery media-slider"></div>
             <div style="margin-top: 30px; padding: 20px; background: rgba(13, 110, 94, 0.05); border-radius: 12px; display: none;" id="galleryUploadSection">
                 <h3 style="margin-top: 0;">Share Your Photo or Video</h3>
                 <form id="galleryUploadForm">
@@ -996,31 +1217,64 @@
         </section>
 
         <section id="reactions">
-            <h2>Share Your Thoughts</h2>
-            <p>We value your feedback! Leave a comment or reaction below.</p>
-            <form>
-                <label for="comment-name">Name:</label>
-                <input type="text" id="comment-name" name="comment-name" required>
+            <div class="feedback-showcase">
+                <div class="feedback-frame">
+                    <h2 class="feedback-title">Feedback</h2>
+                    <div>
+                        <p class="feedback-copy">Abious continues to build a warm, focused space for healing and growth. The programs feel thoughtful, the community feels present, and the experience leaves people feeling seen and supported.</p>
+                        <div class="feedback-author">
+                            <div class="feedback-avatar">
+                                <img src="0f57e4323176f97ce993ae11324fca9c.webp" alt="Community feedback portrait">
+                            </div>
+                            <div>
+                                <strong>Community Voice</strong>
+                                <span>Supporters, members, and families shaping the journey together</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="reaction-layout">
+                <div class="reaction-panel">
+                    <h3>What People Appreciate</h3>
+                    <p>The heart of the initiative shows up in the care, the consistency, and the sense of belonging members feel when they arrive.</p>
+                    <div class="reaction-tags">
+                        <span class="reaction-tag">Warm environment</span>
+                        <span class="reaction-tag">Programs that feel active</span>
+                        <span class="reaction-tag">Real support</span>
+                        <span class="reaction-tag">Youth-centered growth</span>
+                    </div>
+                    <div id="comments-display" class="comment-preview">
+                        <div class="comment-preview-card">
+                            <strong>Recent Comments</strong>
+                            <p><em>Comments will be displayed here after moderation.</em></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="reaction-form-card">
+                    <h3>Share Your Thoughts</h3>
+                    <p>Leave a comment, suggestion, or encouraging note for the community.</p>
+                    <form>
+                        <label for="comment-name">Name:</label>
+                        <input type="text" id="comment-name" name="comment-name" required>
 
-                <label for="comment-email">Email:</label>
-                <input type="email" id="comment-email" name="comment-email" required>
+                        <label for="comment-email">Email:</label>
+                        <input type="email" id="comment-email" name="comment-email" required>
 
-                <label for="reaction">Reaction:</label>
-                <select id="reaction" name="reaction">
-                    <option value="positive">Positive</option>
-                    <option value="suggestion">Suggestion</option>
-                    <option value="question">Question</option>
-                    <option value="other">Other</option>
-                </select>
+                        <label for="reaction">Reaction:</label>
+                        <select id="reaction" name="reaction">
+                            <option value="positive">Positive</option>
+                            <option value="suggestion">Suggestion</option>
+                            <option value="question">Question</option>
+                            <option value="other">Other</option>
+                        </select>
 
-                <label for="comment">Comment:</label>
-                <textarea id="comment" name="comment" rows="4" required></textarea>
+                        <label for="comment">Comment:</label>
+                        <textarea id="comment" name="comment" rows="4" required></textarea>
 
-                <button type="submit">Submit</button>
-            </form>
-            <div id="comments-display" style="margin-top: 20px;">
-                <h3>Recent Comments</h3>
-                <p><em>Comments will be displayed here after moderation.</em></p>
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
             </div>
         </section>
 
@@ -1498,6 +1752,7 @@
                                     return `<img src="${item.url}" alt="${item.title || 'Gallery Item'}" style="width: 280px; height: 180px; object-fit: cover; border-radius: 12px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); transition: all 0.4s ease; cursor: pointer;" onclick="window.open(this.src, '_blank')" onmouseover="this.style.transform='scale(1.05) rotate(2deg)'; this.style.boxShadow='0 12px 30px rgba(0, 0, 0, 0.25)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(0, 0, 0, 0.15)'" title="${item.caption || item.title || 'Gallery Item'}">`;
                                 }
                             }).join("");
+                            initMediaSliders();
                         }
                     }
                 } catch (error) {
@@ -1593,6 +1848,25 @@
                 });
             });
         })();
+
+        function initMediaSliders() {
+            document.querySelectorAll(".image-gallery.media-slider").forEach((gallery) => {
+                if (gallery.dataset.sliderReady === "true") return;
+                const items = Array.from(gallery.children);
+                if (!items.length) return;
+
+                const track = document.createElement("div");
+                track.className = "media-slider-track";
+                items.forEach((item) => track.appendChild(item));
+                items.forEach((item) => track.appendChild(item.cloneNode(true)));
+
+                gallery.classList.add("is-slider");
+                gallery.dataset.sliderReady = "true";
+                gallery.innerHTML = "";
+                gallery.appendChild(track);
+            });
+        }
+        initMediaSliders();
     </script>
 </body>
 </html>

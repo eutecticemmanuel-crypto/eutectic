@@ -899,7 +899,7 @@
                 showAlert("dashboardAlert", (firstError && firstError.message) || "Some dashboard panels could not be loaded.", "info");
             }
         }
-        async function restoreSession() { if (!state.user || !state.token) { setLoggedOutView(); return; } try { setLoggedInView(); await refreshAllData(); } catch { clearSession(); } }
+        async function restoreSession() { setLoggedOutView(); }
 
         document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
             event.preventDefault(); hideAlert("loginAlert");
@@ -1333,7 +1333,7 @@
         document.getElementById("adminEmail").value = "admin@abious.org";
         document.getElementById("adminPassword").value = "St!lla18";
         clearMemberForm();
-        restoreSession();
+        
     </script>
 </body>
 </html>

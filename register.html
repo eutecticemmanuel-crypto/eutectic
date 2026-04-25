@@ -426,13 +426,10 @@
         })();
     </script>
     <script>
-        const LIVE_API_BASE = 'https://abious-rehabilitation-center.onrender.com';
-        const API_BASE_CANDIDATES = Array.from(new Set([
-            location.origin.startsWith('http') ? location.origin : '',
-            (!location.origin.startsWith('http') || ['localhost', '127.0.0.1'].includes(location.hostname)) ? 'http://localhost:3000' : '',
-            LIVE_API_BASE
-        ].filter(Boolean)));
-        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const API_BASE = (!location.origin || location.origin === 'null' || ['localhost', '127.0.0.1'].includes(location.hostname))
+            ? 'http://localhost:3000'
+            : '';
+        let activeApiBase = API_BASE;
         const verificationPanel = document.getElementById('verificationPanel');
         const verificationCodeInput = document.getElementById('verificationCode');
         const verifyCodeBtn = document.getElementById('verifyCodeBtn');
@@ -451,28 +448,12 @@
         }
 
         async function apiRequest(path, init = {}) {
-            let lastError = new Error('Could not reach the server. Start the backend or publish the API first.');
-            for (const base of API_BASE_CANDIDATES) {
-                let response;
-                try {
-                    response = await fetch(base + path, init);
-                } catch (error) {
-                    lastError = error;
-                    continue;
-                }
-                const data = await parseResponse(response);
-                if (response.ok) {
-                    activeApiBase = base;
-                    return data;
-                }
-                const message = data.error || data.message || 'Request failed';
-                if (response.status === 404 || /route not found/i.test(message)) {
-                    lastError = new Error(message);
-                    continue;
-                }
-                throw new Error(message);
+            const response = await fetch(activeApiBase + path, init);
+            const data = await parseResponse(response);
+            if (response.ok) {
+                return data;
             }
-            throw new Error(lastError.message || 'Could not reach the server.');
+            throw new Error(data.error || data.message || 'Request failed');
         }
 
         async function readSelectedPhoto() {

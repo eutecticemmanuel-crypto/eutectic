@@ -1751,10 +1751,9 @@
         </div>
     </div>
     <script>
-        const API_BASE_CANDIDATES = [
-            location.origin.startsWith("http") ? "" : "http://localhost:3000",
-            "https://abious-rehabilitation-center.onrender.com"
-        ].filter(Boolean);
+        const API_BASE = (!location.origin || location.origin === "null" || ["localhost", "127.0.0.1"].includes(location.hostname))
+            ? "http://localhost:3000"
+            : "";
 
         let currentAdminSession = null;
         let isAdminAuthenticated = false;
@@ -1762,39 +1761,8 @@
 
         async function apiFetch(path, options = {}) {
             const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-            let lastError = null;
-            let firstNotFoundResponse = null;
-
-            for (const base of API_BASE_CANDIDATES) {
-                const normalizedBase = base.replace(/\/+$/, "");
-                const url = normalizedBase ? `${normalizedBase}${normalizedPath}` : normalizedPath;
-                console.debug("[apiFetch] trying", url, options);
-
-                try {
-                    const response = await fetch(url, options);
-
-                    if (response.ok) {
-                        return response;
-                    }
-
-                    if (response.status === 404) {
-                        firstNotFoundResponse = firstNotFoundResponse || response;
-                        continue;
-                    }
-
-                    // Return errors that are not route miss; caller handles invalid credentials, forbidden, etc.
-                    return response;
-                } catch (err) {
-                    console.warn("[apiFetch] network error", url, err);
-                    lastError = err;
-                }
-            }
-
-            if (firstNotFoundResponse) {
-                return firstNotFoundResponse;
-            }
-
-            throw lastError || new Error("API route not found");
+            const url = API_BASE ? `${API_BASE}${normalizedPath}` : normalizedPath;
+            return fetch(url, options);
         }
 
         function toApiPath(path) {

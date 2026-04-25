@@ -241,32 +241,17 @@
     </div>
 
     <script>
-        const LIVE_API_BASE = 'https://abious-rehabilitation-center.onrender.com';
-        const API_BASE_CANDIDATES = Array.from(new Set([
-            location.origin.startsWith('http') ? location.origin : '',
-            (!location.origin.startsWith('http') || ['localhost', '127.0.0.1'].includes(location.hostname)) ? 'http://localhost:3000' : '',
-            LIVE_API_BASE
-        ].filter(Boolean)));
-        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const API_BASE = (!location.origin || location.origin === 'null' || ['localhost', '127.0.0.1'].includes(location.hostname))
+            ? 'http://localhost:3000'
+            : '';
+        let activeApiBase = API_BASE;
 
         async function fetchApiJson(path) {
-            let lastError = new Error('Unable to reach the backend.');
-            for (const base of API_BASE_CANDIDATES) {
-                try {
-                    const response = await fetch(base + path);
-                    if (response.status === 404) {
-                        lastError = new Error('API route not found.');
-                        continue;
-                    }
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || 'Request failed.');
-                    activeApiBase = base;
-                    return data;
-                } catch (error) {
-                    lastError = error;
-                }
-            }
-            throw lastError;
+            const response = await fetch(activeApiBase + path);
+            if (response.status === 404) throw new Error('API 1 route not found.');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Request failed.');
+            return data;
         }
 
         function showTab(tab) {
@@ -363,9 +348,8 @@
         }
 
         (async () => {
-            const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
             try {
-                const response = await fetch((activeApiBase || apiBase) + "/api/site-content");
+                const response = await fetch(activeApiBase + "/api/site-content");
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
                 document.querySelectorAll("[data-image-key]").forEach((img) => {

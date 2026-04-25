@@ -408,13 +408,10 @@
     </div>
 
     <script>
-        const LIVE_API_BASE = "https://abious-rehabilitation-center.onrender.com";
-        const API_BASE_CANDIDATES = Array.from(new Set([
-            location.origin.startsWith("http") ? location.origin : "",
-            (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
-            LIVE_API_BASE
-        ].filter(Boolean)));
-        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const API_BASE = (!location.origin || location.origin === "null" || ["localhost", "127.0.0.1"].includes(location.hostname))
+            ? "http://localhost:3000"
+            : "";
+        let activeApiBase = API_BASE;
 
         function getApiUrl(path) {
             if (!path) return "/api";
@@ -478,36 +475,14 @@
             try {
                 response = await fetch(activeApiBase + apiPath, options);
             } catch {
-                throw new Error("Could not reach the server. Check the live backend or localhost:3000.");
+                throw new Error("Could not reach API 1. Check the server or localhost:3000.");
             }
             const data = await parseJsonResponse(response);
             if (!response.ok) throw new Error(data.error || data.message || "Request failed.");
             return data;
         }
         async function fetchJsonWithFallback(path, options = {}) {
-            const apiPath = getApiUrl(path);
-            let lastError = null;
-            for (const base of API_BASE_CANDIDATES) {
-                let response;
-                try {
-                    response = await fetch(base + apiPath, options);
-                } catch (error) {
-                    lastError = error;
-                    continue;
-                }
-                const data = await parseJsonResponse(response);
-                if (response.ok) {
-                    activeApiBase = base;
-                    return data;
-                }
-                const message = data.error || data.message || "Request failed.";
-                if (response.status === 404 || /route not found/i.test(message) || /not found/i.test(message)) {
-                    lastError = new Error(message);
-                    continue;
-                }
-                throw new Error(message);
-            }
-            throw new Error(lastError && lastError.message ? lastError.message : "Could not reach the server. Check the live backend or localhost:3000.");
+            return fetchJson(path, options);
         }
         function readFileAsDataUrl(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result || "")); reader.onerror = reject; reader.readAsDataURL(file); }); }
         function authHeaders(withJson = false) { const headers = { Authorization: "Bearer " + state.token }; if (withJson) headers["Content-Type"] = "application/json"; return headers; }
@@ -913,7 +888,17 @@
             }
         }
 
-        async function refreshAllData() { await Promise.all([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery()]); }
+        async function refreshAllData() {
+            const results = await Promise.allSettled([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery()]);
+            const failed = results.filter((result) => result.status === "rejected");
+            if (failed.length === results.length) {
+                throw failed[0].reason || new Error("Could not load dashboard data.");
+            }
+            if (failed.length) {
+                const firstError = failed[0].reason;
+                showAlert("dashboardAlert", (firstError && firstError.message) || "Some dashboard panels could not be loaded.", "info");
+            }
+        }
         async function restoreSession() { if (!state.user || !state.token) { setLoggedOutView(); return; } try { setLoggedInView(); await refreshAllData(); } catch { clearSession(); } }
 
         document.getElementById("adminLoginForm").addEventListener("submit", async (event) => {
@@ -1287,7 +1272,7 @@
                     store.gallery.push(newItem);
                     saveLocalAdminStore(store);
                 } else {
-                    await fetchJson("/api/admin/gallery", { method: "POST", headers: authHeaders(true), body: JSON.stringify(payload) });
+                    await fetchJson("/api/gallery", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
                 }
                 
                 showAlert("galleryAlert", "Gallery item added successfully.", "success");

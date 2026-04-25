@@ -39,6 +39,7 @@
             animation: gradientShift 15s ease infinite;
             position: relative;
             overflow-x: hidden;
+            perspective: 1600px;
         }
 
         /* Animated floating shapes for liveliness */
@@ -98,6 +99,7 @@
             position: relative;
             overflow: hidden;
             z-index: 10;
+            transform-style: preserve-3d;
         }
 
         header::before {
@@ -249,11 +251,24 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             animation: fadeInUp 0.6s ease-out;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transform: perspective(1400px) translateZ(0);
         }
 
         section:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-6px) rotateX(3deg) rotateY(-3deg);
+            box-shadow: 0 20px 46px rgba(0, 0, 0, 0.16);
+        }
+
+        section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.03) 45%, rgba(13,110,94,0.08));
+            pointer-events: none;
         }
 
         @keyframes fadeInUp {
@@ -1105,13 +1120,10 @@
     </div>
 
     <script>
-        const LIVE_API_BASE = "https://abious-rehabilitation-center.onrender.com";
-        const API_BASE_CANDIDATES = Array.from(new Set([
-            location.origin.startsWith("http") ? location.origin : "",
-            (!location.origin.startsWith("http") || ["localhost", "127.0.0.1"].includes(location.hostname)) ? "http://localhost:3000" : "",
-            LIVE_API_BASE
-        ].filter(Boolean)));
-        let activeApiBase = API_BASE_CANDIDATES[0] || LIVE_API_BASE;
+        const API_BASE = (!location.origin || location.origin === "null" || ["localhost", "127.0.0.1"].includes(location.hostname))
+            ? "http://localhost:3000"
+            : "";
+        let activeApiBase = API_BASE;
 
         // Registration state
         let registrationData = {};
@@ -1334,47 +1346,31 @@
         }
 
         async function sendJson(path, payload) {
-            let lastError = new Error("Could not reach the server. Check the live backend or localhost:3000.");
-            for (const base of API_BASE_CANDIDATES) {
-                let response;
+            const response = await fetch(activeApiBase + path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const raw = await response.text();
+            let data = {};
+            if (raw) {
                 try {
-                    response = await fetch(base + path, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
+                    data = JSON.parse(raw);
                 } catch (error) {
-                    lastError = error;
-                    continue;
-                }
-
-                const raw = await response.text();
-                let data = {};
-                if (raw) {
-                    try {
-                        data = JSON.parse(raw);
-                    } catch (error) {
-                        const contentType = response.headers.get("content-type") || "";
-                        if (contentType.includes("application/json")) {
-                            throw new Error("Invalid JSON received from server.");
-                        }
-                        data = { error: raw };
+                    const contentType = response.headers.get("content-type") || "";
+                    if (contentType.includes("application/json")) {
+                        throw new Error("Invalid JSON received from server.");
                     }
+                    data = { error: raw };
                 }
-
-                if (response.ok) {
-                    activeApiBase = base;
-                    return data;
-                }
-
-                const message = data.error || "Request failed (" + response.status + ").";
-                if (response.status === 404 || /route not found/i.test(message)) {
-                    lastError = new Error(message);
-                    continue;
-                }
-                throw new Error(message);
             }
-            throw new Error(lastError.message || "Could not reach the server.");
+
+            if (response.ok) {
+                return data;
+            }
+
+            throw new Error(data.error || "Request failed (" + response.status + ").");
         }
 
         // Registration form submit
@@ -1469,7 +1465,7 @@
     <script>
         (async () => {
             try {
-                const apiBase = location.origin.startsWith("http") ? "" : "https://abious-rehabilitation-center.onrender.com";
+                const apiBase = activeApiBase;
                 const response = await fetch((apiBase) + "/api/site-content");
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
@@ -1518,69 +1514,84 @@
                 };
                 
                 if (uploadForm) {
-                    const userToken = localStorage.getItem("abiousAuthToken");
                     const userData = localStorage.getItem("abiousUser");
-                    
-                    if (userToken && userData) {
-                        if (uploadSection) uploadSection.style.display = "block";
-                        
-                        uploadForm.addEventListener("submit", async (e) => {
-                            e.preventDefault();
-                            
-                            try {
-                                const file = document.getElementById("uploadFile").files[0];
-                                if (!file) {
-                                    showUploadStatus("Please select a file.", "error");
-                                    return;
-                                }
-                                
-                                const reader = new FileReader();
-                                reader.onload = async (event) => {
-                                    try {
-                                        const payload = {
-                                            title: document.getElementById("uploadTitle").value.trim(),
-                                            caption: document.getElementById("uploadCaption").value.trim(),
-                                            type: file.type.startsWith("video/") ? "video" : "image",
-                                            url: event.target.result,
-                                            uploadedBy: userData ? JSON.parse(userData).fullName || JSON.parse(userData).email : "Member"
-                                        };
-                                        
-                                        const response = await fetch(apiBase + "/api/admin/gallery", {
-                                            method: "POST",
-                                            headers: {
-                                                "Content-Type": "application/json",
-                                                "Authorization": "Bearer " + userToken
-                                            },
-                                            body: JSON.stringify(payload)
-                                        });
-                                        
-                                        if (response.ok) {
-                                            showUploadStatus("Upload successful! Your photo will appear in the gallery soon.", "ok");
-                                            uploadForm.reset();
-                                            setTimeout(() => location.reload(), 1500);
-                                        } else {
-                                            const error = await response.json();
-                                            showUploadStatus(error.error || "Upload failed. Please try again.", "error");
-                                        }
-                                    } catch (error) {
-                                        showUploadStatus("Error uploading. Please try again.", "error");
-                                    }
-                                };
-                                reader.readAsDataURL(file);
-                            } catch (error) {
-                                showUploadStatus("Error with your file. Please try again.", "error");
+                    if (uploadSection) uploadSection.style.display = "block";
+
+                    uploadForm.addEventListener("submit", async (e) => {
+                        e.preventDefault();
+
+                        try {
+                            const file = document.getElementById("uploadFile").files[0];
+                            if (!file) {
+                                showUploadStatus("Please select a file.", "error");
+                                return;
                             }
-                        });
-                    } else {
-                        if (uploadSection) {
-                            uploadSection.innerHTML = '<p style="text-align: center; color: #666;">Log in to share photos and videos in our community gallery!</p>';
-                            uploadSection.style.display = "block";
+
+                            const reader = new FileReader();
+                            reader.onload = async (event) => {
+                                try {
+                                    let uploader = "Community Member";
+                                    if (userData) {
+                                        try {
+                                            const parsedUser = JSON.parse(userData);
+                                            uploader = parsedUser.fullName || parsedUser.email || uploader;
+                                        } catch (error) {}
+                                    }
+
+                                    const payload = {
+                                        title: document.getElementById("uploadTitle").value.trim(),
+                                        caption: document.getElementById("uploadCaption").value.trim(),
+                                        type: file.type.startsWith("video/") ? "video" : "image",
+                                        url: event.target.result,
+                                        uploadedBy: uploader
+                                    };
+
+                                    const response = await fetch(apiBase + "/api/gallery", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json"
+                                        },
+                                        body: JSON.stringify(payload)
+                                    });
+
+                                    if (response.ok) {
+                                        showUploadStatus("Upload successful! Your photo is now part of the gallery.", "ok");
+                                        uploadForm.reset();
+                                        setTimeout(() => location.reload(), 1200);
+                                    } else {
+                                        const error = await response.json();
+                                        showUploadStatus(error.error || "Upload failed. Please try again.", "error");
+                                    }
+                                } catch (error) {
+                                    showUploadStatus("Error uploading. Please try again.", "error");
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        } catch (error) {
+                            showUploadStatus("Error with your file. Please try again.", "error");
                         }
-                    }
+                    });
                 }
             } catch (error) {
                 console.warn("Could not load site content.", error);
             }
+        })();
+
+        (function enableDepthMotion() {
+            const tiltTargets = document.querySelectorAll("header, section, #memberGalleryContainer img, #memberGalleryContainer video, #galleryUploadSection");
+            tiltTargets.forEach((card) => {
+                card.addEventListener("pointermove", (event) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = (event.clientX - rect.left) / rect.width;
+                    const y = (event.clientY - rect.top) / rect.height;
+                    const rotateY = (x - 0.5) * 8;
+                    const rotateX = (0.5 - y) * 8;
+                    card.style.transform = `perspective(1400px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+                });
+                card.addEventListener("pointerleave", () => {
+                    card.style.transform = "";
+                });
+            });
         })();
     </script>
 </body>

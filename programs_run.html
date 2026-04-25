@@ -268,41 +268,8 @@
         </div>
     </div>
 
-    <main class="wrap">
-        <article class="row">
-            <h2>Career Guidance Workshop Series</h2>
-            <div class="meta">Weekly | Saturdays | Community Hall</div>
-            <p>CV reviews, interview practice, and career planning for youth transitioning into employment.</p>
-            <span class="status active">Active</span>
-        </article>
-
-        <article class="row">
-            <h2>Substance Recovery Counseling</h2>
-            <div class="meta">Daily Support Groups | 9:00 AM - 4:00 PM</div>
-            <p>Structured counseling sessions with peer support and recovery milestone tracking.</p>
-            <span class="status active">Active</span>
-        </article>
-
-        <article class="row">
-            <h2>Family Reintegration Program</h2>
-            <div class="meta">Bi-weekly | Social Work Team</div>
-            <p>Guided family sessions to rebuild trust, communication, and healthy home support systems.</p>
-            <span class="status active">Active</span>
-        </article>
-
-        <article class="row">
-            <h2>Outreach and Community Awareness Campaign</h2>
-            <div class="meta">Quarterly Outreach | Schools and Local Centers</div>
-            <p>Public sensitization on rehabilitation, stigma reduction, and available youth services.</p>
-            <span class="status active">Active</span>
-        </article>
-
-        <article class="row">
-            <h2>Life Skills Bootcamp (2025 Cycle)</h2>
-            <div class="meta">8-Week Program | Completed December 2025</div>
-            <p>Training on financial literacy, communication, emotional management, and leadership.</p>
-            <span class="status completed">Completed</span>
-        </article>
+    <main class="wrap" id="programsContainer">
+        <div class="loading">Loading programs...</div>
     </main>
 
     <div class="links">
@@ -359,27 +326,92 @@
         })();
     </script>
     <script>
-        (async () => {
-            const apiBase = (!location.origin || location.origin === "null" || ["localhost", "127.0.0.1"].includes(location.hostname))
-                ? "http://localhost:3000"
-                : "";
+        const API_BASE = (!location.origin || location.origin === 'null' || ['localhost', '127.0.0.1'].includes(location.hostname))
+            ? 'http://localhost:3000'
+            : '';
+        const activeApiBase = API_BASE;
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function formatDate(value) {
+            const date = new Date(value || Date.now());
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        async function loadPrograms() {
+            const container = document.getElementById('programsContainer');
+            container.innerHTML = '<div class="loading">Loading programs...</div>';
+
             try {
-                const response = await fetch(apiBase + "/api/site-content");
+                const response = await fetch(activeApiBase + '/api/resources');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Unable to fetch programs.');
+                }
+
+                const data = await response.json();
+                renderPrograms(data.resources || []);
+            } catch (error) {
+                console.error('Error loading programs:', error);
+                container.innerHTML = '<div class="no-content">Unable to load programs. Please try again later.</div>';
+            }
+        }
+
+        function renderPrograms(items) {
+            const container = document.getElementById('programsContainer');
+            if (!Array.isArray(items) || items.length === 0) {
+                container.innerHTML = '<div class="no-content">No programs are available yet. Check back later.</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const status = (item.status || 'active').toString().toLowerCase();
+                const statusLabel = status === 'completed' || status === 'done' ? 'Completed' : status === 'planned' ? 'Planned' : 'Active';
+                const statusClass = status === 'completed' || status === 'done' ? 'completed' : 'active';
+                const dateLabel = formatDate(item.updatedAt || item.createdAt || Date.now());
+                return `
+                    <article class="row">
+                        <h2>${escapeHtml(item.title)}</h2>
+                        <div class="meta">${escapeHtml(item.category || 'General')} • ${escapeHtml(dateLabel)}</div>
+                        <p>${escapeHtml(item.description || 'No description available.')}</p>
+                        <span class="status ${statusClass}">${escapeHtml(statusLabel)}</span>
+                        ${item.link ? `<p style="margin-top:14px;"><a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer">Open program details</a></p>` : ''}
+                    </article>
+                `;
+            }).join('');
+        }
+
+        (async () => {
+            const apiBase = (!location.origin || location.origin === 'null' || ['localhost', '127.0.0.1'].includes(location.hostname))
+                ? 'http://localhost:3000'
+                : '';
+            try {
+                const response = await fetch(apiBase + '/api/site-content');
                 const data = await response.json();
                 const imageAssets = data && data.imageAssets ? data.imageAssets : {};
-                document.querySelectorAll("[data-image-key]").forEach((img) => {
-                    const key = img.getAttribute("data-image-key");
+                document.querySelectorAll('[data-image-key]').forEach((img) => {
+                    const key = img.getAttribute('data-image-key');
                     if (key && imageAssets[key]) img.src = imageAssets[key];
                 });
             } catch (error) {
-                console.warn("Could not load managed site images.", error);
+                console.warn('Could not load managed site images.', error);
             }
+
+            loadPrograms();
         })();
 
         (function enableDepthMotion() {
-            const tiltTargets = document.querySelectorAll("header, .row");
+            const tiltTargets = document.querySelectorAll('header, .row');
             tiltTargets.forEach((card) => {
-                card.addEventListener("pointermove", (event) => {
+                card.addEventListener('pointermove', (event) => {
                     const rect = card.getBoundingClientRect();
                     const x = (event.clientX - rect.left) / rect.width;
                     const y = (event.clientY - rect.top) / rect.height;
@@ -387,10 +419,10 @@
                     const rotateX = (0.5 - y) * 10;
                     card.style.transform = `perspective(1400px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
                 });
-                card.addEventListener("pointerleave", () => {
-                    card.style.transform = card.matches("header")
-                        ? "perspective(1400px) rotateX(3deg)"
-                        : "";
+                card.addEventListener('pointerleave', () => {
+                    card.style.transform = card.matches('header')
+                        ? 'perspective(1400px) rotateX(3deg)'
+                        : '';
                 });
             });
         })();

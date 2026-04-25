@@ -1696,6 +1696,9 @@ async function handleApi(req, res, urlObj) {
             const description = String(body.description || "").trim();
             const link = body.link || null;
             const category = String(body.category || "general").trim();
+            const status = String(body.status || "active").trim().toLowerCase();
+            const allowedStatuses = ["active", "completed", "done", "planned"];
+            const normalizedStatus = allowedStatuses.includes(status) ? status : "active";
             
             if (!title) {
                 sendJson(res, 400, { error: "Title is required" });
@@ -1708,6 +1711,7 @@ async function handleApi(req, res, urlObj) {
                 description,
                 link,
                 category,
+                status: normalizedStatus,
                 createdAt: nowIso()
             };
             
@@ -1733,6 +1737,9 @@ async function handleApi(req, res, urlObj) {
             const description = String(body.description || "").trim();
             const link = body.link || null;
             const category = String(body.category || "general").trim();
+            const status = String(body.status || "active").trim().toLowerCase();
+            const allowedStatuses = ["active", "completed", "done", "planned"];
+            const normalizedStatus = allowedStatuses.includes(status) ? status : "active";
 
             if (!title) {
                 sendJson(res, 400, { error: "Title is required" });
@@ -1752,6 +1759,7 @@ async function handleApi(req, res, urlObj) {
                     description,
                     link,
                     category,
+                    status: normalizedStatus,
                     updatedAt: nowIso()
                 };
                 await saveResources(resources);
@@ -1768,6 +1776,7 @@ async function handleApi(req, res, urlObj) {
                     description,
                     link,
                     category,
+                    status: normalizedStatus,
                     updatedAt: nowIso()
                 };
                 await saveResources(resources);

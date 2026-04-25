@@ -766,7 +766,7 @@
                 table.innerHTML = '<div class="empty">No programs available.</div>';
                 return;
             }
-            table.innerHTML = programs.map(item => `<article class="program-card" data-id="${esc(item.id)}"><div class="program-card-header"><span class="category-pill">${esc(item.category || "general")}</span><span>${esc(formatDate(item.updatedAt || item.createdAt))}</span></div><h3>${esc(item.title)}</h3><p>${esc(item.description || "No description yet.")}</p><div class="program-card-meta">${item.link ? `<a class="program-link" href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">Open resource</a>` : `<span style="color:var(--muted);">No external link</span>`}<span style="color:var(--muted);">ID ${esc(item.id)}</span></div><div class="program-card-actions" style="margin-top:14px;"><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></div></article>`).join("");
+            table.innerHTML = programs.map(item => `<article class="program-card" data-id="${esc(item.id)}"><div class="program-card-header"><span class="category-pill">${esc(item.category || "general")}</span><span style="color:var(--muted);">Status: ${esc((item.status || "active").toString().charAt(0).toUpperCase() + (item.status || "active").toString().slice(1))}</span><span>${esc(formatDate(item.updatedAt || item.createdAt))}</span></div><h3>${esc(item.title)}</h3><p>${esc(item.description || "No description yet.")}</p><div class="program-card-meta">${item.link ? `<a class="program-link" href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">Open resource</a>` : `<span style="color:var(--muted);">No external link</span>`}<span style="color:var(--muted);">ID ${esc(item.id)}</span></div><div class="program-card-actions" style="margin-top:14px;"><button class="secondary" data-program-action="edit" data-id="${esc(item.id)}">Edit</button><button class="danger" data-program-action="delete" data-id="${esc(item.id)}">Delete</button></div></article>`).join("");
         }
 
         async function fetchGallery() {
@@ -1017,7 +1017,8 @@
                 const newDesc = prompt("Program description:", item.description); if (!newDesc) return;
                 const newLink = prompt("Program link (optional):", item.link || "");
                 const newCategory = prompt("Program category:", item.category || "general") || "general";
-                await createOrUpdateProgram({ title: newTitle, description: newDesc, link: newLink, category: newCategory }, id);
+                const newStatus = prompt("Program status (active/completed):", item.status || "active") || "active";
+                await createOrUpdateProgram({ title: newTitle, description: newDesc, link: newLink, category: newCategory, status: newStatus }, id);
             }
             if (action === "delete") {
                 await deleteProgram(id);
@@ -1039,7 +1040,8 @@
             const description = prompt("Program description:"); if (!description) return;
             const link = prompt("Program link (optional):", "");
             const category = prompt("Program category:", "general") || "general";
-            await createOrUpdateProgram({ title, description, link, category }, null);
+            const status = prompt("Program status (active/completed):", "active") || "active";
+            await createOrUpdateProgram({ title, description, link, category, status }, null);
         });
 
         document.getElementById("refreshProgramsButton").addEventListener("click", async () => { await fetchPrograms(); showAlert("programAlert", "Programs refreshed.", "success"); });

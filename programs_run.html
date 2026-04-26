@@ -158,10 +158,10 @@
         }
 
         .menu-toggle {
-            width: 44px;
-            height: 44px;
-            border: 2px solid rgba(255,255,255,0.85);
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border: 2px solid rgba(255,255,255,0.9);
+            border-radius: 14px;
             background: rgba(0,0,0,0.25);
             color: white;
             display: inline-flex;
@@ -169,12 +169,44 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.25s ease;
+            position: relative;
         }
 
         .menu-toggle:hover, .menu-toggle:focus-visible {
             background: rgba(255,255,255,0.18);
             border-color: rgba(255,255,255,1);
             outline: none;
+        }
+
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 22px;
+        }
+
+        .hamburger span {
+            display: block;
+            height: 2.5px;
+            border-radius: 2px;
+            background: currentColor;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger span:nth-child(1) { width: 100%; }
+        .hamburger span:nth-child(2) { width: 75%; }
+        .hamburger span:nth-child(3) { width: 100%; }
+
+        .menu-wrap.open .hamburger span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .menu-wrap.open .hamburger span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-wrap.open .hamburger span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
         }
 
         .menu-panel {
@@ -249,12 +281,11 @@
 
     <div class="menu-wrap" aria-label="Mobile site menu" role="navigation">
         <button class="menu-toggle" type="button" aria-label="Open site menu" aria-expanded="false" aria-controls="site-menu">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
-                <path d="M3 5h18v14H3z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M3 5h6v4H3z" fill="currentColor" opacity="0.8"/>
-                <path d="M9 5h6v4H9z" fill="currentColor" opacity="0.6"/>
-                <path d="M15 5h6v4H15z" fill="currentColor" opacity="0.4"/>
-            </svg>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </button>
         <div class="menu-panel" id="site-menu">
             <a href="trial.html"><span>Home</span><span>Page</span></a>

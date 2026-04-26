@@ -93,13 +93,14 @@
         header {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            padding: 25px 20px;
+            padding: 22px 24px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            position: relative;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+            position: sticky;
+            top: 0;
+            z-index: 100;
             overflow: hidden;
-            z-index: 10;
-            transform-style: preserve-3d;
+            backdrop-filter: blur(10px);
         }
 
         header::before {
@@ -109,8 +110,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-            animation: shimmer 3s infinite;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+            animation: shimmer 4s infinite;
         }
 
         @keyframes shimmer {
@@ -120,16 +121,19 @@
 
         header h1 {
             margin: 0;
-            font-size: 2rem;
+            font-size: clamp(1.4rem, 3vw, 2rem);
             position: relative;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            font-weight: 800;
+            letter-spacing: -0.02em;
         }
 
         header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
+            margin: 8px 0 0;
+            opacity: 0.92;
+            font-size: 1rem;
             position: relative;
+            font-weight: 500;
         }
 
         nav {
@@ -150,10 +154,10 @@
         }
 
         .menu-toggle {
-            width: 44px;
-            height: 44px;
-            border: 2px solid rgba(255,255,255,0.85);
-            border-radius: 12px;
+            width: 48px;
+            height: 48px;
+            border: 2px solid rgba(255,255,255,0.9);
+            border-radius: 14px;
             background: rgba(0,0,0,0.25);
             color: white;
             display: inline-flex;
@@ -161,6 +165,7 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.25s ease;
+            position: relative;
         }
 
         .menu-toggle:hover, .menu-toggle:focus-visible {
@@ -169,42 +174,109 @@
             outline: none;
         }
 
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 22px;
+        }
+
+        .hamburger span {
+            display: block;
+            height: 2.5px;
+            border-radius: 2px;
+            background: currentColor;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger span:nth-child(1) { width: 100%; }
+        .hamburger span:nth-child(2) { width: 75%; }
+        .hamburger span:nth-child(3) { width: 100%; }
+
+        .menu-wrap.open .hamburger span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .menu-wrap.open .hamburger span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-wrap.open .hamburger span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
         .menu-panel {
             position: absolute;
-            top: 58px;
+            top: 62px;
             right: 0;
-            background: rgba(15, 42, 37, 0.95);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            width: min(280px, 92vw);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(13, 110, 94, 0.15);
+            border-radius: 18px;
+            width: min(300px, 92vw);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.18);
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-12px);
-            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
-            padding: 10px;
+            transform: translateY(-12px) scale(0.96);
+            transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s ease;
+            padding: 14px;
+            backdrop-filter: blur(20px);
         }
 
         .menu-wrap.open .menu-panel {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         .menu-panel a {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 8px;
-            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: #0d3b33;
             text-decoration: none;
-            margin-bottom: 8px;
-            font-weight: 500;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            margin-bottom: 6px;
+            background: rgba(13, 110, 94, 0.04);
+            border: 1px solid rgba(13, 110, 94, 0.06);
         }
 
-        .menu-panel a span:last-child {
-            color: #d1f7e7;
-            opacity: 0.9;
-            font-size: 0.84rem;
+        .menu-panel a:last-child {
+            margin-bottom: 0;
+        }
+
+        .menu-panel a:hover, .menu-panel a:focus-visible {
+            background: rgba(13, 110, 94, 0.1);
+            border-color: rgba(13, 110, 94, 0.18);
+            transform: translateX(-3px);
+            outline: none;
+        }
+
+        .menu-panel a .menu-label {
+            color: #6b8a82;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(13, 110, 94, 0.08);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .menu-section-label {
+            padding: 8px 14px;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #8aa89e;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .menu-section-label:first-child {
+            margin-top: 0;
         }
 
         @media (max-width: 900px) {
@@ -242,24 +314,23 @@
         }
 
         section {
-            margin-bottom: 35px;
-            padding: 25px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 28px;
+            padding: 28px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             animation: fadeInUp 0.6s ease-out;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             overflow: hidden;
-            transform-style: preserve-3d;
-            transform: perspective(1400px) translateZ(0);
         }
 
         section:hover {
-            transform: translateY(-6px) rotateX(3deg) rotateY(-3deg);
-            box-shadow: 0 20px 46px rgba(0, 0, 0, 0.16);
+            transform: translateY(-4px);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.1);
         }
 
         section::before {
@@ -267,7 +338,7 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.03) 45%, rgba(13,110,94,0.08));
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.02) 50%, rgba(13,110,94,0.06));
             pointer-events: none;
         }
 
@@ -839,22 +910,31 @@
             background: linear-gradient(90deg, #1a3a32, #2d5a4d);
             color: white;
             text-align: center;
-            padding: 25px;
-            margin-top: 40px;
+            padding: 32px 24px;
+            margin-top: 48px;
             position: relative;
             z-index: 5;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        footer p:first-child {
+            font-weight: 600;
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin: 0 0 8px;
         }
 
         footer .scripture-footer {
             font-style: italic;
-            font-size: 0.85rem;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            line-height: 1.6;
-            max-width: 800px;
+            font-size: 0.82rem;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.15);
+            line-height: 1.7;
+            max-width: 780px;
             margin-left: auto;
             margin-right: auto;
+            opacity: 0.85;
         }
 
         /* Progress indicator */
@@ -936,6 +1016,27 @@
                 flex-direction: column;
                 align-items: center;
             }
+
+            section {
+                padding: 20px;
+                border-radius: 16px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            header {
+                padding: 18px 16px;
+            }
+
+            header h1 {
+                font-size: 1.3rem;
+            }
+
+            .menu-wrap {
+                margin-top: 8px;
+            }
         }
     </style>
 </head>
@@ -964,25 +1065,29 @@
 
     <div class="menu-wrap" aria-label="Mobile site menu" role="navigation">
         <button class="menu-toggle" type="button" aria-label="Open site menu" aria-expanded="false" aria-controls="site-menu">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
-                <path d="M3 5h18v14H3z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M3 5h6v4H3z" fill="currentColor" opacity="0.8"/>
-                <path d="M9 5h6v4H9z" fill="currentColor" opacity="0.6"/>
-                <path d="M15 5h6v4H15z" fill="currentColor" opacity="0.4"/>
-            </svg>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
         </button>
         <div class="menu-panel" id="site-menu">
-            <a href="#about"><span>About</span><span>Section</span></a>
-            <a href="#values"><span>Core Values</span><span>Section</span></a>
-            <a href="#activities"><span>Activities</span><span>Section</span></a>
-            <a href="programs_run.html"><span>Programs</span><span>Open</span></a>
-            <a href="#faqs"><span>FAQs</span><span>Info</span></a>
-            <a href="#membership"><span>Membership</span><span>Details</span></a>
-            <a href="#donate"><span>Donate</span><span>Give</span></a>
-            <a href="#reactions"><span>Reactions</span><span>View</span></a>
-            <a href="#contact"><span>Contact</span><span>Reach</span></a>
-            <a href="#member-area"><span>Member</span><span>Area</span></a>
-            <a href="admin.html"><span>Admin</span><span>Secure</span></a>
+            <div class="menu-section-label">Explore</div>
+            <a href="#about">About <span class="menu-label">Section</span></a>
+            <a href="#values">Core Values <span class="menu-label">Section</span></a>
+            <a href="#activities">Activities <span class="menu-label">Section</span></a>
+            <a href="programs_run.html">Programs <span class="menu-label">Page</span></a>
+            <a href="#faqs">FAQs <span class="menu-label">Info</span></a>
+            <a href="#membership">Membership <span class="menu-label">Join</span></a>
+            <a href="#donate">Donate <span class="menu-label">Give</span></a>
+            <a href="#reactions">Reactions <span class="menu-label">View</span></a>
+            <a href="#contact">Contact <span class="menu-label">Reach</span></a>
+            <div class="menu-section-label">Account</div>
+            <a href="#member-area">Member Area <span class="menu-label">Login</span></a>
+            <a href="news.html">News & Updates <span class="menu-label">Page</span></a>
+            <a href="members.html">Our Members <span class="menu-label">Page</span></a>
+            <a href="register.html">Register <span class="menu-label">Join</span></a>
+            <a href="admin.html">Admin <span class="menu-label">Secure</span></a>
         </div>
     </div>
 

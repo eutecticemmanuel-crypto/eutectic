@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -178,6 +179,7 @@
                         <button class="tab-btn" data-tab="site" type="button">Website Data</button>
                         <button class="tab-btn" data-tab="policies" type="button">Policies</button>
                         <button class="tab-btn" data-tab="media" type="button">Media</button>
+                        <button class="tab-btn" data-tab="reactions" type="button">Reactions</button>
                     </div>
                     <div id="dashboardAlert" class="alert"></div>
                 </section>
@@ -402,6 +404,20 @@
                             <div id="postsAlert" class="alert"></div>
                         </div>
                     </div>
+                </section>
+
+                <section id="tab-reactions" class="tab-panel card">
+                    <div class="header" style="margin-bottom:16px; justify-content:space-between; align-items:center;">
+                        <div><h2>Public Reactions</h2><p>View and manage reactions submitted from the public site. Admin receives email notifications for each new reaction.</p></div>
+                        <button class="secondary" type="button" id="refreshReactionsButton">Refresh Reactions</button>
+                    </div>
+                    <div class="mini-stats" style="margin-bottom:16px;">
+                        <div class="mini-stat"><small>Total</small><strong id="reactionCount">0</strong></div>
+                        <div class="mini-stat"><small>Positive</small><strong id="reactionPositiveCount">0</strong></div>
+                        <div class="mini-stat"><small>Suggestions</small><strong id="reactionSuggestionCount">0</strong></div>
+                    </div>
+                    <div id="reactionsList" class="moderation-list"></div>
+                    <div id="reactionsAlert" class="alert"></div>
                 </section>
             </main>
         </div>
@@ -889,7 +905,7 @@
         }
 
         async function refreshAllData() {
-            const results = await Promise.allSettled([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery()]);
+            const results = await Promise.allSettled([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery(), loadReactions()]);
             const failed = results.filter((result) => result.status === "rejected");
             if (failed.length === results.length) {
                 throw failed[0].reason || new Error("Could not load dashboard data.");
@@ -1334,6 +1350,70 @@
         }));
         document.getElementById("adminEmail").value = "admin@abious.org";
         document.getElementById("adminPassword").value = "St!lla18";
+        async function loadReactions() {
+            const list = document.getElementById('reactionsList');
+            hideAlert('reactionsAlert');
+            list.innerHTML = '<div class="no-content">Loading reactions...</div>';
+
+            try {
+                const response = await fetch(activeApiBase + '/api/admin/reactions', { headers: authHeaders() });
+                if (!response.ok) throw new Error('Failed to load reactions');
+                const data = await response.json();
+                const reactions = data.reactions || [];
+
+                document.getElementById('reactionCount').textContent = reactions.length;
+                document.getElementById('reactionPositiveCount').textContent = reactions.filter(r => r.reaction === 'positive').length;
+                document.getElementById('reactionSuggestionCount').textContent = reactions.filter(r => r.reaction === 'suggestion').length;
+
+                if (reactions.length === 0) {
+                    list.innerHTML = '<div class="no-content">No reactions yet.</div>';
+                    return;
+                }
+
+                const typeLabels = { positive: 'Positive', suggestion: 'Suggestion', question: 'Question', other: 'Other' };
+                const typeColors = { positive: '#0b6b43', suggestion: '#d97706', question: '#2563eb', other: '#6b7280' };
+
+                list.innerHTML = reactions.map(r => {
+                    const date = new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const typeLabel = typeLabels[r.reaction] || r.reaction;
+                    const typeColor = typeColors[r.reaction] || '#6b7280';
+                    return `
+                        <div class="moderation-card" style="border-left: 4px solid ${typeColor};">
+                            <div class="moderation-head">
+                                <strong>${esc(r.name)}</strong>
+                                <span class="pill pending" style="background:${typeColor}; color:#fff;">${typeLabel}</span>
+                                <span style="color:var(--muted);">${date}</span>
+                            </div>
+                            <p style="margin:8px 0;">${esc(r.comment)}</p>
+                            <div style="color:var(--muted); font-size:12px; margin-bottom:8px; display:flex; gap:8px;"><span>${esc(r.email)}</span></div>
+                            <div class="moderation-actions">
+                                <button class="danger" type="button" data-reaction-action="delete" data-id="${esc(r.id)}">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                list.querySelectorAll('button[data-reaction-action="delete"]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.id;
+                        if (!id || !confirm('Delete this reaction?')) return;
+                        try {
+                            await fetch(activeApiBase + '/api/admin/reactions/' + encodeURIComponent(id), { method: 'DELETE', headers: authHeaders() });
+                            showAlert('reactionsAlert', 'Reaction deleted.', 'success');
+                            await loadReactions();
+                        } catch (error) {
+                            showAlert('reactionsAlert', error.message || 'Could not delete reaction.', 'error');
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading reactions:', error);
+                list.innerHTML = '<div class="no-content">Error loading reactions.</div>';
+            }
+        }
+
+        document.getElementById('refreshReactionsButton').addEventListener('click', loadReactions);
+
         clearMemberForm();
         
     </script>

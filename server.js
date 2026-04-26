@@ -561,6 +561,40 @@ async function getResources() {
     return store.resources || [];
 }
 
+async function getReactions() {
+    if (useFirebase && firestore) {
+        return await firebaseGetAll('reactions');
+    }
+    if (useMongoDB && db) {
+        return await db.collection('reactions').find({}).toArray();
+    }
+    const store = readStore();
+    return store.reactions || [];
+}
+
+async function saveReactions(reactions) {
+    if (useFirebase && firestore) {
+        const existing = await firebaseGetAll('reactions');
+        for (const r of existing) {
+            await firebaseDeleteDoc('reactions', r.id);
+        }
+        for (const r of reactions) {
+            await firebaseAddDoc('reactions', r);
+        }
+        return;
+    }
+    if (useMongoDB && db) {
+        await db.collection('reactions').deleteMany({});
+        if (reactions.length > 0) {
+            await db.collection('reactions').insertMany(reactions);
+        }
+        return;
+    }
+    const store = readStore();
+    store.reactions = reactions;
+    writeStore(store);
+}
+
 async function saveResources(resources) {
     if (useFirebase && firestore) {
         const existing = await firebaseGetAll('resources');
@@ -913,6 +947,65 @@ async function sendVerificationEmail(recipientEmail, code) {
     };
 }
 
+async function sendReactionNotificationEmail(reaction) {
+    const transporter = getMailTransporter();
+    if (!transporter) {
+        console.warn("Email not configured: cannot send reaction notification");
+        return { delivered: false, reason: "smtp_not_configured" };
+    }
+
+    try {
+        const reactionTypeLabels = {
+            positive: "Positive Feedback",
+            suggestion: "Suggestion",
+            question: "Question",
+            other: "Other"
+        };
+        const typeLabel = reactionTypeLabels[reaction.reaction] || reaction.reaction;
+
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #071814 0%, #0d2d26 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+                    <h2 style="margin: 0; color: #fff; font-size: 24px;">🌿 Abious Rehabilitation Initiative</h2>
+                    <p style="margin: 8px 0 0 0; color: #a8f5e0;">New Reaction Received</p>
+                </div>
+
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; border-left: 4px solid #d8a13d;">
+                    <span style="display: inline-block; background: #d8a13d; color: #1f1608; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; margin-bottom: 12px;">${typeLabel}</span>
+                    
+                    <p style="margin: 0 0 8px 0;"><strong>From:</strong> ${reaction.name} (${reaction.email})</p>
+                    <p style="margin: 0 0 12px 0; color: #333; line-height: 1.6; font-style: italic;">"${reaction.comment}"</p>
+                    
+                    <p style="margin: 12px 0 0 0; color: #666; font-size: 12px;">
+                        Received on ${new Date(reaction.createdAt).toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="color: #666; font-size: 12px; margin: 0;">
+                        This is an automated notification from Abious Rehabilitation Initiative.<br>
+                        You are receiving this because you are the site administrator.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+            to: "isaacnewton0767304563@gmail.com",
+            subject: `New Reaction: ${typeLabel} from ${reaction.name}`,
+            html: htmlContent,
+            text: `New Reaction Received\n\nType: ${typeLabel}\nFrom: ${reaction.name} (${reaction.email})\nComment: ${reaction.comment}\nReceived: ${new Date(reaction.createdAt).toLocaleString()}`
+        });
+
+        console.log(`Reaction notification email sent to admin for ${reaction.name}`);
+        return { delivered: true };
+    } catch (error) {
+        console.error("Error sending reaction notification:", error);
+        return { delivered: false, reason: error.message };
+    }
+}
+
 async function sendNewsNotificationEmails(newsItem) {
     const transporter = getMailTransporter();
     if (!transporter) {
@@ -1083,6 +1176,10 @@ function ensureStore() {
     }
     if (!Array.isArray(currentStore.verificationCodes)) {
         currentStore.verificationCodes = [];
+        changed = true;
+    }
+    if (!Array.isArray(currentStore.reactions)) {
+        currentStore.reactions = [];
         changed = true;
     }
     if (!currentStore.sessions || typeof currentStore.sessions !== "object") {
@@ -2466,7 +2563,82 @@ async function handleApi(req, res, urlObj) {
                 sendJson(res, 401, { ok: false, error: "Unauthorized." });
                 return true;
             }
-            sendJson(res, 200, { ok: true, messages: store.chat });
+        sendJson(res, 200, { ok: true, messages: store.chat });
+            return true;
+        }
+
+        if (method === "POST" && pathname === "/api/reactions") {
+            const body = await getRequestBody(req);
+            const name = sanitizeInput(String(body.name || "").trim());
+            const email = sanitizeInput(String(body.email || "").trim().toLowerCase());
+            const reactionType = sanitizeInput(String(body.reaction || "other").trim());
+            const comment = sanitizeInput(String(body.comment || "").trim());
+
+            if (!name || !email || !comment) {
+                sendJson(res, 400, { ok: false, error: "Name, email, and comment are required." });
+                return true;
+            }
+
+            const reaction = {
+                id: "r_" + Date.now(),
+                name,
+                email,
+                reaction: reactionType,
+                comment,
+                createdAt: nowIso()
+            };
+
+            let reactions = await getReactions();
+            reactions.push(reaction);
+            await saveReactions(reactions);
+
+            // Send notification email to admin
+            try {
+                const emailResult = await sendReactionNotificationEmail(reaction);
+                console.log("Reaction notification result:", emailResult);
+            } catch (error) {
+                console.error("Error sending reaction notification:", error);
+            }
+
+            sendJson(res, 201, { ok: true, reaction });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/reactions") {
+            const reactions = await getReactions();
+            const sorted = reactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sendJson(res, 200, { ok: true, reactions: sorted });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/admin/reactions") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const reactions = await getReactions();
+            const sorted = reactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sendJson(res, 200, { ok: true, reactions: sorted });
+            return true;
+        }
+
+        if (method === "DELETE" && pathname.startsWith("/api/admin/reactions/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const reactionId = pathname.split("/").pop();
+            let reactions = await getReactions();
+            const initialLength = reactions.length;
+            reactions = reactions.filter(r => r.id !== reactionId);
+            if (reactions.length === initialLength) {
+                sendJson(res, 404, { error: "Reaction not found" });
+                return true;
+            }
+            await saveReactions(reactions);
+            sendJson(res, 200, { ok: true });
             return true;
         }
 

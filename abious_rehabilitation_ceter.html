@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abious Rehabilitation Initiative</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -1359,7 +1360,7 @@
                 <div class="reaction-form-card">
                     <h3>Share Your Thoughts</h3>
                     <p>Leave a comment, suggestion, or encouraging note for the community.</p>
-                    <form>
+                    <form id="reactionForm">
                         <label for="comment-name">Name:</label>
                         <input type="text" id="comment-name" name="comment-name" required>
 
@@ -1377,8 +1378,9 @@
                         <label for="comment">Comment:</label>
                         <textarea id="comment" name="comment" rows="4" required></textarea>
 
-                        <button type="submit">Submit</button>
+                        <button type="submit">Submit Reaction</button>
                     </form>
+                    <div id="reactionStatus" class="auth-status"></div>
                 </div>
             </div>
         </section>
@@ -1973,5 +1975,213 @@
         }
         initMediaSliders();
     </script>
+    <script>
+        // Reaction Form Handling
+        const reactionForm = document.getElementById("reactionForm");
+        const reactionStatus = document.getElementById("reactionStatus");
+
+        async function submitReaction(event) {
+            event.preventDefault();
+            setStatus(reactionStatus, "info", "Submitting your reaction...");
+
+            const payload = {
+                name: document.getElementById("comment-name").value.trim(),
+                email: document.getElementById("comment-email").value.trim(),
+                reaction: document.getElementById("reaction").value,
+                comment: document.getElementById("comment").value.trim()
+            };
+
+            try {
+                const response = await fetch(activeApiBase + "/api/reactions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    setStatus(reactionStatus, "ok", "Thank you! Your reaction has been submitted and sent to our team.");
+                    reactionForm.reset();
+                    loadReactions();
+                    showToast("Reaction submitted successfully!", "success");
+                } else {
+                    setStatus(reactionStatus, "error", data.error || "Failed to submit reaction.");
+                    showToast("Failed to submit reaction.", "error");
+                }
+            } catch (error) {
+                setStatus(reactionStatus, "error", "Network error. Please try again.");
+                showToast("Network error. Please try again.", "error");
+            }
+        }
+
+        if (reactionForm) {
+            reactionForm.addEventListener("submit", submitReaction);
+        }
+
+        // Load and display reactions
+        async function loadReactions() {
+            const container = document.getElementById("comments-display");
+            if (!container) return;
+
+            try {
+                const response = await fetch(activeApiBase + "/api/reactions");
+                const data = await response.json();
+                const reactions = data.reactions || [];
+
+                if (reactions.length === 0) {
+                    container.innerHTML = `
+                        <div class="comment-preview-card">
+                            <strong>Recent Comments</strong>
+                            <p><em>No reactions yet. Be the first to share your thoughts!</em></p>
+                        </div>`;
+                    return;
+                }
+
+                const reactionEmojis = {
+                    positive: "😊",
+                    suggestion: "💡",
+                    question: "❓",
+                    other: "💬"
+                };
+
+                container.innerHTML = reactions.slice(0, 5).map(r => `
+                    <div class="comment-preview-card" style="animation: fadeInUp 0.5s ease;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <strong style="color:var(--primary-dark);">${escapeHtml(r.name)}</strong>
+                            <span style="font-size:0.8rem;color:#888;">${reactionEmojis[r.reaction] || "💬"} ${escapeHtml(r.reaction)}</span>
+                        </div>
+                        <p style="margin:0;color:#444;line-height:1.5;">${escapeHtml(r.comment)}</p>
+                        <small style="color:#aaa;">${new Date(r.createdAt).toLocaleDateString()}</small>
+                    </div>
+                `).join("");
+            } catch (error) {
+                console.warn("Could not load reactions.", error);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadReactions();
+
+        // Toast Notification System
+        function showToast(message, type = "info") {
+            const existing = document.querySelector(".site-toast");
+            if (existing) existing.remove();
+
+            const toast = document.createElement("div");
+            toast.className = "site-toast";
+            const colors = {
+                success: "linear-gradient(135deg, #16a34a, #15803d)",
+                error: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                info: "linear-gradient(135deg, #0d6e5e, #094a42)"
+            };
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 14px 22px;
+                border-radius: 14px;
+                font-weight: 600;
+                font-size: 14px;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+                z-index: 10000;
+                animation: toastSlideIn 0.4s ease;
+                max-width: 320px;
+                line-height: 1.4;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = "toastSlideOut 0.4s ease forwards";
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        // Back to Top Button
+        const backToTop = document.createElement("button");
+        backToTop.innerHTML = "&#8593;";
+        backToTop.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(13,110,94,0.35);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            display: grid;
+            place-items: center;
+        `;
+        backToTop.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+        document.body.appendChild(backToTop);
+
+        window.addEventListener("scroll", () => {
+            if (window.scrollY > 500) {
+                backToTop.style.opacity = "1";
+                backToTop.style.transform = "translateY(0)";
+            } else {
+                backToTop.style.opacity = "0";
+                backToTop.style.transform = "translateY(20px)";
+            }
+        });
+
+        // Scroll-triggered entrance animations
+        const observerOptions = { threshold: 0.1, rootMargin: "0px 0px -40px 0px" };
+        const entranceObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = "1";
+                    entry.target.style.transform = "translateY(0)";
+                    entranceObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll("section, .value, .plan-card").forEach(el => {
+            el.style.opacity = "0";
+            el.style.transform = "translateY(30px)";
+            el.style.transition = "opacity 0.7s ease, transform 0.7s ease";
+            entranceObserver.observe(el);
+        });
+
+        // Animated counters for stats (if any)
+        function animateCounter(el, target, duration = 2000) {
+            let start = 0;
+            const step = timestamp => {
+                if (!start) start = timestamp;
+                const progress = Math.min((timestamp - start) / duration, 1);
+                el.textContent = Math.floor(progress * target);
+                if (progress < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        }
+    </script>
+    <style>
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastSlideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
+        }
+    </style>
 </body>
 </html>

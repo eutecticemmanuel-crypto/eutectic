@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Cylin Painters</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fas fa-paint-roller"></i>
+        <span>Cylin Painters</span>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="#" class="active" data-section="overview"><i class="fas fa-chart-pie"></i> Overview</a></li>
+          <li><a href="#" data-section="contacts"><i class="fas fa-envelope"></i> Contacts</a></li>
+          <li><a href="#" data-section="hero"><i class="fas fa-image"></i> Hero Section</a></li>
+          <li><a href="#" data-section="services"><i class="fas fa-tools"></i> Services</a></li>
+          <li><a href="#" data-section="gallery"><i class="fas fa-images"></i> Gallery</a></li>
+          <li><a href="#" data-section="about"><i class="fas fa-info-circle"></i> About</a></li>
+          <li><a href="#" data-section="stats"><i class="fas fa-chart-bar"></i> Stats</a></li>
+          <li><a href="#" data-section="contact"><i class="fas fa-address-book"></i> Contact Info</a></li>
+          <li><a href="#" data-section="footer"><i class="fas fa-shoe-prints"></i> Footer</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" target="_blank"><i class="fas fa-external-link-alt"></i> View Website</a>
+      </div>
+      <div class="sidebar-footer">
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h2 id="pageTitle">Dashboard Overview</h2>
+        <div class="top-bar-user">
+          <i class="fas fa-user-circle"></i>
+          <span id="adminUsername">Admin</span>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div class="message" id="globalMessage"></div>
+
+        <!-- Overview -->
+        <div class="section-panel active" id="panel-overview">
+          <div class="dashboard-cards">
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon blue"><i class="fas fa-envelope"></i></div>
+              <div class="dashboard-card-info">
+                <h3 id="statContacts">0</h3>
+                <p>Total Contacts</p>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon green"><i class="fas fa-check-circle"></i></div>
+              <div class="dashboard-card-info">
+                <h3 id="statServices">0</h3>
+                <p>Services Listed</p>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon gold"><i class="fas fa-images"></i></div>
+              <div class="dashboard-card-info">
+                <h3 id="statGallery">0</h3>
+                <p>Gallery Items</p>
+              </div>
+            </div>
+            <div class="dashboard-card">
+              <div class="dashboard-card-icon purple"><i class="fas fa-chart-line"></i></div>
+              <div class="dashboard-card-info">
+                <h3 id="statStats">0</h3>
+                <p>Stats Listed</p>
+              </div>
+            </div>
+          </div>
+          <div class="section-panel">
+            <div class="section-panel-header"><h3>Quick Actions</h3></div>
+            <div class="section-panel-body">
+              <p style="color: var(--gray);">Use the sidebar to navigate between different sections of your website. You can edit content, manage contact submissions, and update images from each section.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contacts -->
+        <div class="section-panel" id="panel-contacts">
+          <div class="section-panel-header"><h3>Contact Submissions</h3></div>
+          <div class="section-panel-body">
+            <div class="table-wrapper">
+              <table class="data-table" id="contactsTable">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Service</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="empty-state" id="contactsEmpty" style="display:none;">
+              <i class="fas fa-inbox"></i>
+              <p>No contact submissions yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero -->
+        <div class="section-panel" id="panel-hero">
+          <div class="section-panel-header"><h3>Edit Hero Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('hero')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-hero">
+              <div class="form-group"><label>Title (HTML allowed)</label><input type="text" name="title" id="hero-title"></div>
+              <div class="form-group"><label>Subtitle</label><textarea name="subtitle" id="hero-subtitle" rows="3"></textarea></div>
+              <div class="form-row">
+                <div class="form-group"><label>Primary Button</label><input type="text" name="primaryButton" id="hero-primaryButton"></div>
+                <div class="form-group"><label>Secondary Button</label><input type="text" name="secondaryButton" id="hero-secondaryButton"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <div class="section-panel" id="panel-services">
+          <div class="section-panel-header"><h3>Edit Services Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('services')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-services">
+              <div class="form-row">
+                <div class="form-group"><label>Tag</label><input type="text" name="tag" id="services-tag"></div>
+                <div class="form-group"><label>Title</label><input type="text" name="title" id="services-title"></div>
+              </div>
+              <div class="form-group"><label>Description</label><textarea name="description" id="services-description" rows="3"></textarea></div>
+              <div id="services-items"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="section-panel" id="panel-gallery">
+          <div class="section-panel-header"><h3>Edit Gallery Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('gallery')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-gallery">
+              <div class="form-row">
+                <div class="form-group"><label>Tag</label><input type="text" name="tag" id="gallery-tag"></div>
+                <div class="form-group"><label>Title</label><input type="text" name="title" id="gallery-title"></div>
+              </div>
+              <div class="form-group"><label>Description</label><textarea name="description" id="gallery-description" rows="3"></textarea></div>
+              <div id="gallery-items"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="section-panel" id="panel-about">
+          <div class="section-panel-header"><h3>Edit About Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('about')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-about">
+              <div class="form-row">
+                <div class="form-group"><label>Tag</label><input type="text" name="tag" id="about-tag"></div>
+                <div class="form-group"><label>Title</label><input type="text" name="title" id="about-title"></div>
+              </div>
+              <div class="form-group"><label>Description</label><textarea name="description" id="about-description" rows="4"></textarea></div>
+              <div class="form-group"><label>Description 2</label><textarea name="description2" id="about-description2" rows="4"></textarea></div>
+              <div class="form-group"><label>Image URL</label><input type="text" name="image" id="about-image"></div>
+              <div class="form-row">
+                <div class="form-group"><label>Experience Number</label><input type="text" name="experienceNumber" id="about-experience-number"></div>
+                <div class="form-group"><label>Experience Text (HTML allowed)</label><input type="text" name="experienceText" id="about-experience-text"></div>
+              </div>
+              <div id="about-features"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="section-panel" id="panel-stats">
+          <div class="section-panel-header"><h3>Edit Stats Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('stats')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-stats">
+              <div id="stats-items"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="section-panel" id="panel-contact">
+          <div class="section-panel-header"><h3>Edit Contact Section</h3><button class="btn btn-primary btn-sm" onclick="saveSection('contact')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-contact">
+              <div class="form-row">
+                <div class="form-group"><label>Tag</label><input type="text" name="tag" id="contact-tag"></div>
+                <div class="form-group"><label>Title</label><input type="text" name="title" id="contact-title"></div>
+              </div>
+              <div class="form-group"><label>Description</label><textarea name="description" id="contact-description" rows="3"></textarea></div>
+              <div class="form-group"><label>Address (use \n for new lines)</label><textarea name="address" id="contact-address" rows="3"></textarea></div>
+              <div class="form-group"><label>Phone (use \n for new lines)</label><textarea name="phone" id="contact-phone" rows="3"></textarea></div>
+              <div class="form-group"><label>Email (use \n for new lines)</label><textarea name="email" id="contact-email" rows="3"></textarea></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="section-panel" id="panel-footer">
+          <div class="section-panel-header"><h3>Edit Footer</h3><button class="btn btn-primary btn-sm" onclick="saveSection('footer')">Save Changes</button></div>
+          <div class="section-panel-body">
+            <form class="admin-form" id="form-footer">
+              <div class="form-group"><label>Description</label><textarea name="description" id="footer-description" rows="3"></textarea></div>
+              <div class="form-group"><label>Copyright</label><input type="text" name="copyright" id="footer-copyright"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
+

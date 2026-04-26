@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cylin Painters | Premium Painting Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <i class="fas fa-paint-roller"></i>
+        <span>Cylin Painters</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#home" class="nav-link active">Home</a></li>
+        <li><a href="#services" class="nav-link">Services</a></li>
+        <li><a href="#gallery" class="nav-link">Gallery</a></li>
+        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="#contact" class="nav-link">Contact</a></li>
+        <li><a href="/admin" class="nav-link admin-link"><i class="fas fa-cog"></i> Admin</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section with Live Wallpaper -->
+  <section class="hero" id="home">
+    <canvas id="wallpaperCanvas"></canvas>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title" data-content="hero.title">Transform Your Space<br>With Color</h1>
+      <p class="hero-subtitle" data-content="hero.subtitle">Premium residential & commercial painting services that bring your vision to life with precision and artistry.</p>
+      <div class="hero-buttons">
+        <a href="#contact" class="btn btn-primary" data-content="hero.primaryButton">Get a Free Quote</a>
+        <a href="#gallery" class="btn btn-outline" data-content="hero.secondaryButton">View Our Work</a>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="mouse">
+        <div class="wheel"></div>
+      </div>
+      <span>Scroll to explore</span>
+    </div>
+  </section>
+
+  <!-- Services Section -->
+  <section class="services" id="services">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-content="services.tag">What We Do</span>
+        <h2 class="section-title" data-content="services.title">Our Services</h2>
+        <p class="section-desc" data-content="services.description">From cozy homes to grand commercial spaces, we deliver flawless finishes every time.</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-home"></i>
+          </div>
+          <h3>Residential Painting</h3>
+          <p>Interior and exterior painting for homes, apartments, and condos. We treat your home with the care it deserves.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <h3>Commercial Painting</h3>
+          <p>Offices, retail stores, warehouses, and industrial facilities. Minimal disruption to your business operations.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-couch"></i>
+          </div>
+          <h3>Interior Painting</h3>
+          <p>Walls, ceilings, trim, cabinets, and specialty finishes. Color consultation included with every project.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-sun"></i>
+          </div>
+          <h3>Exterior Painting</h3>
+          <p>Siding, stucco, decks, fences, and more. Weather-resistant coatings that stand the test of time.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-palette"></i>
+          </div>
+          <h3>Custom Finishes</h3>
+          <p>Textured walls, faux finishes, accent walls, murals, and decorative painting for unique spaces.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">
+            <i class="fas fa-tools"></i>
+          </div>
+          <h3>Surface Preparation</h3>
+          <p>Power washing, sanding, caulking, drywall repair, and priming for a perfect, long-lasting finish.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery Section -->
+  <section class="gallery" id="gallery">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-content="gallery.tag">Portfolio</span>
+        <h2 class="section-title" data-content="gallery.title">Our Gallery</h2>
+        <p class="section-desc" data-content="gallery.description">Browse through our completed projects and imagine the possibilities for your space.</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item" data-index="0">
+          <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80" alt="Modern living room with accent wall" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Modern Living Room</span>
+            <span class="gallery-category">Interior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="1">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80" alt="Elegant bedroom with soft tones" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Elegant Bedroom</span>
+            <span class="gallery-category">Interior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="2">
+          <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80" alt="Kitchen with fresh paint" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Fresh Kitchen</span>
+            <span class="gallery-category">Interior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="3">
+          <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80" alt="Bathroom renovation" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Bathroom Refresh</span>
+            <span class="gallery-category">Interior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="4">
+          <img src="https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=800&q=80" alt="Exterior house painting" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Exterior Facade</span>
+            <span class="gallery-category">Exterior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="5">
+          <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80" alt="Office space painting" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Office Space</span>
+            <span class="gallery-category">Commercial</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="6">
+          <img src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80" alt="Dining room with bold colors" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Bold Dining Room</span>
+            <span class="gallery-category">Interior</span>
+          </div>
+        </div>
+        <div class="gallery-item" data-index="7">
+          <img src="https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=800&q=80" alt="Retail store interior" loading="lazy">
+          <div class="gallery-overlay">
+            <span class="gallery-title">Retail Store</span>
+            <span class="gallery-category">Commercial</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close lightbox">
+      <i class="fas fa-times"></i>
+    </button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous image">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <img src="" alt="Gallery image" class="lightbox-img" id="lightboxImg">
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next image">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+  <!-- About Section -->
+  <section class="about" id="about">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-image">
+          <img src="https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&q=80" alt="Professional painter at work" data-content="about.image">
+          <div class="about-experience">
+            <span class="exp-number" data-content="about.experience.number">15+</span>
+            <span class="exp-text" data-content="about.experience.text">Years of<br>Experience</span>
+          </div>
+        </div>
+        <div class="about-content">
+          <span class="section-tag" data-content="about.tag">About Us</span>
+          <h2 class="section-title" data-content="about.title">Bringing Color to Life Since 2009</h2>
+          <p>Cylin Painters is a full-service painting company dedicated to transforming spaces with color, creativity, and craftsmanship. Founded on the principles of quality, integrity, and customer satisfaction, we have grown to become one of the most trusted names in the industry.</p>
+          <p>Our team of skilled professionals brings years of experience to every project, ensuring meticulous attention to detail and a flawless finish. We use only premium paints and materials, combined with proven techniques, to deliver results that exceed expectations.</p>
+          <div class="about-features">
+            <div class="feature">
+              <i class="fas fa-check-circle"></i>
+              <span>Licensed & Insured</span>
+            </div>
+            <div class="feature">
+              <i class="fas fa-check-circle"></i>
+              <span>Free Estimates</span>
+            </div>
+            <div class="feature">
+              <i class="fas fa-check-circle"></i>
+              <span>Satisfaction Guaranteed</span>
+            </div>
+            <div class="feature">
+              <i class="fas fa-check-circle"></i>
+              <span>Eco-Friendly Options</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-number" data-target="1200">0</span>
+          <span class="stat-label">Projects Completed</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-target="850">0</span>
+          <span class="stat-label">Happy Clients</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-target="25">0</span>
+          <span class="stat-label">Expert Painters</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" data-target="15">0</span>
+          <span class="stat-label">Years Experience</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="contact" id="contact">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-content="contact.tag">Get In Touch</span>
+        <h2 class="section-title" data-content="contact.title">Request a Free Quote</h2>
+        <p class="section-desc" data-content="contact.description">Ready to transform your space? Fill out the form below and we'll get back to you within 24 hours.</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="info-content">
+              <h4>Visit Us</h4>
+              <p>123 Color Avenue<br>Design District, NY 10001</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-phone-alt"></i>
+            </div>
+            <div class="info-content">
+              <h4>Call Us</h4>
+              <p>(555) 123-4567<br>Mon - Sat: 8am - 6pm</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="info-content">
+              <h4>Email Us</h4>
+              <p>info@cylinpainters.com<br>quotes@cylinpainters.com</p>
+            </div>
+          </div>
+          <div class="social-links">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <form class="contact-form" id="contactForm">
+          <div class="form-group">
+            <label for="name">Full Name *</label>
+            <input type="text" id="name" name="name" required placeholder="John Doe">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input type="email" id="email" name="email" required placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" name="phone" placeholder="(555) 000-0000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="service">Service Type</label>
+            <select id="service" name="service">
+              <option value="">Select a service...</option>
+              <option value="residential">Residential Painting</option>
+              <option value="commercial">Commercial Painting</option>
+              <option value="interior">Interior Painting</option>
+              <option value="exterior">Exterior Painting</option>
+              <option value="custom">Custom Finishes</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Message *</label>
+            <textarea id="message" name="message" rows="5" required placeholder="Tell us about your project..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">
+            <span class="btn-text">Send Message</span>
+            <i class="fas fa-paper-plane"></i>
+          </button>
+          <div class="form-message" id="formMessage"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <i class="fas fa-paint-roller"></i>
+            <span>Cylin Painters</span>
+          </a>
+          <p data-content="footer.description">Premium painting services for residential and commercial spaces. Quality craftsmanship, exceptional results.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Services</h4>
+          <ul>
+            <li><a href="#services">Residential</a></li>
+            <li><a href="#services">Commercial</a></li>
+            <li><a href="#services">Interior</a></li>
+            <li><a href="#services">Exterior</a></li>
+            <li><a href="#services">Custom Finishes</a></li>
+          </ul>
+        </div>
+        <div class="footer-newsletter">
+          <h4>Stay Updated</h4>
+          <p>Subscribe for tips, trends, and exclusive offers.</p>
+          <form class="newsletter-form" id="newsletterForm">
+            <input type="email" placeholder="Your email" required>
+            <button type="submit" aria-label="Subscribe to newsletter"><i class="fas fa-arrow-right"></i></button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p data-content="footer.copyright">&copy; 2024 Cylin Painters. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/wallpaper.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/content-loader.js"></script>
+</body>
+</html>
+

@@ -595,6 +595,40 @@ async function saveReactions(reactions) {
     writeStore(store);
 }
 
+async function getDonations() {
+    if (useFirebase && firestore) {
+        return await firebaseGetAll('donations');
+    }
+    if (useMongoDB && db) {
+        return await db.collection('donations').find({}).toArray();
+    }
+    const store = readStore();
+    return store.donations || [];
+}
+
+async function saveDonations(donations) {
+    if (useFirebase && firestore) {
+        const existing = await firebaseGetAll('donations');
+        for (const d of existing) {
+            await firebaseDeleteDoc('donations', d.id);
+        }
+        for (const d of donations) {
+            await firebaseAddDoc('donations', d);
+        }
+        return;
+    }
+    if (useMongoDB && db) {
+        await db.collection('donations').deleteMany({});
+        if (donations.length > 0) {
+            await db.collection('donations').insertMany(donations);
+        }
+        return;
+    }
+    const store = readStore();
+    store.donations = donations;
+    writeStore(store);
+}
+
 async function saveResources(resources) {
     if (useFirebase && firestore) {
         const existing = await firebaseGetAll('resources');
@@ -1006,6 +1040,58 @@ async function sendReactionNotificationEmail(reaction) {
     }
 }
 
+async function sendDonationNotificationEmail(donation) {
+    const transporter = getMailTransporter();
+    if (!transporter) {
+        console.warn("Email not configured: cannot send donation notification");
+        return { delivered: false, reason: "smtp_not_configured" };
+    }
+
+    try {
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #071814 0%, #0d2d26 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+                    <h2 style="margin: 0; color: #fff; font-size: 24px;">🌿 Abious Rehabilitation Initiative</h2>
+                    <p style="margin: 8px 0 0 0; color: #a8f5e0;">New Donation Received</p>
+                </div>
+
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; border-left: 4px solid #4ec7a1;">
+                    <span style="display: inline-block; background: #4ec7a1; color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 12px; margin-bottom: 12px;">DONATION</span>
+                    
+                    <p style="margin: 0 0 8px 0;"><strong>From:</strong> ${donation.name} (${donation.email})</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> $${donation.amount.toFixed(2)}</p>
+                    ${donation.message ? `<p style="margin: 0 0 12px 0; color: #333; line-height: 1.6; font-style: italic;">"${donation.message}"</p>` : ''}
+                    
+                    <p style="margin: 12px 0 0 0; color: #666; font-size: 12px;">
+                        Received on ${new Date(donation.createdAt).toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="color: #666; font-size: 12px; margin: 0;">
+                        This is an automated notification from Abious Rehabilitation Initiative.<br>
+                        Please verify the bank transfer and update the donation status in the admin panel.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+            to: "isaacnewton0767304563@gmail.com",
+            subject: `New Donation: $${donation.amount.toFixed(2)} from ${donation.name}`,
+            html: htmlContent,
+            text: `New Donation Received\n\nFrom: ${donation.name} (${donation.email})\nAmount: $${donation.amount.toFixed(2)}\nMessage: ${donation.message || 'None'}\nReceived: ${new Date(donation.createdAt).toLocaleString()}`
+        });
+
+        console.log(`Donation notification email sent to admin for ${donation.name}`);
+        return { delivered: true };
+    } catch (error) {
+        console.error("Error sending donation notification:", error);
+        return { delivered: false, reason: error.message };
+    }
+}
+
 async function sendNewsNotificationEmails(newsItem) {
     const transporter = getMailTransporter();
     if (!transporter) {
@@ -1157,6 +1243,7 @@ function ensureStore() {
             news: [],
             resources: [],
             verificationCodes: [],
+            donations: [],
             siteContent: normalizeSiteContent(DEFAULT_SITE_CONTENT)
         };
         fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2), "utf8");
@@ -1180,6 +1267,10 @@ function ensureStore() {
     }
     if (!Array.isArray(currentStore.reactions)) {
         currentStore.reactions = [];
+        changed = true;
+    }
+    if (!Array.isArray(currentStore.donations)) {
+        currentStore.donations = [];
         changed = true;
     }
     if (!currentStore.sessions || typeof currentStore.sessions !== "object") {
@@ -2639,6 +2730,57 @@ async function handleApi(req, res, urlObj) {
             }
             await saveReactions(reactions);
             sendJson(res, 200, { ok: true });
+            return true;
+        }
+
+        // Donations endpoints
+        if (method === "POST" && pathname === "/api/donations") {
+            const body = await getRequestBody(req);
+            const name = sanitizeInput(String(body.name || "").trim());
+            const email = sanitizeInput(String(body.email || "").trim().toLowerCase());
+            const amount = parseFloat(body.amount);
+            const message = sanitizeInput(String(body.message || "").trim());
+
+            if (!name || !email || !amount || amount <= 0) {
+                sendJson(res, 400, { ok: false, error: "Name, email, and valid amount are required." });
+                return true;
+            }
+
+            const donation = {
+                id: "d_" + Date.now(),
+                name,
+                email,
+                amount,
+                message,
+                status: "pending",
+                createdAt: nowIso()
+            };
+
+            let donations = await getDonations();
+            donations.push(donation);
+            await saveDonations(donations);
+
+            // Send notification email to admin
+            try {
+                const emailResult = await sendDonationNotificationEmail(donation);
+                console.log("Donation notification result:", emailResult);
+            } catch (error) {
+                console.error("Error sending donation notification:", error);
+            }
+
+            sendJson(res, 201, { ok: true, donation });
+            return true;
+        }
+
+        if (method === "GET" && pathname === "/api/admin/donations") {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const donations = await getDonations();
+            const sorted = donations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            sendJson(res, 200, { ok: true, donations: sorted });
             return true;
         }
 

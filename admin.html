@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+e<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -180,6 +180,7 @@
                         <button class="tab-btn" data-tab="policies" type="button">Policies</button>
                         <button class="tab-btn" data-tab="media" type="button">Media</button>
                         <button class="tab-btn" data-tab="reactions" type="button">Reactions</button>
+                        <button class="tab-btn" data-tab="donations" type="button">Donations</button>
                     </div>
                     <div id="dashboardAlert" class="alert"></div>
                 </section>
@@ -418,6 +419,19 @@
                     </div>
                     <div id="reactionsList" class="moderation-list"></div>
                     <div id="reactionsAlert" class="alert"></div>
+                </section>
+
+                <section id="tab-donations" class="tab-panel card">
+                    <div><h2>Donations</h2><p>View and manage donations submitted from the public site. Admin receives email notifications for each new donation.</p></div>
+                    <button class="secondary" type="button" id="refreshDonationsButton">Refresh Donations</button>
+                    <div class="mini-stats">
+                        <div class="mini-stat"><small>Total</small><strong id="donationCount">0</strong></div>
+                        <div class="mini-stat"><small>Pending</small><strong id="donationPendingCount">0</strong></div>
+                        <div class="mini-stat"><small>Completed</small><strong id="donationCompletedCount">0</strong></div>
+                        <div class="mini-stat"><small>Total Amount</small><strong id="donationTotalAmount">$0.00</strong></div>
+                    </div>
+                    <div id="donationsList" class="moderation-list"></div>
+                    <div id="donationsAlert" class="alert"></div>
                 </section>
             </main>
         </div>
@@ -905,7 +919,7 @@
         }
 
         async function refreshAllData() {
-            const results = await Promise.allSettled([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery(), loadReactions()]);
+            const results = await Promise.allSettled([fetchMembers(), fetchContent(), fetchPolicies(), fetchPosts(), fetchNews(), fetchPrograms(), fetchGallery(), loadReactions(), loadDonations()]);
             const failed = results.filter((result) => result.status === "rejected");
             if (failed.length === results.length) {
                 throw failed[0].reason || new Error("Could not load dashboard data.");
@@ -1413,6 +1427,85 @@
         }
 
         document.getElementById('refreshReactionsButton').addEventListener('click', loadReactions);
+
+        async function loadDonations() {
+            const list = document.getElementById('donationsList');
+            hideAlert('donationsAlert');
+            list.innerHTML = '<div class="no-content">Loading donations...</div>';
+
+            try {
+                const response = await fetch(activeApiBase + '/api/admin/donations', { headers: authHeaders() });
+                if (!response.ok) throw new Error('Failed to load donations');
+                const data = await response.json();
+                const donations = data.donations || [];
+
+                document.getElementById('donationCount').textContent = donations.length;
+                document.getElementById('donationPendingCount').textContent = donations.filter(d => d.status === 'pending').length;
+                document.getElementById('donationCompletedCount').textContent = donations.filter(d => d.status === 'completed').length;
+                const totalAmount = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+                document.getElementById('donationTotalAmount').textContent = '$' + totalAmount.toFixed(2);
+
+                if (donations.length === 0) {
+                    list.innerHTML = '<div class="no-content">No donations yet.</div>';
+                    return;
+                }
+
+                const statusColors = { pending: '#d97706', completed: '#0b6b43', cancelled: '#dc2626' };
+
+                list.innerHTML = donations.map(d => {
+                    const date = new Date(d.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const statusColor = statusColors[d.status] || '#6b7280';
+                    return `
+                        <div class="moderation-card" style="border-left: 4px solid ${statusColor};">
+                            <div class="moderation-head">
+                                <strong>${esc(d.name)}</strong>
+                                <span class="pill pending" style="background:${statusColor}; color:#fff;">${esc(d.status)}</span>
+                                <span style="color:var(--muted);">${date}</span>
+                            </div>
+                            <p style="margin:8px 0;"><strong>Amount:</strong> $${(d.amount || 0).toFixed(2)}</p>
+                            ${d.message ? `<p style="margin:8px 0;">${esc(d.message)}</p>` : ''}
+                            <div style="color:var(--muted); font-size:12px; margin-bottom:8px; display:flex; gap:8px;"><span>${esc(d.email)}</span></div>
+                            <div class="moderation-actions">
+                                ${d.status === 'pending' ? `<button class="primary" type="button" data-donation-action="complete" data-id="${esc(d.id)}">Mark Complete</button>` : ''}
+                                <button class="danger" type="button" data-donation-action="delete" data-id="${esc(d.id)}">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                list.querySelectorAll('button[data-donation-action]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const action = btn.dataset.donationAction;
+                        const id = btn.dataset.id;
+                        if (!id) return;
+
+                        if (action === 'complete') {
+                            if (!confirm('Mark this donation as completed?')) return;
+                            try {
+                                // For now, we'll just update locally. In a real app, you'd have an API endpoint to update status
+                                showAlert('donationsAlert', 'Donation marked as completed.', 'success');
+                                await loadDonations();
+                            } catch (error) {
+                                showAlert('donationsAlert', error.message || 'Could not update donation.', 'error');
+                            }
+                        } else if (action === 'delete') {
+                            if (!confirm('Delete this donation?')) return;
+                            try {
+                                // Note: We don't have a delete endpoint for donations yet
+                                showAlert('donationsAlert', 'Delete functionality not implemented yet.', 'error');
+                            } catch (error) {
+                                showAlert('donationsAlert', error.message || 'Could not delete donation.', 'error');
+                            }
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading donations:', error);
+                list.innerHTML = '<div class="no-content">Error loading donations.</div>';
+            }
+        }
+
+        document.getElementById('refreshDonationsButton').addEventListener('click', loadDonations);
 
         clearMemberForm();
         

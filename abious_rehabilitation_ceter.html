@@ -1305,7 +1305,7 @@
         <section id="donate">
             <h2>Donate to Our Foundation</h2>
             <p>Your generous donations help us continue our mission of supporting youth rehabilitation. Every contribution makes a difference.</p>
-            <form>
+            <form id="donationForm">
                 <label for="donor-name">Your Name:</label>
                 <input type="text" id="donor-name" name="donor-name" required>
 
@@ -1320,6 +1320,13 @@
 
                 <button type="submit">Donate Now</button>
             </form>
+            <div id="donationStatus"></div>
+            <div id="bankDetails" style="display: none;">
+                <h3>Bank Transfer Details</h3>
+                <p>Please transfer the donation amount to the following bank account:</p>
+                <div id="bankInfo"></div>
+                <p><strong>Important:</strong> Include your name and "Donation" in the transfer reference.</p>
+            </div>
         </section>
 
         <section id="reactions">
@@ -2016,6 +2023,72 @@
 
         if (reactionForm) {
             reactionForm.addEventListener("submit", submitReaction);
+        }
+
+        // Donation Form Handler
+        const donationForm = document.getElementById("donationForm");
+        const donationStatus = document.getElementById("donationStatus");
+        const bankDetails = document.getElementById("bankDetails");
+        const bankInfo = document.getElementById("bankInfo");
+
+        async function handleDonation(event) {
+            event.preventDefault();
+            setStatus(donationStatus, "info", "Processing your donation request...");
+
+            const formData = new FormData(donationForm);
+            const donationData = {
+                name: formData.get("donor-name"),
+                email: formData.get("donor-email"),
+                amount: parseFloat(formData.get("amount")),
+                message: formData.get("message") || "",
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // First, submit the donation data
+                const submitResponse = await fetch(activeApiBase + "/api/donations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(donationData)
+                });
+
+                if (!submitResponse.ok) {
+                    throw new Error("Failed to submit donation");
+                }
+
+                // Then, fetch bank details
+                const bankResponse = await fetch(activeApiBase + "/api/bank-account");
+                if (!bankResponse.ok) {
+                    throw new Error("Failed to load bank details");
+                }
+
+                const bankData = await bankResponse.json();
+
+                // Display bank details
+                bankInfo.innerHTML = `
+                    <p><strong>Bank Name:</strong> ${escapeHtml(bankData.bankName || "Not configured")}</p>
+                    <p><strong>Account Name:</strong> ${escapeHtml(bankData.accountName || "Not configured")}</p>
+                    <p><strong>Account Number:</strong> ${escapeHtml(bankData.accountNumber || "Not configured")}</p>
+                    <p><strong>SWIFT/BIC:</strong> ${escapeHtml(bankData.swiftCode || "Not configured")}</p>
+                    <p><strong>Amount:</strong> $${donationData.amount.toFixed(2)}</p>
+                `;
+
+                bankDetails.style.display = "block";
+                setStatus(donationStatus, "ok", "Donation request submitted! Please complete the transfer using the details below.");
+                showToast("Donation request submitted! Check bank details below.", "success");
+
+                // Scroll to bank details
+                bankDetails.scrollIntoView({ behavior: "smooth" });
+
+            } catch (error) {
+                console.error("Donation error:", error);
+                setStatus(donationStatus, "error", "Failed to process donation. Please try again.");
+                showToast("Failed to process donation.", "error");
+            }
+        }
+
+        if (donationForm) {
+            donationForm.addEventListener("submit", handleDonation);
         }
 
         // Load and display reactions

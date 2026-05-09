@@ -131,6 +131,13 @@ if (initFirebase()) {
 }
 console.log(`Verification sender: ${VERIFICATION_SENDER_EMAIL}`);
 console.log(`SMTP ready: ${canSendVerificationEmails() ? 'yes' : 'no (set SMTP_PASS or GMAIL_APP_PASSWORD)'}`);
+if (canSendVerificationEmails()) {
+    console.log(`SMTP host: ${SMTP_HOST}:${SMTP_PORT} (secure: ${SMTP_SECURE})`);
+    console.log(`SMTP user: ${SMTP_USER ? 'configured' : 'not configured'}`);
+} else {
+    console.log('To enable email: set SMTP_PASS or GMAIL_APP_PASSWORD environment variable');
+    console.log('For Gmail: generate an App Password at https://myaccount.google.com/apppasswords');
+}
 console.log('=============================');
 
 // Connect to MongoDB with better error handling
@@ -932,7 +939,6 @@ function getMailTransporter() {
             secure: SMTP_SECURE,
             service: SMTP_HOST && SMTP_HOST.includes("gmail") ? "gmail" : undefined,
             family: 4, // force IPv4 to avoid IPv6 ENETUNREACH in restricted environments
-            localAddress: "0.0.0.0",
             name: process.env.SMTP_CLIENT_NAME || "abious-rehabilitation-center",
             auth: {
                 user: SMTP_USER,
@@ -959,26 +965,34 @@ async function sendVerificationEmail(recipientEmail, code) {
         };
     }
 
-    await transporter.sendMail({
-        from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
-        to: recipientEmail,
-        subject: "Your Abious verification code",
-        text: `Your verification code is ${code}. It expires in 1 hour.`,
-        html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
-                <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
-                <p>Your verification code is:</p>
-                <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
-                    ${code}
+    try {
+        await transporter.sendMail({
+            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+            to: recipientEmail,
+            subject: "Your Abious verification code",
+            text: `Your verification code is ${code}. It expires in 1 hour.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
+                    <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
+                    <p>Your verification code is:</p>
+                    <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                        ${code}
+                    </div>
+                    <p style="margin-top: 18px;">This code expires in 1 hour.</p>
                 </div>
-                <p style="margin-top: 18px;">This code expires in 1 hour.</p>
-            </div>
-        `
-    });
+            `
+        });
 
-    return {
-        delivered: true
-    };
+        return {
+            delivered: true
+        };
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        return {
+            delivered: false,
+            reason: error.message || "smtp_error"
+        };
+    }
 }
 
 async function sendReactionNotificationEmail(reaction) {

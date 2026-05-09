@@ -1,11 +1,24 @@
 <!DOCTYPE html>
-<html lang="en"></html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My first website</title>
+    <link rel="stylesheet" href="shared-theme.css">
 </head>
-<body>
+<body class="theme-page">
+    <nav class="mobile-menu">
+        <input type="checkbox" id="menu-toggle" class="menu-toggle">
+        <label for="menu-toggle" class="menu-icon">&#9776;</label>
+        <ul class="menu-list">
+            <li><a href="members.html">Members</a></li>
+            <li><a href="news.html">News</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="admin.html">Admin</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="security-policy.html">Security Policy</a></li>
+        </ul>
+    </nav>
     <h1>This is an h1 heading</h1>
     <h2>This is an h2 heading</h2>
     <h3>This is an h3 heading</h3>
@@ -14,4 +27,8 @@
 This is a preformatted text block.
 It preserves whitespace and line breaks.
     </pre>
+    <script>
+        // Optional: Add any JS if needed for menu toggle
+    </script>
 </body>
+</html>

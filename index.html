@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="shared-theme.css">
 </head>
 <body class="theme-page">
+    <div class="live-wallpaper">
+        <div class="theme-orb one"></div>
+        <div class="theme-orb two"></div>
+        <div class="theme-orb three"></div>
+        <div class="theme-particles">
+            <div class="theme-particle" style="--size: 4px; --left: 10%; --duration: 12s; --delay: 0s;"></div>
+            <div class="theme-particle" style="--size: 6px; --left: 20%; --duration: 18s; --delay: -2s;"></div>
+            <div class="theme-particle" style="--size: 3px; --left: 30%; --duration: 14s; --delay: -4s;"></div>
+            <div class="theme-particle" style="--size: 5px; --left: 40%; --duration: 16s; --delay: -6s;"></div>
+            <div class="theme-particle" style="--size: 4px; --left: 50%; --duration: 20s; --delay: -8s;"></div>
+            <div class="theme-particle" style="--size: 3px; --left: 60%; --duration: 15s; --delay: -10s;"></div>
+            <div class="theme-particle" style="--size: 6px; --left: 70%; --duration: 17s; --delay: -12s;"></div>
+            <div class="theme-particle" style="--size: 4px; --left: 80%; --duration: 13s; --delay: -14s;"></div>
+            <div class="theme-particle" style="--size: 5px; --left: 90%; --duration: 19s; --delay: -16s;"></div>
+        </div>
+    </div>
     <nav class="mobile-menu">
         <input type="checkbox" id="menu-toggle" class="menu-toggle">
         <label for="menu-toggle" class="menu-icon">&#9776;</label>
@@ -19,16 +35,167 @@
             <li><a href="security-policy.html">Security Policy</a></li>
         </ul>
     </nav>
-    <h1>This is an h1 heading</h1>
-    <h2>This is an h2 heading</h2>
-    <h3>This is an h3 heading</h3>
-    <br>
-    <pre>
-This is a preformatted text block.
-It preserves whitespace and line breaks.
-    </pre>
+    <div class="page-shell">
+        <h1>Welcome to Our Website</h1>
+        <p>This is our main page with some sample content.</p>
+
+        <section class="gallery">
+            <h2>Gallery</h2>
+            <div class="gallery-grid">
+                <img src="IMG_4692.JPG" alt="Image 1" class="gallery-image">
+                <img src="IMG_4693.JPG" alt="Image 2" class="gallery-image">
+                <img src="IMG_4694.JPG" alt="Image 3" class="gallery-image">
+                <img src="IMG_4696.JPG" alt="Image 4" class="gallery-image">
+            </div>
+        </section>
+
+        <section id="reactions" class="reactions-section">
+            <h2>Share Your Thoughts</h2>
+            <div class="reaction-layout">
+                <div class="reaction-panel">
+                    <h3>What People Say</h3>
+                    <div id="comments-display" class="comment-preview">
+                        <div class="comment-preview-card">
+                            <strong>Recent Comments</strong>
+                            <p><em>Loading comments...</em></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="reaction-form-card">
+                    <h3>Leave a Reaction</h3>
+                    <form id="reactionForm">
+                        <label for="comment-name">Name:</label>
+                        <input type="text" id="comment-name" name="comment-name" required>
+
+                        <label for="comment-email">Email:</label>
+                        <input type="email" id="comment-email" name="comment-email" required>
+
+                        <label for="reaction">Type:</label>
+                        <select id="reaction" name="reaction">
+                            <option value="positive">Positive</option>
+                            <option value="suggestion">Suggestion</option>
+                            <option value="question">Question</option>
+                            <option value="other">Other</option>
+                        </select>
+
+                        <label for="comment">Comment:</label>
+                        <textarea id="comment" name="comment" rows="3" required></textarea>
+
+                        <button type="submit">Submit</button>
+                    </form>
+                    <div id="reactionStatus"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Lightbox for images -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+        <div id="lightbox-caption"></div>
+    </div>
+
     <script>
-        // Optional: Add any JS if needed for menu toggle
+        // Mobile menu toggle (already handled by CSS)
+
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxCaption = document.getElementById('lightbox-caption');
+        const lightboxClose = document.querySelector('.lightbox-close');
+
+        document.querySelectorAll('.gallery-image').forEach(img => {
+            img.addEventListener('click', () => {
+                lightbox.style.display = 'block';
+                lightboxImg.src = img.src;
+                lightboxCaption.textContent = img.alt;
+            });
+        });
+
+        lightboxClose.addEventListener('click', () => {
+            lightbox.style.display = 'none';
+        });
+
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.style.display = 'none';
+            }
+        });
+
+        // Reactions functionality
+        const reactionForm = document.getElementById('reactionForm');
+        const commentsDisplay = document.getElementById('comments-display');
+        const reactionStatus = document.getElementById('reactionStatus');
+
+        async function loadReactions() {
+            try {
+                const response = await fetch('/api/reactions');
+                if (response.ok) {
+                    const data = await response.json();
+                    const reactions = data.reactions || [];
+                    displayReactions(reactions);
+                } else {
+                    commentsDisplay.innerHTML = '<div class="comment-preview-card"><p>No comments available.</p></div>';
+                }
+            } catch (error) {
+                console.error('Error loading reactions:', error);
+                commentsDisplay.innerHTML = '<div class="comment-preview-card"><p>Error loading comments.</p></div>';
+            }
+        }
+
+        function displayReactions(reactions) {
+            if (reactions.length === 0) {
+                commentsDisplay.innerHTML = '<div class="comment-preview-card"><p>No comments yet. Be the first to share your thoughts!</p></div>';
+                return;
+            }
+
+            const html = reactions.slice(0, 5).map(reaction => `
+                <div class="comment-preview-card">
+                    <strong>${reaction.name}</strong> <small>(${reaction.reaction})</small>
+                    <p>${reaction.comment}</p>
+                    <small>${new Date(reaction.timestamp).toLocaleDateString()}</small>
+                </div>
+            `).join('');
+
+            commentsDisplay.innerHTML = html;
+        }
+
+        reactionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            reactionStatus.textContent = 'Submitting...';
+
+            const formData = new FormData(reactionForm);
+            const data = {
+                name: formData.get('comment-name'),
+                email: formData.get('comment-email'),
+                reaction: formData.get('reaction'),
+                comment: formData.get('comment'),
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch('/api/reactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    reactionStatus.textContent = 'Thank you for your reaction!';
+                    reactionForm.reset();
+                    loadReactions(); // Refresh comments
+                } else {
+                    reactionStatus.textContent = 'Error submitting reaction. Please try again.';
+                }
+            } catch (error) {
+                console.error('Error submitting reaction:', error);
+                reactionStatus.textContent = 'Error submitting reaction. Please try again.';
+            }
+        });
+
+        // Load reactions on page load
+        loadReactions();
     </script>
 </body>
 </html>

@@ -3005,7 +3005,7 @@ async function handleApi(req, res, urlObj) {
 
 function serveStatic(req, res, urlObj) {
     let filePath = decodeURIComponent(urlObj.pathname);
-    if (filePath === "/") filePath = "/abious_rehabilitation_ceter.html";
+    if (filePath === "/") filePath = "/trial.html";
     const normalized = path.normalize(filePath).replace(/^(\.\.[/\\])+/, "");
     const absolute = path.join(ROOT_DIR, normalized);
 

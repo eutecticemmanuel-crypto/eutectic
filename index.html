@@ -154,7 +154,7 @@
                 <div class="comment-preview-card">
                     <strong>${reaction.name}</strong> <small>(${reaction.reaction})</small>
                     <p>${reaction.comment}</p>
-                    <small>${new Date(reaction.timestamp).toLocaleDateString()}</small>
+                    <small>${new Date(reaction.createdAt || reaction.timestamp).toLocaleDateString()}</small>
                 </div>
             `).join('');
 

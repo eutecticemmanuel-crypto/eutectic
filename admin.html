@@ -1463,6 +1463,15 @@ e<!DOCTYPE html>
                                 <span style="color:var(--muted);">${date}</span>
                             </div>
                             <p style="margin:8px 0;"><strong>Amount:</strong> $${(d.amount || 0).toFixed(2)}</p>
+                            <p style="margin:8px 0;"><strong>Receipt:</strong> ${esc(d.receiptNumber || d.id || '-')}</p>
+                            ${(d.donorBankName || d.donorAccountName || d.transferReference || d.donorPhone) ? `
+                                <div style="margin:8px 0; padding:10px; border:1px solid var(--line); border-radius:8px; background:rgba(13,110,94,0.04);">
+                                    ${d.donorBankName ? `<div><strong>Bank used:</strong> ${esc(d.donorBankName)}</div>` : ''}
+                                    ${d.donorAccountName ? `<div><strong>Account holder:</strong> ${esc(d.donorAccountName)}</div>` : ''}
+                                    ${d.transferReference ? `<div><strong>Transfer reference:</strong> ${esc(d.transferReference)}</div>` : ''}
+                                    ${d.donorPhone ? `<div><strong>Phone:</strong> ${esc(d.donorPhone)}</div>` : ''}
+                                </div>
+                            ` : ''}
                             ${d.message ? `<p style="margin:8px 0;">${esc(d.message)}</p>` : ''}
                             <div style="color:var(--muted); font-size:12px; margin-bottom:8px; display:flex; gap:8px;"><span>${esc(d.email)}</span></div>
                             <div class="moderation-actions">
@@ -1482,7 +1491,12 @@ e<!DOCTYPE html>
                         if (action === 'complete') {
                             if (!confirm('Mark this donation as completed?')) return;
                             try {
-                                // For now, we'll just update locally. In a real app, you'd have an API endpoint to update status
+                                const response = await fetch(activeApiBase + '/api/admin/donations/' + encodeURIComponent(id), {
+                                    method: 'PATCH',
+                                    headers: authHeaders(true),
+                                    body: JSON.stringify({ status: 'completed' })
+                                });
+                                if (!response.ok) throw new Error('Could not update donation.');
                                 showAlert('donationsAlert', 'Donation marked as completed.', 'success');
                                 await loadDonations();
                             } catch (error) {
@@ -1491,8 +1505,13 @@ e<!DOCTYPE html>
                         } else if (action === 'delete') {
                             if (!confirm('Delete this donation?')) return;
                             try {
-                                // Note: We don't have a delete endpoint for donations yet
-                                showAlert('donationsAlert', 'Delete functionality not implemented yet.', 'error');
+                                const response = await fetch(activeApiBase + '/api/admin/donations/' + encodeURIComponent(id), {
+                                    method: 'DELETE',
+                                    headers: authHeaders()
+                                });
+                                if (!response.ok) throw new Error('Could not delete donation.');
+                                showAlert('donationsAlert', 'Donation deleted.', 'success');
+                                await loadDonations();
                             } catch (error) {
                                 showAlert('donationsAlert', error.message || 'Could not delete donation.', 'error');
                             }

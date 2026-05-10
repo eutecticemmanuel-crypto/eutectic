@@ -1315,6 +1315,18 @@
                 <label for="amount">Donation Amount ($):</label>
                 <input type="number" id="amount" name="amount" min="1" step="0.01" required>
 
+                <label for="donor-bank-name">Bank You Will Pay From:</label>
+                <input type="text" id="donor-bank-name" name="donor-bank-name" placeholder="Bank or mobile money provider" required>
+
+                <label for="donor-account-name">Account Holder Name:</label>
+                <input type="text" id="donor-account-name" name="donor-account-name" required>
+
+                <label for="transfer-reference">Transfer Reference:</label>
+                <input type="text" id="transfer-reference" name="transfer-reference" placeholder="Reference you will use on the transfer" required>
+
+                <label for="donor-phone">Phone Number (optional):</label>
+                <input type="tel" id="donor-phone" name="donor-phone">
+
                 <label for="message">Message (optional):</label>
                 <textarea id="message" name="message" rows="3"></textarea>
 
@@ -1552,7 +1564,7 @@
                 setStatus(
                     document.getElementById("verificationStatus"),
                     "error",
-                    "Could not create a verification code right now. Please try again."
+                    error.message || "Could not create a verification code right now. Please try again."
                 );
             }
         }
@@ -1627,7 +1639,7 @@
                 setStatus(
                     document.getElementById("verificationStatus"),
                     "error",
-                    "Could not resend the verification code."
+                    error.message || "Could not resend the verification code."
                 );
             }
         });
@@ -2040,6 +2052,10 @@
                 name: formData.get("donor-name"),
                 email: formData.get("donor-email"),
                 amount: parseFloat(formData.get("amount")),
+                donorBankName: formData.get("donor-bank-name"),
+                donorAccountName: formData.get("donor-account-name"),
+                transferReference: formData.get("transfer-reference"),
+                donorPhone: formData.get("donor-phone") || "",
                 message: formData.get("message") || "",
                 timestamp: new Date().toISOString()
             };
@@ -2052,8 +2068,9 @@
                     body: JSON.stringify(donationData)
                 });
 
+                const submitData = await submitResponse.json();
                 if (!submitResponse.ok) {
-                    throw new Error("Failed to submit donation");
+                    throw new Error(submitData.error || "Failed to submit donation");
                 }
 
                 // Then, fetch bank details
@@ -2071,11 +2088,15 @@
                     <p><strong>Account Number:</strong> ${escapeHtml(bankData.accountNumber || "Not configured")}</p>
                     <p><strong>SWIFT/BIC:</strong> ${escapeHtml(bankData.swiftCode || "Not configured")}</p>
                     <p><strong>Amount:</strong> $${donationData.amount.toFixed(2)}</p>
+                    <p><strong>Your Transfer Reference:</strong> ${escapeHtml(donationData.transferReference)}</p>
                 `;
 
                 bankDetails.style.display = "block";
-                setStatus(donationStatus, "ok", "Donation request submitted! Please complete the transfer using the details below.");
-                showToast("Donation request submitted! Check bank details below.", "success");
+                const receiptMessage = submitData.receiptDelivery && submitData.receiptDelivery.delivered
+                    ? " A receipt has been sent to your email."
+                    : " Your receipt is recorded, but email delivery could not be confirmed.";
+                setStatus(donationStatus, "ok", "Donation request submitted! Please complete the transfer using the details below." + receiptMessage);
+                showToast("Donation request submitted! Check your email and bank details below.", "success");
 
                 // Scroll to bank details
                 bankDetails.scrollIntoView({ behavior: "smooth" });

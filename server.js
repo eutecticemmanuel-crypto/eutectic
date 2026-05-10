@@ -19,7 +19,13 @@ function loadEnvFile() {
         const separator = trimmed.indexOf("=");
         if (separator === -1) continue;
         const key = trimmed.slice(0, separator).trim();
-        const value = trimmed.slice(separator + 1).trim();
+        let value = trimmed.slice(separator + 1).trim();
+        if (
+            value.length >= 2 &&
+            ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))
+        ) {
+            value = value.slice(1, -1);
+        }
         if (key && !process.env[key]) {
             process.env[key] = value;
         }
@@ -50,6 +56,20 @@ if (ADMIN_PASSWORD === "admin@123") {
 function sanitizeInput(input) {
     if (typeof input !== "string") return "";
     return input.replace(/[<>"'`;(){}]/g, "").trim();
+}
+
+function sanitizeEmail(input) {
+    if (typeof input !== "string") return "";
+    return input.replace(/[<>"'`;()\s{}]/g, "").trim().toLowerCase();
+}
+
+function escapeHtml(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 function sanitizeUserData(user) {
@@ -1106,6 +1126,80 @@ async function sendDonationNotificationEmail(donation) {
     }
 }
 
+async function sendDonationReceiptEmail(donation, bankAccount = {}) {
+    const transporter = getMailTransporter();
+    if (!transporter) {
+        console.warn("Email not configured: cannot send donation receipt");
+        return { delivered: false, reason: "smtp_not_configured" };
+    }
+
+    const receiptNumber = donation.receiptNumber || donation.id;
+    const donorBankLines = [
+        donation.donorBankName ? `Bank used: ${donation.donorBankName}` : "",
+        donation.donorAccountName ? `Account holder: ${donation.donorAccountName}` : "",
+        donation.transferReference ? `Transfer reference: ${donation.transferReference}` : "",
+        donation.donorPhone ? `Phone: ${donation.donorPhone}` : ""
+    ].filter(Boolean);
+
+    const recipientBankLines = [
+        bankAccount.bankName ? `Bank name: ${bankAccount.bankName}` : "",
+        bankAccount.accountName ? `Account name: ${bankAccount.accountName}` : "",
+        bankAccount.accountNumber ? `Account number: ${bankAccount.accountNumber}` : "",
+        bankAccount.branch ? `Branch: ${bankAccount.branch}` : "",
+        bankAccount.swiftCode ? `SWIFT/BIC: ${bankAccount.swiftCode}` : "",
+        bankAccount.instructions ? `Instructions: ${bankAccount.instructions}` : ""
+    ].filter(Boolean);
+    const donorBankHtml = donorBankLines.map(escapeHtml);
+    const recipientBankHtml = recipientBankLines.map(escapeHtml);
+
+    try {
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b; max-width: 620px; margin: 0 auto;">
+                <h2 style="margin-bottom: 6px;">Abious Rehabilitation Initiative</h2>
+                <p style="margin-top: 0;">Thank you for supporting our work. We have received your donation details.</p>
+                <div style="background: #f5fbf8; border: 1px solid #cfe9df; border-radius: 10px; padding: 18px;">
+                    <p style="margin: 0 0 8px 0;"><strong>Receipt:</strong> ${escapeHtml(receiptNumber)}</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Donor:</strong> ${escapeHtml(donation.name)}</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> $${donation.amount.toFixed(2)}</p>
+                    <p style="margin: 0;"><strong>Status:</strong> Pending bank transfer confirmation</p>
+                </div>
+                ${donorBankLines.length ? `
+                    <h3 style="margin-top: 22px;">Your Transfer Details</h3>
+                    <ul>${donorBankHtml.map((line) => `<li>${line}</li>`).join("")}</ul>
+                ` : ""}
+                ${recipientBankLines.length ? `
+                    <h3 style="margin-top: 22px;">Account To Pay</h3>
+                    <ul>${recipientBankHtml.map((line) => `<li>${line}</li>`).join("")}</ul>
+                ` : ""}
+                <p style="margin-top: 22px; color: #52635f;">Please keep this receipt for your records. The team will verify the transfer and update the donation status.</p>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+            to: donation.email,
+            subject: `Donation receipt ${receiptNumber}`,
+            html: htmlContent,
+            text: [
+                "Abious Rehabilitation Initiative donation receipt",
+                `Receipt: ${receiptNumber}`,
+                `Donor: ${donation.name}`,
+                `Amount: $${donation.amount.toFixed(2)}`,
+                "Status: Pending bank transfer confirmation",
+                donorBankLines.length ? `Your transfer details:\n${donorBankLines.join("\n")}` : "",
+                recipientBankLines.length ? `Account to pay:\n${recipientBankLines.join("\n")}` : "",
+                "Thank you for supporting our work."
+            ].filter(Boolean).join("\n\n")
+        });
+
+        console.log(`Donation receipt sent to ${donation.email}`);
+        return { delivered: true };
+    } catch (error) {
+        console.error("Error sending donation receipt:", error);
+        return { delivered: false, reason: error.message };
+    }
+}
+
 async function sendNewsNotificationEmails(newsItem) {
     const transporter = getMailTransporter();
     if (!transporter) {
@@ -1492,7 +1586,7 @@ async function handleApi(req, res, urlObj) {
                 return true;
             }
             const body = await getRequestBody(req);
-            const email = String(body.email || "").trim().toLowerCase();
+            const email = sanitizeEmail(body.email || "");
             const password = String(body.password || "");
             
             // Check admin credentials
@@ -2335,7 +2429,7 @@ async function handleApi(req, res, urlObj) {
             // Allow both authenticated admin and public access
             const authUser = requireUser(req, store);
             const body = await getRequestBody(req);
-            const email = String(body.email || "").trim().toLowerCase();
+            const email = sanitizeEmail(body.email || "");
             
             if (!email) {
                 sendJson(res, 400, { error: "Email required" });
@@ -2368,12 +2462,22 @@ async function handleApi(req, res, urlObj) {
 
             // Avoid logging verification codes in production logs for security.
             // console.log(`Verification code for ${email} from ${VERIFICATION_SENDER_EMAIL}: ${code}`);
+
+            if (!delivery.delivered) {
+                sendJson(res, 503, {
+                    success: false,
+                    error: delivery.reason === "smtp_not_configured"
+                        ? "Verification email is not configured on the server."
+                        : "Verification email could not be sent. Please check the email settings and try again.",
+                    sender: VERIFICATION_SENDER_EMAIL,
+                    delivery
+                });
+                return true;
+            }
             
             sendJson(res, 200, {
                 success: true,
-                message: delivery.delivered
-                    ? `Verification code sent from ${VERIFICATION_SENDER_EMAIL}`
-                    : `Verification code created. Email sender is configured as ${VERIFICATION_SENDER_EMAIL}`,
+                message: `Verification code sent from ${VERIFICATION_SENDER_EMAIL}`,
                 sender: VERIFICATION_SENDER_EMAIL,
                 delivery
             });
@@ -2387,7 +2491,7 @@ async function handleApi(req, res, urlObj) {
                 return true;
             }
             const body = await getRequestBody(req);
-            const email = String(body.email || "").trim().toLowerCase();
+            const email = sanitizeEmail(body.email || "");
             const code = String(body.code || "");
             
             if (!store.verificationCodes || store.verificationCodes.length === 0) {
@@ -2751,9 +2855,13 @@ async function handleApi(req, res, urlObj) {
         if (method === "POST" && pathname === "/api/donations") {
             const body = await getRequestBody(req);
             const name = sanitizeInput(String(body.name || "").trim());
-            const email = sanitizeInput(String(body.email || "").trim().toLowerCase());
+            const email = sanitizeEmail(body.email || "");
             const amount = parseFloat(body.amount);
             const message = sanitizeInput(String(body.message || "").trim());
+            const donorBankName = sanitizeInput(String(body.donorBankName || "").trim());
+            const donorAccountName = sanitizeInput(String(body.donorAccountName || "").trim());
+            const transferReference = sanitizeInput(String(body.transferReference || "").trim());
+            const donorPhone = sanitizeInput(String(body.donorPhone || "").trim());
 
             if (!name || !email || !amount || amount <= 0) {
                 sendJson(res, 400, { ok: false, error: "Name, email, and valid amount are required." });
@@ -2762,10 +2870,15 @@ async function handleApi(req, res, urlObj) {
 
             const donation = {
                 id: "d_" + Date.now(),
+                receiptNumber: "ARI-" + Date.now().toString(36).toUpperCase(),
                 name,
                 email,
                 amount,
                 message,
+                donorBankName,
+                donorAccountName,
+                transferReference,
+                donorPhone,
                 status: "pending",
                 createdAt: nowIso()
             };
@@ -2782,7 +2895,17 @@ async function handleApi(req, res, urlObj) {
                 console.error("Error sending donation notification:", error);
             }
 
-            sendJson(res, 201, { ok: true, donation });
+            let receiptDelivery = { delivered: false, reason: "not_attempted" };
+            try {
+                const content = await getSiteContent();
+                receiptDelivery = await sendDonationReceiptEmail(donation, content.bankAccount || {});
+                console.log("Donation receipt result:", receiptDelivery);
+            } catch (error) {
+                console.error("Error sending donation receipt:", error);
+                receiptDelivery = { delivered: false, reason: error.message };
+            }
+
+            sendJson(res, 201, { ok: true, donation, receiptDelivery });
             return true;
         }
 
@@ -2795,6 +2918,52 @@ async function handleApi(req, res, urlObj) {
             const donations = await getDonations();
             const sorted = donations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             sendJson(res, 200, { ok: true, donations: sorted });
+            return true;
+        }
+
+        if (method === "PATCH" && pathname.startsWith("/api/admin/donations/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const donationId = pathname.split("/").pop();
+            const body = await getRequestBody(req);
+            const nextStatus = sanitizeInput(String(body.status || "").trim());
+            if (!["pending", "completed", "cancelled"].includes(nextStatus)) {
+                sendJson(res, 400, { error: "Invalid donation status" });
+                return true;
+            }
+
+            const donations = await getDonations();
+            const donation = donations.find(d => d.id === donationId);
+            if (!donation) {
+                sendJson(res, 404, { error: "Donation not found" });
+                return true;
+            }
+            donation.status = nextStatus;
+            donation.updatedAt = nowIso();
+            await saveDonations(donations);
+            sendJson(res, 200, { ok: true, donation });
+            return true;
+        }
+
+        if (method === "DELETE" && pathname.startsWith("/api/admin/donations/")) {
+            const user = requireUser(req, store);
+            if (!user || user.role !== "Admin") {
+                sendJson(res, 403, { error: "Admin access required" });
+                return true;
+            }
+            const donationId = pathname.split("/").pop();
+            let donations = await getDonations();
+            const initialLength = donations.length;
+            donations = donations.filter(d => d.id !== donationId);
+            if (donations.length === initialLength) {
+                sendJson(res, 404, { error: "Donation not found" });
+                return true;
+            }
+            await saveDonations(donations);
+            sendJson(res, 200, { ok: true });
             return true;
         }
 
@@ -2835,7 +3004,7 @@ async function handleApi(req, res, urlObj) {
 
 function serveStatic(req, res, urlObj) {
     let filePath = decodeURIComponent(urlObj.pathname);
-    if (filePath === "/") filePath = "/trial.html";
+    if (filePath === "/") filePath = "/abious_rehabilitation_ceter.html";
     const normalized = path.normalize(filePath).replace(/^(\.\.[/\\])+/, "");
     const absolute = path.join(ROOT_DIR, normalized);
 

@@ -42,6 +42,7 @@ const SMTP_SECURE = String(process.env.SMTP_SECURE || "false") === "true";
 const SMTP_FAMILY = Number(process.env.SMTP_FAMILY || 4);
 const SMTP_USER = process.env.SMTP_USER || VERIFICATION_SENDER_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "";
+const SMTP_ALLOW_GMAIL_SSL = String(process.env.SMTP_ALLOW_GMAIL_SSL || "false") === "true";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "admin@abious.org").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
 const SESSION_TTL_MS = Number(process.env.SESSION_TTL_MS || 7 * 24 * 60 * 60 * 1000);
@@ -986,8 +987,12 @@ function createMailTransporter(config) {
 }
 
 function getSmtpConfigs() {
-    const configs = [{ host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_SECURE }];
     const isGmail = SMTP_HOST && SMTP_HOST.toLowerCase().includes("gmail");
+    if (isGmail && !SMTP_ALLOW_GMAIL_SSL) {
+        return [{ host: SMTP_HOST, port: 587, secure: false }];
+    }
+
+    const configs = [{ host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_SECURE }];
     const hasSubmissionPort = configs.some((item) => item.port === 587 && item.secure === false);
 
     if (isGmail && !hasSubmissionPort) {

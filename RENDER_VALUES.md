@@ -26,6 +26,7 @@ Use these exact values when creating or updating the Render web service.
 - `SMTP_PORT` = `587`
 - `SMTP_SECURE` = `false`
 - `SMTP_FAMILY` = `4`
+- `SMTP_ALLOW_GMAIL_SSL` = `false`
 - `SMTP_USER` = `your-gmail-address@gmail.com`
 - `SMTP_PASS` = `your-gmail-app-password`
 
@@ -33,4 +34,5 @@ Use these exact values when creating or updating the Render web service.
 
 - If this is a Gmail account, `SMTP_PASS` may need to be a Gmail App Password instead of the normal account password.
 - If Render shows `ETIMEDOUT` on `smtp.gmail.com:465`, use `SMTP_PORT=587` and `SMTP_SECURE=false`.
+- The server also forces Gmail to use `587` unless `SMTP_ALLOW_GMAIL_SSL=true`.
 - If the Render service already exists, add or update the `sync: false` variables manually in the Render dashboard because Render does not backfill those from Blueprint syncs.

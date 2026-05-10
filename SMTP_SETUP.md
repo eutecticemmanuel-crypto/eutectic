@@ -37,3 +37,4 @@ SMTP_PASS=your-16-character-app-password
 - If you switch to another mail provider later, update `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS`.
 - `SMTP_FAMILY=4` forces IPv4 when the hosting environment cannot reach Gmail over IPv6.
 - On Render, Gmail often works more reliably with `SMTP_PORT=587` and `SMTP_SECURE=false` because Nodemailer upgrades the connection with STARTTLS.
+- For Gmail, the server now ignores port `465` by default and uses `587` unless `SMTP_ALLOW_GMAIL_SSL=true` is explicitly set.

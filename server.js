@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const os = require("os");
+const dns = require("dns");
 const { URL } = require("url");
 const nodemailer = require("nodemailer");
 
@@ -948,6 +949,16 @@ function canSendVerificationEmails() {
     return Boolean(SMTP_USER && SMTP_PASS);
 }
 
+function smtpLookup(hostname, options, callback) {
+    const lookupOptions = {
+        ...options,
+        family: SMTP_FAMILY === 6 ? 6 : 4,
+        all: false
+    };
+
+    return dns.lookup(hostname, lookupOptions, callback);
+}
+
 function createMailTransporter(config) {
     const key = `${config.host}:${config.port}:${config.secure}`;
     if (!mailTransporters.has(key)) {
@@ -956,6 +967,7 @@ function createMailTransporter(config) {
             port: config.port,
             secure: config.secure,
             family: SMTP_FAMILY,
+            lookup: smtpLookup,
             name: process.env.SMTP_CLIENT_NAME || "abious-rehabilitation-center",
             auth: {
                 user: SMTP_USER,
@@ -985,8 +997,18 @@ function getSmtpConfigs() {
     return configs;
 }
 
-function isConnectionTimeout(error) {
-    return error && (error.code === "ETIMEDOUT" || /timeout/i.test(error.message || ""));
+function isRetryableSmtpConnectionError(error) {
+    if (!error) return false;
+    const code = String(error.code || "");
+    const message = String(error.message || "");
+    return (
+        code === "ETIMEDOUT" ||
+        code === "ENETUNREACH" ||
+        code === "ECONNRESET" ||
+        code === "ECONNREFUSED" ||
+        (code === "ESOCKET" && /ENETUNREACH|ETIMEDOUT|ECONNRESET|ECONNREFUSED|timeout/i.test(message)) ||
+        /ENETUNREACH|ETIMEDOUT|ECONNRESET|ECONNREFUSED|timeout/i.test(message)
+    );
 }
 
 async function sendMailWithFallback(message) {
@@ -1008,7 +1030,7 @@ async function sendMailWithFallback(message) {
         } catch (error) {
             lastError = error;
             console.error(`SMTP send failed via ${config.host}:${config.port} (secure: ${config.secure}):`, error);
-            if (!isConnectionTimeout(error)) {
+            if (!isRetryableSmtpConnectionError(error)) {
                 break;
             }
         }

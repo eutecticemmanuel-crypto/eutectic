@@ -96,7 +96,6 @@ function getAllowedOrigin() {
     }
     return "*";
 }
-const mailTransporters = new Map();
 const rateLimitBuckets = new Map();
 
 // ============================================
@@ -950,121 +949,46 @@ function canSendVerificationEmails() {
     return Boolean(SMTP_USER && SMTP_PASS);
 }
 
-function smtpLookup(hostname, options, callback) {
-    const lookupOptions = {
-        ...options,
-        family: SMTP_FAMILY === 6 ? 6 : 4,
-        all: false
-    };
-
-    return dns.lookup(hostname, lookupOptions, callback);
+function createMailTransporter() {
+    return nodemailer.createTransporter({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_SECURE,
+        auth: {
+            user: SMTP_USER,
+            pass: SMTP_PASS
+        }
+    });
 }
 
-function createMailTransporter(config) {
-    const key = `${config.host}:${config.port}:${config.secure}`;
-    if (!mailTransporters.has(key)) {
-        mailTransporters.set(key, nodemailer.createTransport({
-            host: config.host,
-            port: config.port,
-            secure: config.secure,
-            family: SMTP_FAMILY,
-            lookup: smtpLookup,
-            name: process.env.SMTP_CLIENT_NAME || "abious-rehabilitation-center",
-            auth: {
-                user: SMTP_USER,
-                pass: SMTP_PASS
-            },
-            connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 45000),
-            greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 30000),
-            socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 45000),
-            tls: {
-                rejectUnauthorized: true
-            }
-        }));
-    }
-
-    return mailTransporters.get(key);
-}
-
-function getSmtpConfigs() {
-    const isGmail = SMTP_HOST && SMTP_HOST.toLowerCase().includes("gmail");
-    if (isGmail && !SMTP_ALLOW_GMAIL_SSL) {
-        return [{ host: SMTP_HOST, port: 587, secure: false }];
-    }
-
-    const configs = [{ host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_SECURE }];
-    const hasSubmissionPort = configs.some((item) => item.port === 587 && item.secure === false);
-
-    if (isGmail && !hasSubmissionPort) {
-        configs.push({ host: SMTP_HOST, port: 587, secure: false });
-    }
-
-    return configs;
-}
-
-function isRetryableSmtpConnectionError(error) {
-    if (!error) return false;
-    const code = String(error.code || "");
-    const message = String(error.message || "");
-    return (
-        code === "ETIMEDOUT" ||
-        code === "ENETUNREACH" ||
-        code === "ECONNRESET" ||
-        code === "ECONNREFUSED" ||
-        (code === "ESOCKET" && /ENETUNREACH|ETIMEDOUT|ECONNRESET|ECONNREFUSED|timeout/i.test(message)) ||
-        /ENETUNREACH|ETIMEDOUT|ECONNRESET|ECONNREFUSED|timeout/i.test(message)
-    );
-}
-
-async function sendMailWithFallback(message) {
+async function sendVerificationEmail(recipientEmail, code) {
     if (!canSendVerificationEmails()) {
         return { delivered: false, reason: "smtp_not_configured" };
     }
 
-    const configs = getSmtpConfigs();
-    let lastError = null;
-
-    for (let index = 0; index < configs.length; index += 1) {
-        const config = configs[index];
-        try {
-            await createMailTransporter(config).sendMail(message);
-            if (index > 0) {
-                console.log(`SMTP delivered after fallback via ${config.host}:${config.port}`);
-            }
-            return { delivered: true, host: config.host, port: config.port, secure: config.secure };
-        } catch (error) {
-            lastError = error;
-            console.error(`SMTP send failed via ${config.host}:${config.port} (secure: ${config.secure}):`, error);
-            if (!isRetryableSmtpConnectionError(error)) {
-                break;
-            }
-        }
-    }
-
-    return {
-        delivered: false,
-        reason: lastError ? (lastError.message || "smtp_error") : "smtp_error",
-        code: lastError ? lastError.code : undefined
-    };
-}
-
-async function sendVerificationEmail(recipientEmail, code) {
-    return await sendMailWithFallback({
-        from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
-        to: recipientEmail,
-        subject: "Your Abious verification code",
-        text: `Your verification code is ${code}. It expires in 1 hour.`,
-        html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
-                <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
-                <p>Your verification code is:</p>
-                <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
-                    ${code}
+    try {
+        const transporter = createMailTransporter();
+        await transporter.sendMail({
+            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+            to: recipientEmail,
+            subject: "Your Abious verification code",
+            text: `Your verification code is ${code}. It expires in 1 hour.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
+                    <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
+                    <p>Your verification code is:</p>
+                    <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                        ${code}
+                    </div>
+                    <p style="margin-top: 18px;">This code expires in 1 hour.</p>
                 </div>
-                <p style="margin-top: 18px;">This code expires in 1 hour.</p>
-            </div>
-        `
-    });
+            `
+        });
+        return { delivered: true };
+    } catch (error) {
+        console.error("Email send failed:", error);
+        return { delivered: false, reason: error.message };
+    }
 }
 
 async function sendReactionNotificationEmail(reaction) {
@@ -1109,7 +1033,8 @@ async function sendReactionNotificationEmail(reaction) {
             </div>
         `;
 
-        const delivery = await sendMailWithFallback({
+        const transporter = createMailTransporter();
+        await transporter.sendMail({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: "isaacnewton0767304563@gmail.com",
             subject: `New Reaction: ${typeLabel} from ${reaction.name}`,
@@ -1117,10 +1042,8 @@ async function sendReactionNotificationEmail(reaction) {
             text: `New Reaction Received\n\nType: ${typeLabel}\nFrom: ${reaction.name} (${reaction.email})\nComment: ${reaction.comment}\nReceived: ${new Date(reaction.createdAt).toLocaleString()}`
         });
 
-        if (delivery.delivered) {
-            console.log(`Reaction notification email sent to admin for ${reaction.name}`);
-        }
-        return delivery;
+        console.log(`Reaction notification email sent to admin for ${reaction.name}`);
+        return { delivered: true };
     } catch (error) {
         console.error("Error sending reaction notification:", error);
         return { delivered: false, reason: error.message };
@@ -1162,7 +1085,8 @@ async function sendDonationNotificationEmail(donation) {
             </div>
         `;
 
-        const delivery = await sendMailWithFallback({
+        const transporter = createMailTransporter();
+        await transporter.sendMail({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: "isaacnewton0767304563@gmail.com",
             subject: `New Donation: $${donation.amount.toFixed(2)} from ${donation.name}`,
@@ -1170,10 +1094,8 @@ async function sendDonationNotificationEmail(donation) {
             text: `New Donation Received\n\nFrom: ${donation.name} (${donation.email})\nAmount: $${donation.amount.toFixed(2)}\nMessage: ${donation.message || 'None'}\nReceived: ${new Date(donation.createdAt).toLocaleString()}`
         });
 
-        if (delivery.delivered) {
-            console.log(`Donation notification email sent to admin for ${donation.name}`);
-        }
-        return delivery;
+        console.log(`Donation notification email sent to admin for ${donation.name}`);
+        return { delivered: true };
     } catch (error) {
         console.error("Error sending donation notification:", error);
         return { delivered: false, reason: error.message };
@@ -1228,7 +1150,8 @@ async function sendDonationReceiptEmail(donation, bankAccount = {}) {
             </div>
         `;
 
-        const delivery = await sendMailWithFallback({
+        const transporter = createMailTransporter();
+        await transporter.sendMail({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: donation.email,
             subject: `Donation receipt ${receiptNumber}`,
@@ -1245,10 +1168,8 @@ async function sendDonationReceiptEmail(donation, bankAccount = {}) {
             ].filter(Boolean).join("\n\n")
         });
 
-        if (delivery.delivered) {
-            console.log(`Donation receipt sent to ${donation.email}`);
-        }
-        return delivery;
+        console.log(`Donation receipt sent to ${donation.email}`);
+        return { delivered: true };
     } catch (error) {
         console.error("Error sending donation receipt:", error);
         return { delivered: false, reason: error.message };
@@ -1317,39 +1238,41 @@ async function sendNewsNotificationEmails(newsItem) {
         `;
 
         // Send emails to all users
-        const emailPromises = users.map(user => {
-            if (!user.email) return Promise.resolve(null);
+        const transporter = createMailTransporter();
+        const emailPromises = users.map(async user => {
+            if (!user.email) return null;
             
-            return sendMailWithFallback({
-                from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
-                to: user.email,
-                subject: `${emoji} New ${newsItem.type}: ${newsItem.title}`,
-                html: emailContent,
-                text: `
-                    Abious Rehabilitation Initiative
-                    Motor of Life for All
-                    
-                    ${newsItem.type.toUpperCase()}: ${newsItem.title}
-                    
-                    ${newsItem.content}
-                    
-                    Posted: ${new Date(newsItem.createdAt).toLocaleDateString("en-US")}
-                    By: ${newsItem.author || "Administrator"}
-                `
-            }).then((delivery) => {
-                if (!delivery.delivered) {
-                    console.error(`Failed to send email to ${user.email}:`, delivery.reason);
-                    return null;
-                }
-                return delivery;
-            });
+            try {
+                await transporter.sendMail({
+                    from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+                    to: user.email,
+                    subject: `${emoji} New ${newsItem.type}: ${newsItem.title}`,
+                    html: emailContent,
+                    text: `
+                        Abious Rehabilitation Initiative
+                        Motor of Life for All
+                        
+                        ${newsItem.type.toUpperCase()}: ${newsItem.title}
+                        
+                        ${newsItem.content}
+                        
+                        Posted: ${new Date(newsItem.createdAt).toLocaleDateString("en-US")}
+                        By: ${newsItem.author || "Administrator"}
+                    `
+                });
+                return { delivered: true };
+            } catch (error) {
+                console.error(`Failed to send email to ${user.email}:`, error.message);
+                return { delivered: false, reason: error.message };
+            }
         });
 
-        await Promise.all(emailPromises);
-        console.log(`✓ News notification sent to ${users.length} members`);
+        const results = await Promise.all(emailPromises);
+        const successful = results.filter(r => r && r.delivered).length;
+        console.log(`✓ News notification sent to ${successful}/${users.length} members`);
         return {
             delivered: true,
-            recipientCount: users.length
+            recipientCount: successful
         };
     } catch (error) {
         console.error("Error sending news notifications:", error);

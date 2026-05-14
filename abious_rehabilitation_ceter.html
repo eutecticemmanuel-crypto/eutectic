@@ -1461,8 +1461,20 @@
                 <label for="amount">Donation Amount ($):</label>
                 <input type="number" id="amount" name="amount" min="1" step="0.01" required>
 
-                <label for="donor-bank-name">Bank You Will Pay From:</label>
+                <label for="payment-method">Payment Method:</label>
+                <select id="payment-method" name="payment-method" required>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="mobile">Mobile Money</option>
+                </select>
+
+                <label for="donor-bank-name">Bank or Mobile Money Provider:</label>
                 <input type="text" id="donor-bank-name" name="donor-bank-name" placeholder="Bank or mobile money provider" required>
+
+                <div id="mobileMoneyDetails" style="display: none; margin-bottom: 1rem; padding: 12px; border: 1px solid #c8e6c9; border-radius: 8px; background: #ecfdf5;">
+                    <p><strong>Mobile Money payment</strong></p>
+                    <p>When you choose Mobile Money, tap the button below to open your phone dialer and send the amount to Abious' mobile money contact.</p>
+                    <p><strong>Recipient phone:</strong> <a href="tel:+256745490032">+256 745 490 032</a></p>
+                </div>
 
                 <label for="donor-account-name">Account Holder Name:</label>
                 <input type="text" id="donor-account-name" name="donor-account-name" required>
@@ -1478,6 +1490,7 @@
 
                 <button type="submit">Donate Now</button>
             </form>
+            <div id="mobileInstructions" style="display: none; margin-top: 20px; padding: 16px; border: 1px solid #a7f3d0; border-radius: 10px; background: #ecfdf5;"></div>
             <div id="donationStatus"></div>
             <div id="bankDetails" style="display: none;">
                 <h3>Bank Transfer Details</h3>
@@ -2185,9 +2198,21 @@
 
         // Donation Form Handler
         const donationForm = document.getElementById("donationForm");
+        const paymentMethod = document.getElementById("payment-method");
+        const donorBankName = document.getElementById("donor-bank-name");
         const donationStatus = document.getElementById("donationStatus");
         const bankDetails = document.getElementById("bankDetails");
         const bankInfo = document.getElementById("bankInfo");
+        const mobileMoneyDetails = document.getElementById("mobileMoneyDetails");
+        const mobileInstructions = document.getElementById("mobileInstructions");
+
+        if (paymentMethod && mobileMoneyDetails && donorBankName) {
+            paymentMethod.addEventListener("change", () => {
+                const isMobile = paymentMethod.value === "mobile";
+                mobileMoneyDetails.style.display = isMobile ? "block" : "none";
+                donorBankName.placeholder = isMobile ? "Mobile money provider (e.g. MTN Mobile Money)" : "Bank name";
+            });
+        }
 
         async function handleDonation(event) {
             event.preventDefault();
@@ -2198,6 +2223,7 @@
                 name: formData.get("donor-name"),
                 email: formData.get("donor-email"),
                 amount: parseFloat(formData.get("amount")),
+                paymentMethod: formData.get("payment-method") || "bank",
                 donorBankName: formData.get("donor-bank-name"),
                 donorAccountName: formData.get("donor-account-name"),
                 transferReference: formData.get("transfer-reference"),
@@ -2219,33 +2245,50 @@
                     throw new Error(submitData.error || "Failed to submit donation");
                 }
 
-                // Then, fetch bank details
-                const bankResponse = await fetch(activeApiBase + "/api/bank-account");
-                if (!bankResponse.ok) {
-                    throw new Error("Failed to load bank details");
-                }
-
-                const bankData = await bankResponse.json();
-
-                // Display bank details
-                bankInfo.innerHTML = `
-                    <p><strong>Bank Name:</strong> ${escapeHtml(bankData.bankName || "Not configured")}</p>
-                    <p><strong>Account Name:</strong> ${escapeHtml(bankData.accountName || "Not configured")}</p>
-                    <p><strong>Account Number:</strong> ${escapeHtml(bankData.accountNumber || "Not configured")}</p>
-                    <p><strong>SWIFT/BIC:</strong> ${escapeHtml(bankData.swiftCode || "Not configured")}</p>
-                    <p><strong>Amount:</strong> $${donationData.amount.toFixed(2)}</p>
-                    <p><strong>Your Transfer Reference:</strong> ${escapeHtml(donationData.transferReference)}</p>
-                `;
-
-                bankDetails.style.display = "block";
                 const receiptMessage = submitData.receiptDelivery && submitData.receiptDelivery.delivered
                     ? " A receipt has been sent to your email."
                     : " Your receipt is recorded, but email delivery could not be confirmed.";
-                setStatus(donationStatus, "ok", "Donation request submitted! Please complete the transfer using the details below." + receiptMessage);
-                showToast("Donation request submitted! Check your email and bank details below.", "success");
 
-                // Scroll to bank details
-                bankDetails.scrollIntoView({ behavior: "smooth" });
+                if (donationData.paymentMethod === "mobile") {
+                    bankDetails.style.display = "none";
+                    mobileInstructions.innerHTML = `
+                        <h3>Complete your Mobile Money donation</h3>
+                        <p>Please send <strong>$${donationData.amount.toFixed(2)}</strong> to the Abious mobile money contact below:</p>
+                        <p><strong>Recipient:</strong> Abious Rehabilitation Initiative</p>
+                        <p><strong>Phone:</strong> <a href="tel:+256745490032">+256 745 490 032</a></p>
+                        <p><strong>Reference:</strong> ${escapeHtml(donationData.transferReference)}</p>
+                        <p>Tap the phone number to open your device dialer, then complete the transfer through your mobile money menu.</p>
+                    `;
+                    mobileInstructions.style.display = "block";
+                    setStatus(donationStatus, "ok", "Donation request submitted! Please complete the mobile money transfer using the details above." + receiptMessage);
+                    showToast("Donation request submitted! Use your mobile phone to send the money to the Abious contact.", "success");
+                    mobileInstructions.scrollIntoView({ behavior: "smooth" });
+                } else {
+                    const bankResponse = await fetch(activeApiBase + "/api/bank-account");
+                    if (!bankResponse.ok) {
+                        throw new Error("Failed to load bank details");
+                    }
+
+                    const bankData = await bankResponse.json();
+
+                    // Display bank details
+                    bankInfo.innerHTML = `
+                        <p><strong>Bank Name:</strong> ${escapeHtml(bankData.bankName || "Not configured")}</p>
+                        <p><strong>Account Name:</strong> ${escapeHtml(bankData.accountName || "Not configured")}</p>
+                        <p><strong>Account Number:</strong> ${escapeHtml(bankData.accountNumber || "Not configured")}</p>
+                        <p><strong>SWIFT/BIC:</strong> ${escapeHtml(bankData.swiftCode || "Not configured")}</p>
+                        <p><strong>Amount:</strong> $${donationData.amount.toFixed(2)}</p>
+                        <p><strong>Your Transfer Reference:</strong> ${escapeHtml(donationData.transferReference)}</p>
+                    `;
+
+                    mobileInstructions.style.display = "none";
+                    bankDetails.style.display = "block";
+                    setStatus(donationStatus, "ok", "Donation request submitted! Please complete the transfer using the details below." + receiptMessage);
+                    showToast("Donation request submitted! Check your email and bank details below.", "success");
+
+                    // Scroll to bank details
+                    bankDetails.scrollIntoView({ behavior: "smooth" });
+                }
 
             } catch (error) {
                 console.error("Donation error:", error);

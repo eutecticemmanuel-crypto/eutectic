@@ -950,7 +950,7 @@ function canSendVerificationEmails() {
 }
 
 function createMailTransporter() {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
         host: SMTP_HOST,
         port: SMTP_PORT,
         secure: SMTP_SECURE,
@@ -1069,6 +1069,8 @@ async function sendDonationNotificationEmail(donation) {
                     
                     <p style="margin: 0 0 8px 0;"><strong>From:</strong> ${donation.name} (${donation.email})</p>
                     <p style="margin: 0 0 8px 0;"><strong>Amount:</strong> $${donation.amount.toFixed(2)}</p>
+                    <p style="margin: 0 0 8px 0;"><strong>Payment Method:</strong> ${escapeHtml(donation.paymentMethod === 'mobile' ? 'Mobile Money' : 'Bank Transfer')}</p>
+                    ${donation.donorBankName ? `<p style="margin: 0 0 8px 0;"><strong>${donation.paymentMethod === 'mobile' ? 'Mobile money provider' : 'Bank used'}:</strong> ${escapeHtml(donation.donorBankName)}</p>` : ''}
                     ${donation.message ? `<p style="margin: 0 0 12px 0; color: #333; line-height: 1.6; font-style: italic;">"${donation.message}"</p>` : ''}
                     
                     <p style="margin: 12px 0 0 0; color: #666; font-size: 12px;">
@@ -1091,7 +1093,7 @@ async function sendDonationNotificationEmail(donation) {
             to: "isaacnewton0767304563@gmail.com",
             subject: `New Donation: $${donation.amount.toFixed(2)} from ${donation.name}`,
             html: htmlContent,
-            text: `New Donation Received\n\nFrom: ${donation.name} (${donation.email})\nAmount: $${donation.amount.toFixed(2)}\nMessage: ${donation.message || 'None'}\nReceived: ${new Date(donation.createdAt).toLocaleString()}`
+            text: `New Donation Received\n\nFrom: ${donation.name} (${donation.email})\nAmount: $${donation.amount.toFixed(2)}\nPayment Method: ${donation.paymentMethod === 'mobile' ? 'Mobile Money' : 'Bank Transfer'}\nProvider: ${donation.donorBankName || 'N/A'}\nMessage: ${donation.message || 'None'}\nReceived: ${new Date(donation.createdAt).toLocaleString()}`
         });
 
         console.log(`Donation notification email sent to admin for ${donation.name}`);
@@ -2838,6 +2840,7 @@ async function handleApi(req, res, urlObj) {
             const email = sanitizeEmail(body.email || "");
             const amount = parseFloat(body.amount);
             const message = sanitizeInput(String(body.message || "").trim());
+            const paymentMethod = String(body.paymentMethod || "bank").trim().toLowerCase();
             const donorBankName = sanitizeInput(String(body.donorBankName || "").trim());
             const donorAccountName = sanitizeInput(String(body.donorAccountName || "").trim());
             const transferReference = sanitizeInput(String(body.transferReference || "").trim());
@@ -2855,6 +2858,7 @@ async function handleApi(req, res, urlObj) {
                 email,
                 amount,
                 message,
+                paymentMethod,
                 donorBankName,
                 donorAccountName,
                 transferReference,

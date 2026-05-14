@@ -1464,9 +1464,10 @@ e<!DOCTYPE html>
                             </div>
                             <p style="margin:8px 0;"><strong>Amount:</strong> $${(d.amount || 0).toFixed(2)}</p>
                             <p style="margin:8px 0;"><strong>Receipt:</strong> ${esc(d.receiptNumber || d.id || '-')}</p>
+                            ${d.paymentMethod ? `<p style="margin:8px 0;"><strong>Payment method:</strong> ${esc(d.paymentMethod === 'mobile' ? 'Mobile Money' : 'Bank Transfer')}</p>` : ''}
                             ${(d.donorBankName || d.donorAccountName || d.transferReference || d.donorPhone) ? `
                                 <div style="margin:8px 0; padding:10px; border:1px solid var(--line); border-radius:8px; background:rgba(13,110,94,0.04);">
-                                    ${d.donorBankName ? `<div><strong>Bank used:</strong> ${esc(d.donorBankName)}</div>` : ''}
+                                    ${d.donorBankName ? `<div><strong>${d.paymentMethod === 'mobile' ? 'Mobile money provider' : 'Bank used'}:</strong> ${esc(d.donorBankName)}</div>` : ''}
                                     ${d.donorAccountName ? `<div><strong>Account holder:</strong> ${esc(d.donorAccountName)}</div>` : ''}
                                     ${d.transferReference ? `<div><strong>Transfer reference:</strong> ${esc(d.transferReference)}</div>` : ''}
                                     ${d.donorPhone ? `<div><strong>Phone:</strong> ${esc(d.donorPhone)}</div>` : ''}

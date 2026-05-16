@@ -35,6 +35,10 @@ function loadEnvFile() {
 
 loadEnvFile();
 
+if (typeof dns.setDefaultResultOrder === "function") {
+    dns.setDefaultResultOrder("ipv4first");
+}
+
 const VERIFICATION_SENDER_EMAIL = process.env.VERIFICATION_SENDER_EMAIL || "noreply@abious.org";
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.resend.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
@@ -42,6 +46,7 @@ const SMTP_SECURE = String(process.env.SMTP_SECURE || "false") === "true";
 const SMTP_FAMILY = Number(process.env.SMTP_FAMILY || 4);
 const SMTP_USER = process.env.SMTP_USER || "apikey";
 const SMTP_PASS = process.env.SMTP_PASS || process.env.RESEND_API_KEY || "";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const SMTP_ALLOW_GMAIL_SSL = String(process.env.SMTP_ALLOW_GMAIL_SSL || "false") === "true";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "admin@abious.org").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
@@ -171,7 +176,7 @@ console.log(`Verification sender: ${VERIFICATION_SENDER_EMAIL}`);
 console.log(`SMTP ready: ${smtpConfigured ? 'yes' : 'no (set SMTP_PASS or RESEND_API_KEY)'}`);
 console.log(`SMTP PASS status: ${smtpPassState}${SMTP_PASS ? ` (length ${SMTP_PASS.length})` : ''}`);
 if (smtpConfigured) {
-    console.log(`SMTP host: ${SMTP_HOST}:${SMTP_PORT} (secure: ${SMTP_SECURE})`);
+    console.log(`SMTP host: ${SMTP_HOST}:${SMTP_PORT} (secure: ${SMTP_SECURE}, family: ${SMTP_FAMILY || "auto"})`);
     console.log(`SMTP user: ${SMTP_USER ? 'configured' : 'not configured'}`);
 } else {
     if (SMTP_USER && SMTP_PASS && !isValidSmtpPassword(SMTP_PASS)) {
@@ -971,7 +976,7 @@ function canSendVerificationEmails() {
     return Boolean(SMTP_USER && isValidSmtpPassword(SMTP_PASS));
 }
 
-function createMailTransporter() {
+function createMailTransporter(overrideConfig = {}) {
     const config = {
         host: SMTP_HOST,
         port: SMTP_PORT,
@@ -982,11 +987,20 @@ function createMailTransporter() {
         },
         connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
         greetingTimeout: SMTP_GREETING_TIMEOUT_MS,
-        socketTimeout: SMTP_SOCKET_TIMEOUT_MS
+        socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
+        family: SMTP_FAMILY,
+        ...overrideConfig
     };
 
+    // Force IPv4 when the environment cannot reach IPv6 hosts
+    if (config.family === 4) {
+        config.lookup = (hostname, options, callback) => {
+            return dns.lookup(hostname, { family: 4, all: false }, callback);
+        };
+    }
+
     // For port 587, ensure TLS upgrade
-    if (SMTP_PORT === 587 && !SMTP_SECURE) {
+    if (config.port === 587 && !config.secure) {
         config.requireTLS = true;
     }
 
@@ -1001,7 +1015,7 @@ function isResendProvider() {
     return String(SMTP_HOST || "").includes("resend.com");
 }
 
-async function sendEmailViaResendApi(mailOptions, previousError) {
+async function sendEmailViaResendApi(mailOptions, previousError, apiKey = RESEND_API_KEY || SMTP_PASS) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     try {
@@ -1009,7 +1023,7 @@ async function sendEmailViaResendApi(mailOptions, previousError) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${SMTP_PASS}`
+                Authorization: `Bearer ${apiKey}`
             },
             body: JSON.stringify({
                 from: mailOptions.from,
@@ -1048,9 +1062,35 @@ async function sendMailWithFallback(mailOptions, transporter = null) {
         return { delivered: true, via: "smtp" };
     } catch (error) {
         console.error("SMTP send failed:", error);
-        if (isResendProvider()) {
-            return await sendEmailViaResendApi(mailOptions, error);
+
+        // Try Gmail's other SMTP port when the configured one is unreachable.
+        if (SMTP_HOST.includes("smtp.gmail.com") && SMTP_PORT === 465) {
+            try {
+                const alternateTransport = createMailTransporter({ port: 587, secure: false });
+                await alternateTransport.verify();
+                await alternateTransport.sendMail(mailOptions);
+                return { delivered: true, via: "smtp_gmail_587" };
+            } catch (alternateError) {
+                console.error("Gmail SMTP alternate port fallback failed:", alternateError);
+            }
         }
+
+        if (SMTP_HOST.includes("smtp.gmail.com") && SMTP_PORT === 587) {
+            try {
+                const alternateTransport = createMailTransporter({ port: 465, secure: true });
+                await alternateTransport.verify();
+                await alternateTransport.sendMail(mailOptions);
+                return { delivered: true, via: "smtp_gmail_465" };
+            } catch (alternateError) {
+                console.error("Gmail SMTP SSL fallback failed:", alternateError);
+            }
+        }
+
+        if (RESEND_API_KEY || isResendProvider()) {
+            const apiKey = RESEND_API_KEY || SMTP_PASS;
+            return await sendEmailViaResendApi(mailOptions, error, apiKey);
+        }
+
         return { delivered: false, reason: error.message || "smtp_send_failed" };
     }
 }

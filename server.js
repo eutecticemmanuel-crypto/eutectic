@@ -35,13 +35,13 @@ function loadEnvFile() {
 
 loadEnvFile();
 
-const VERIFICATION_SENDER_EMAIL = process.env.VERIFICATION_SENDER_EMAIL || "isaacnewton0767304563@gmail.com";
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const VERIFICATION_SENDER_EMAIL = process.env.VERIFICATION_SENDER_EMAIL || "noreply@abious.org";
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.resend.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE = String(process.env.SMTP_SECURE || "false") === "true";
 const SMTP_FAMILY = Number(process.env.SMTP_FAMILY || 4);
-const SMTP_USER = process.env.SMTP_USER || VERIFICATION_SENDER_EMAIL;
-const SMTP_PASS = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "";
+const SMTP_USER = process.env.SMTP_USER || "apikey";
+const SMTP_PASS = process.env.SMTP_PASS || process.env.RESEND_API_KEY || "";
 const SMTP_ALLOW_GMAIL_SSL = String(process.env.SMTP_ALLOW_GMAIL_SSL || "false") === "true";
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "admin@abious.org").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin@123";
@@ -50,6 +50,19 @@ const VERIFICATION_APPROVAL_TTL_MS = Number(process.env.VERIFICATION_APPROVAL_TT
 const PASSWORD_HASH_ITERATIONS = Number(process.env.PASSWORD_HASH_ITERATIONS || 120000);
 const VERIFICATION_TOKEN_SECRET = process.env.VERIFICATION_TOKEN_SECRET || crypto.randomBytes(32).toString("hex");
 const PUBLIC_BASE_URL = String(process.env.PUBLIC_BASE_URL || "").trim();
+const SMTP_CONNECTION_TIMEOUT_MS = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000);
+const SMTP_GREETING_TIMEOUT_MS = Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000);
+const SMTP_SOCKET_TIMEOUT_MS = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 30000);
+
+const PLACEHOLDER_PASSWORD_PATTERNS = [
+    /your[-_ ]?(resend|smtp|api)?[-_ ]?key/i,
+    /replace(-with)?/i,
+    /example/i
+];
+
+function isValidSmtpPassword(password) {
+    return typeof password === "string" && password.trim() && !PLACEHOLDER_PASSWORD_PATTERNS.some((pattern) => pattern.test(password));
+}
 
 if (ADMIN_PASSWORD === "admin@123") {
     console.warn("⚠️ SECURITY WARNING: Using default admin password 'admin@123'. Set ADMIN_PASSWORD in environment variables before production deployment.");
@@ -150,13 +163,22 @@ if (initFirebase()) {
     console.log('  - Set MONGODB_URI for MongoDB Atlas');
     console.log('  - Or add firebase-service-account.json for Firebase');
 }
+const smtpConfigured = canSendVerificationEmails();
+const smtpPassState = SMTP_PASS
+    ? (isValidSmtpPassword(SMTP_PASS) ? 'loaded and valid-looking' : 'loaded but looks placeholder/invalid')
+    : 'missing';
 console.log(`Verification sender: ${VERIFICATION_SENDER_EMAIL}`);
-console.log(`SMTP ready: ${canSendVerificationEmails() ? 'yes' : 'no (set SMTP_PASS or GMAIL_APP_PASSWORD)'}`);
-if (canSendVerificationEmails()) {
+console.log(`SMTP ready: ${smtpConfigured ? 'yes' : 'no (set SMTP_PASS or RESEND_API_KEY)'}`);
+console.log(`SMTP PASS status: ${smtpPassState}${SMTP_PASS ? ` (length ${SMTP_PASS.length})` : ''}`);
+if (smtpConfigured) {
     console.log(`SMTP host: ${SMTP_HOST}:${SMTP_PORT} (secure: ${SMTP_SECURE})`);
     console.log(`SMTP user: ${SMTP_USER ? 'configured' : 'not configured'}`);
 } else {
-    console.log('To enable email: set SMTP_PASS or GMAIL_APP_PASSWORD environment variable');
+    if (SMTP_USER && SMTP_PASS && !isValidSmtpPassword(SMTP_PASS)) {
+        console.log('WARNING: SMTP_PASS looks like a placeholder or invalid key. Replace it with a real API key in .env.');
+    }
+    console.log('To enable email: set SMTP_PASS or RESEND_API_KEY environment variable');
+    console.log('For Resend: get API key at https://resend.com/api-keys');
     console.log('For Gmail: generate an App Password at https://myaccount.google.com/apppasswords');
 }
 console.log('=============================');
@@ -946,19 +968,91 @@ function securityHeaders() {
 }
 
 function canSendVerificationEmails() {
-    return Boolean(SMTP_USER && SMTP_PASS);
+    return Boolean(SMTP_USER && isValidSmtpPassword(SMTP_PASS));
 }
 
 function createMailTransporter() {
-    return nodemailer.createTransport({
+    const config = {
         host: SMTP_HOST,
         port: SMTP_PORT,
         secure: SMTP_SECURE,
         auth: {
             user: SMTP_USER,
             pass: SMTP_PASS
+        },
+        connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
+        greetingTimeout: SMTP_GREETING_TIMEOUT_MS,
+        socketTimeout: SMTP_SOCKET_TIMEOUT_MS
+    };
+
+    // For port 587, ensure TLS upgrade
+    if (SMTP_PORT === 587 && !SMTP_SECURE) {
+        config.requireTLS = true;
+    }
+
+    if (SMTP_ALLOW_GMAIL_SSL) {
+        config.tls = { rejectUnauthorized: false };
+    }
+
+    return nodemailer.createTransport(config);
+}
+
+function isResendProvider() {
+    return String(SMTP_HOST || "").includes("resend.com");
+}
+
+async function sendEmailViaResendApi(mailOptions, previousError) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+        const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${SMTP_PASS}`
+            },
+            body: JSON.stringify({
+                from: mailOptions.from,
+                to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
+                subject: mailOptions.subject,
+                text: mailOptions.text,
+                html: mailOptions.html
+            }),
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            const bodyText = await response.text();
+            const message = `resend_api_error ${response.status}: ${bodyText}`;
+            console.error("Resend API email failed:", message);
+            return { delivered: false, reason: message };
         }
-    });
+
+        return { delivered: true, via: "resend_api" };
+    } catch (error) {
+        const reason = error.name === 'AbortError' ? 'resend_api_timeout' : (error.message || 'resend_api_failed');
+        console.error("Resend API email failed:", reason, error);
+        return { delivered: false, reason };
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function sendMailWithFallback(mailOptions, transporter = null) {
+    const transport = transporter || createMailTransporter();
+    try {
+        if (!transporter) {
+            await transport.verify();
+        }
+        await transport.sendMail(mailOptions);
+        return { delivered: true, via: "smtp" };
+    } catch (error) {
+        console.error("SMTP send failed:", error);
+        if (isResendProvider()) {
+            return await sendEmailViaResendApi(mailOptions, error);
+        }
+        return { delivered: false, reason: error.message || "smtp_send_failed" };
+    }
 }
 
 async function sendVerificationEmail(recipientEmail, code) {
@@ -966,28 +1060,70 @@ async function sendVerificationEmail(recipientEmail, code) {
         return { delivered: false, reason: "smtp_not_configured" };
     }
 
-    try {
-        const transporter = createMailTransporter();
-        await transporter.sendMail({
-            from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
-            to: recipientEmail,
-            subject: "Your Abious verification code",
-            text: `Your verification code is ${code}. It expires in 1 hour.`,
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
-                    <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
-                    <p>Your verification code is:</p>
-                    <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
-                        ${code}
-                    </div>
-                    <p style="margin-top: 18px;">This code expires in 1 hour.</p>
+    const mailOptions = {
+        from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+        to: recipientEmail,
+        subject: "Your Abious verification code",
+        text: `Your verification code is ${code}. It expires in 1 hour.`,
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
+                <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
+                <p>Your verification code is:</p>
+                <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                    ${code}
                 </div>
-            `
+                <p style="margin-top: 18px;">This code expires in 1 hour.</p>
+            </div>
+        `
+    };
+
+    const result = await sendMailWithFallback(mailOptions);
+    return result;
+}
+
+async function sendVerificationEmailViaResendApi(recipientEmail, code, previousError) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+        const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${SMTP_PASS}`
+            },
+            body: JSON.stringify({
+                from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+                to: [recipientEmail],
+                subject: "Your Abious verification code",
+                text: `Your verification code is ${code}. It expires in 1 hour.`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #15302b;">
+                        <h2 style="margin-bottom: 8px;">Abious Rehabilitation Initiative</h2>
+                        <p>Your verification code is:</p>
+                        <div style="display: inline-block; padding: 12px 18px; background: #0d6e5e; color: #fff; border-radius: 10px; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                            ${code}
+                        </div>
+                        <p style="margin-top: 18px;">This code expires in 1 hour.</p>
+                    </div>
+                `
+            }),
+            signal: controller.signal
         });
-        return { delivered: true };
+
+        if (!response.ok) {
+            const bodyText = await response.text();
+            const message = `resend_api_error ${response.status}: ${bodyText}`;
+            console.error("Resend API email failed:", message);
+            return { delivered: false, reason: message };
+        }
+
+        return { delivered: true, via: "resend_api" };
     } catch (error) {
-        console.error("Email send failed:", error);
-        return { delivered: false, reason: error.message };
+        const reason = error.name === 'AbortError' ? 'resend_api_timeout' : (error.message || 'resend_api_failed');
+        console.error("Resend API email failed:", reason, error);
+        return { delivered: false, reason };
+    } finally {
+        clearTimeout(timeout);
     }
 }
 
@@ -1033,14 +1169,18 @@ async function sendReactionNotificationEmail(reaction) {
             </div>
         `;
 
-        const transporter = createMailTransporter();
-        await transporter.sendMail({
+        const result = await sendMailWithFallback({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: "isaacnewton0767304563@gmail.com",
             subject: `New Reaction: ${typeLabel} from ${reaction.name}`,
             html: htmlContent,
             text: `New Reaction Received\n\nType: ${typeLabel}\nFrom: ${reaction.name} (${reaction.email})\nComment: ${reaction.comment}\nReceived: ${new Date(reaction.createdAt).toLocaleString()}`
         });
+
+        if (!result.delivered) {
+            console.error(`Reaction notification failed: ${result.reason}`);
+            return result;
+        }
 
         console.log(`Reaction notification email sent to admin for ${reaction.name}`);
         return { delivered: true };
@@ -1087,14 +1227,18 @@ async function sendDonationNotificationEmail(donation) {
             </div>
         `;
 
-        const transporter = createMailTransporter();
-        await transporter.sendMail({
+        const result = await sendMailWithFallback({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: "isaacnewton0767304563@gmail.com",
             subject: `New Donation: $${donation.amount.toFixed(2)} from ${donation.name}`,
             html: htmlContent,
             text: `New Donation Received\n\nFrom: ${donation.name} (${donation.email})\nAmount: $${donation.amount.toFixed(2)}\nPayment Method: ${donation.paymentMethod === 'mobile' ? 'Mobile Money' : 'Bank Transfer'}\nProvider: ${donation.donorBankName || 'N/A'}\nMessage: ${donation.message || 'None'}\nReceived: ${new Date(donation.createdAt).toLocaleString()}`
         });
+
+        if (!result.delivered) {
+            console.error(`Donation notification failed: ${result.reason}`);
+            return result;
+        }
 
         console.log(`Donation notification email sent to admin for ${donation.name}`);
         return { delivered: true };
@@ -1152,8 +1296,7 @@ async function sendDonationReceiptEmail(donation, bankAccount = {}) {
             </div>
         `;
 
-        const transporter = createMailTransporter();
-        await transporter.sendMail({
+        const result = await sendMailWithFallback({
             from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
             to: donation.email,
             subject: `Donation receipt ${receiptNumber}`,
@@ -1169,6 +1312,11 @@ async function sendDonationReceiptEmail(donation, bankAccount = {}) {
                 "Thank you for supporting our work."
             ].filter(Boolean).join("\n\n")
         });
+
+        if (!result.delivered) {
+            console.error(`Donation receipt failed: ${result.reason}`);
+            return result;
+        }
 
         console.log(`Donation receipt sent to ${donation.email}`);
         return { delivered: true };
@@ -1244,29 +1392,28 @@ async function sendNewsNotificationEmails(newsItem) {
         const emailPromises = users.map(async user => {
             if (!user.email) return null;
             
-            try {
-                await transporter.sendMail({
-                    from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
-                    to: user.email,
-                    subject: `${emoji} New ${newsItem.type}: ${newsItem.title}`,
-                    html: emailContent,
-                    text: `
-                        Abious Rehabilitation Initiative
-                        Motor of Life for All
-                        
-                        ${newsItem.type.toUpperCase()}: ${newsItem.title}
-                        
-                        ${newsItem.content}
-                        
-                        Posted: ${new Date(newsItem.createdAt).toLocaleDateString("en-US")}
-                        By: ${newsItem.author || "Administrator"}
-                    `
-                });
-                return { delivered: true };
-            } catch (error) {
-                console.error(`Failed to send email to ${user.email}:`, error.message);
-                return { delivered: false, reason: error.message };
+            const result = await sendMailWithFallback({
+                from: `"Abious Rehabilitation Initiative" <${VERIFICATION_SENDER_EMAIL}>`,
+                to: user.email,
+                subject: `${emoji} New ${newsItem.type}: ${newsItem.title}`,
+                html: emailContent,
+                text: `
+                    Abious Rehabilitation Initiative
+                    Motor of Life for All
+                    
+                    ${newsItem.type.toUpperCase()}: ${newsItem.title}
+                    
+                    ${newsItem.content}
+                    
+                    Posted: ${new Date(newsItem.createdAt).toLocaleDateString("en-US")}
+                    By: ${newsItem.author || "Administrator"}
+                `
+            }, transporter);
+
+            if (!result.delivered) {
+                console.error(`Failed to send email to ${user.email}:`, result.reason);
             }
+            return result;
         });
 
         const results = await Promise.all(emailPromises);
@@ -1515,14 +1662,38 @@ async function handleApi(req, res, urlObj) {
         }
 
         if (method === "GET" && pathname === "/api/health") {
+            // Test SMTP connectivity
+            let smtpStatus = "not_configured";
+            if (canSendVerificationEmails()) {
+                try {
+                    const dns = require('dns');
+                    await new Promise((resolve, reject) => {
+                        dns.lookup(SMTP_HOST, (err, addr) => {
+                            if (err) reject(err);
+                            else resolve(addr);
+                        });
+                    });
+                    smtpStatus = "dns_resolved";
+                } catch (error) {
+                    smtpStatus = `dns_failed: ${error.code || error.message}`;
+                }
+            }
+
             sendJson(res, 200, {
                 ok: true,
                 now: nowIso(),
                 mongodb: useMongoDB,
                 firebase: useFirebase,
-                storage: useFirebase ? "firebase" : useMongoDB ? "mongodb" : "json",
+                storage: useFirebase ? "firebase" : "json",
                 verificationSender: VERIFICATION_SENDER_EMAIL,
-                publicBaseUrl: process.env.PUBLIC_BASE_URL || ""
+                smtpConfigured: canSendVerificationEmails(),
+                smtpStatus: smtpStatus,
+                publicBaseUrl: process.env.PUBLIC_BASE_URL || "",
+                smtpConfigured: canSendVerificationEmails(),
+                smtpStatus: smtpStatus,
+                smtpHost: SMTP_HOST,
+                smtpPort: SMTP_PORT,
+                smtpSecure: SMTP_SECURE
             });
             return true;
         }

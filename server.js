@@ -4,6 +4,7 @@ const path = require("path");
 const crypto = require("crypto");
 const os = require("os");
 const dns = require("dns");
+const net = require("net");
 const { URL } = require("url");
 const nodemailer = require("nodemailer");
 
@@ -976,7 +977,7 @@ function canSendVerificationEmails() {
     return Boolean(SMTP_USER && isValidSmtpPassword(SMTP_PASS));
 }
 
-function createMailTransporter(overrideConfig = {}) {
+async function createMailTransporter(overrideConfig = {}) {
     const config = {
         host: SMTP_HOST,
         port: SMTP_PORT,
@@ -992,7 +993,26 @@ function createMailTransporter(overrideConfig = {}) {
         ...overrideConfig
     };
 
-    // Force IPv4 when the environment cannot reach IPv6 hosts
+    if (SMTP_ALLOW_GMAIL_SSL) {
+        config.tls = { ...(config.tls || {}), rejectUnauthorized: false };
+    }
+
+    // Nodemailer v8 resolves IPv4 and IPv6 internally, so pass an IPv4
+    // address directly when the host platform cannot route IPv6.
+    if (config.family === 4 && config.host && !net.isIP(config.host)) {
+        const servername = config.servername || config.host;
+        try {
+            const addresses = await dns.promises.resolve4(config.host);
+            if (addresses.length) {
+                config.host = addresses[0];
+                config.servername = servername;
+                config.tls = { ...(config.tls || {}), servername };
+            }
+        } catch (error) {
+            console.warn(`SMTP IPv4 DNS lookup failed for ${config.host}:`, error.message || error);
+        }
+    }
+
     if (config.family === 4) {
         config.lookup = (hostname, options, callback) => {
             return dns.lookup(hostname, { family: 4, all: false }, callback);
@@ -1002,10 +1022,6 @@ function createMailTransporter(overrideConfig = {}) {
     // For port 587, ensure TLS upgrade
     if (config.port === 587 && !config.secure) {
         config.requireTLS = true;
-    }
-
-    if (SMTP_ALLOW_GMAIL_SSL) {
-        config.tls = { rejectUnauthorized: false };
     }
 
     return nodemailer.createTransport(config);
@@ -1053,7 +1069,7 @@ async function sendEmailViaResendApi(mailOptions, previousError, apiKey = RESEND
 }
 
 async function sendMailWithFallback(mailOptions, transporter = null) {
-    const transport = transporter || createMailTransporter();
+    const transport = transporter || await createMailTransporter();
     try {
         if (!transporter) {
             await transport.verify();
@@ -1066,7 +1082,7 @@ async function sendMailWithFallback(mailOptions, transporter = null) {
         // Try Gmail's other SMTP port when the configured one is unreachable.
         if (SMTP_HOST.includes("smtp.gmail.com") && SMTP_PORT === 465) {
             try {
-                const alternateTransport = createMailTransporter({ port: 587, secure: false });
+                const alternateTransport = await createMailTransporter({ port: 587, secure: false });
                 await alternateTransport.verify();
                 await alternateTransport.sendMail(mailOptions);
                 return { delivered: true, via: "smtp_gmail_587" };
@@ -1077,7 +1093,7 @@ async function sendMailWithFallback(mailOptions, transporter = null) {
 
         if (SMTP_HOST.includes("smtp.gmail.com") && SMTP_PORT === 587) {
             try {
-                const alternateTransport = createMailTransporter({ port: 465, secure: true });
+                const alternateTransport = await createMailTransporter({ port: 465, secure: true });
                 await alternateTransport.verify();
                 await alternateTransport.sendMail(mailOptions);
                 return { delivered: true, via: "smtp_gmail_465" };
@@ -1428,7 +1444,7 @@ async function sendNewsNotificationEmails(newsItem) {
         `;
 
         // Send emails to all users
-        const transporter = createMailTransporter();
+        const transporter = await createMailTransporter();
         const emailPromises = users.map(async user => {
             if (!user.email) return null;
             
